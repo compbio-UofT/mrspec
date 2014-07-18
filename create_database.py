@@ -126,24 +126,24 @@ if __name__ == "__main__":
         cur = con.cursor()
         print('Connection to database successful.\n')
 
-        #import requisite tables in local folder and mysql folder
-        import_csv("outcomes2.csv", "outcomes", "varchar(500)")
-        import_csv("mrspec.csv", "mrspec", "text")
-        import_csv("tabPatients.csv", "tab_MRN", "varchar(50)")
+    #import requisite tables in local folder and mysql folder
+    import_csv("outcomes2.csv", "outcomes", "varchar(500)")
+    import_csv("mrspec.csv", "mrspec", "text")
+    import_csv("tabPatients.csv", "tab_MRN", "varchar(50)")
 
-        #re-personalize mrspec
-        create_table('mrspec_MRN', "CREATE TABLE IF NOT EXISTS mrspec_MRN SELECT m.*, t.HSC_Number as MRN FROM mrspec AS m JOIN tab_MRN as t ON m.tabPatient_ID=t.tabPatient_ID")
+    #re-personalize mrspec
+    create_table('mrspec_MRN', "CREATE TABLE IF NOT EXISTS mrspec_MRN SELECT m.*, t.HSC_Number as MRN FROM mrspec AS m JOIN tab_MRN as t ON m.tabPatient_ID=t.tabPatient_ID")
 
-        #merge tables into table 'merged'
-        cur.execute("ALTER TABLE outcomes DROP COLUMN tabPatient_ID") if column_exists("outcomes", "tabPatient_ID") else None
-        cur.execute("CREATE TEMPORARY TABLE OUTCOMES_GROUPED SELECT * FROM outcomes GROUP BY `MRN (column to be removed once study is in analysis phase)`,str_to_date(outcomes.Date, '%Y-%m-%d') ORDER BY str_to_date(outcomes.Date, '%Y-%m-%d')") if not table_exists('merged') else None
+    #merge tables into table 'merged'
+    cur.execute("ALTER TABLE outcomes DROP COLUMN tabPatient_ID") if column_exists("outcomes", "tabPatient_ID") else None
+    cur.execute("CREATE TEMPORARY TABLE OUTCOMES_GROUPED SELECT * FROM outcomes GROUP BY `MRN (column to be removed once study is in analysis phase)`,str_to_date(outcomes.Date, '%Y-%m-%d') ORDER BY str_to_date(outcomes.Date, '%Y-%m-%d')") if not table_exists('merged') else None
 
-        create_table('merged', "CREATE TABLE IF NOT EXISTS merged SELECT * FROM OUTCOMES_GROUPED RIGHT JOIN mrspec_MRN ON OUTCOMES_GROUPED.`MRN (column to be removed once study is in analysis phase)` = mrspec_MRN.MRN AND str_to_date(OUTCOMES_GROUPED.Date, '%Y-%m-%d') = str_to_date(mrspec_MRN.procedureDate, '%y-%m-%d')")
+    create_table('merged', "CREATE TABLE IF NOT EXISTS merged SELECT * FROM OUTCOMES_GROUPED RIGHT JOIN mrspec_MRN ON OUTCOMES_GROUPED.`MRN (column to be removed once study is in analysis phase)` = mrspec_MRN.MRN AND str_to_date(OUTCOMES_GROUPED.Date, '%Y-%m-%d') = str_to_date(mrspec_MRN.procedureDate, '%y-%m-%d')")
 
-        #create standardized table
-        create_standardized_table('standard', 'merged', table_schema)
+    #create standardized table
+    create_standardized_table('standard', 'merged', table_schema)
 
-        print('\nAll operations completed successfully.')
+    print('\nAll operations completed successfully.')
 
-        #close the connection to the database
-        con.close()
+    #close the connection to the database
+    con.close()
