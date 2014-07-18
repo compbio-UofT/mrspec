@@ -12,10 +12,17 @@
 				background-color: white;
 
 				height: 500px;
+				width: 545px;
 				position: float;
 				top: 150px;
 				right: 100px;
-				border-left: 1px solid #eee;
+
+			}
+
+			#patient {
+				border: 1px solid #eee;
+				padding: 10px;
+				margin-bottom: 10px;
 			}
 
 			#title {
@@ -29,8 +36,43 @@
 			#content {
 				text-align: left;
 				padding-left: 20px;
-				padding-bottom: 20px
+				padding-bottom: 5px
 			}
+
+			#listContainer{
+  margin-top:15px;
+}
+ 
+#expList ul, li {
+    list-style: none;
+    margin:0;
+    padding:0;
+    cursor: pointer;
+}
+#expList p {
+    margin:0;
+    display:block;
+}
+#expList p:hover {
+    background-color:#121212;
+}
+#expList li {
+    line-height:140%;
+    text-indent:0px;
+    background-position: 1px 8px;
+    padding-left: 20px;
+    background-repeat: no-repeat;
+}
+ 
+/* Collapsed state for list element */
+#expList .collapsed {
+    background-image: url(../img/collapsed.png);
+}
+/* Expanded state for list element
+/* NOTE: This class must be located UNDER the collapsed one */
+#expList .expanded {
+    background-image: url(../img/expanded.png);
+}
         </style>
     </head>
     <body>
@@ -96,6 +138,42 @@
 
         <div id="sidebar" style="overflow-y:auto;"></div>
 
+    <div id="listContainer">
+    <ul id="expList">
+      <li>Item A
+        <ul>
+          <li>Item A.1
+            <ul>
+              <li><span>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec sagittis ultricies arcu, quis porttitor risus placerat et. Proin quis metus diam, quis bibendum dolor. Nulla nec dapibus nunc. Quisque ac erat sit amet nisl venenatis consequat nec in nibh. Aliquam viverra vestibulum elit faucibus sollicitudin.</span>
+		      </li>
+      	    </ul>
+	  	  </li>
+	      <li>Item A.2</li>
+	      <li>Item A.3
+        	<ul>
+          	  <li>
+			    <span>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec sagittis ultricies arcu, quis porttitor risus placerat et. Proin quis metus diam, quis bibendum dolor. Nulla nec dapibus nunc. Quisque ac erat sit amet nisl venenatis consequat nec in nibh. Aliquam viverra vestibulum elit faucibus sollicitudin.</span>
+		  	  </li>
+        	</ul>
+	  	  </li>
+	   </ul>
+	</li>
+	<li>Item B</li>
+	<li>Item C
+	  <ul>
+		<li>Item C.1</li>
+		<li>Item C.2
+	  	  <ul>
+			<li>
+		  	  <span>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec sagittis ultricies arcu, quis porttitor risus placerat et. Proin quis metus diam, quis bibendum dolor. Nulla nec dapibus nunc. Quisque ac erat sit amet nisl venenatis consequat nec in nibh. Aliquam viverra vestibulum elit faucibus sollicitudin.</span>
+			</li>
+	  	  </ul>
+		</li>
+  	  </ul>
+	</li>
+  </ul>
+</div>
+
         <script type="text/javascript">
 			 			$(function() { 
             $('a#query').bind('click', function() {
@@ -123,6 +201,32 @@
             });
             });
 
+
+  $(function prepareList() {
+	$('#expList').find('li:has(ul)').unbind('click').click(function(event) {
+		if(this == event.target) {
+			$(this).toggleClass('expanded');
+			$(this).children('ul').toggle('medium');
+		}
+		return false;
+	}).addClass('collapsed').removeClass('expanded').children('ul').hide();
+ 
+	//Hack to add links inside the cv
+	$('#expList a').unbind('click').click(function() {
+		window.open($(this).attr('href'));
+		return false;
+	});
+	//Create the button functionality
+	$('#expandList').unbind('click').click(function() {
+		$('.collapsed').addClass('expanded');
+		$('.collapsed').children().show('medium');
+	})
+	$('#collapseList').unbind('click').click(function() {
+		$('.collapsed').removeClass('expanded');
+		$('.collapsed').children().hide('medium');
+	})
+});
+
             $(document).keyup(function(e) {
             if (e.keyCode == 13) { $('.query').click(); }     // enter
             if (e.keyCode == 27) { 	            
@@ -130,7 +234,7 @@
 		            	window.my_config.charts[c].setSelection()
 		            		}
 					}
-					update_sidebar()   // esc
+					$(".sides").remove()   // esc
             });
 
             function render_html(names) {
@@ -159,7 +263,8 @@
 
                 var options = {
                 title: 'Age vs. ' + c,
-                hAxis: {title: 'Age', minValue: 0, maxValue: 15,            logScale: document.getElementById('scale').checked? true:false},
+                hAxis: {title: 'Age', minValue: 0, maxValue: 15,            
+                logScale: document.getElementById('scale').checked? true:false},
                 vAxis: {title: c, minValue: 0, maxValue: 5},
                 legend: (columns > 3)? {}: 'none',
                 aggregationTarget: 'series',
@@ -212,16 +317,23 @@
 
 					for (r in patients){
 
+						var i = ""
+
 						console.log(r)
 						console.log(window.my_config.metadata_array)
 
 						for (m in window.my_config.metadata_array[r]) {
 		            		for (n in window.my_config.metadata_array[r][m]) {
-		            			$("#sidebar").append(window.my_config.metadata_array[r][m][n]? "<div id='title' class='sides'>"
-		            			+n+": </div><div id='content' class='sides'>" 
-		            			+ window.my_config.metadata_array[r][m][n] + "</div>":"") 
+		            			if (window.my_config.metadata_array[r][m][n]) {
+		            				i+= "<div id='title'>"
+		            					+n+": </div><div id='content'>" 
+		            					+ window.my_config.metadata_array[r][m][n] + "</div>"
+		            				}
+		            			
+		            				
 		            		}
 		            	}
+		           		$("#sidebar").append("<div id='patient' class ='sides'>"+i+"</div>") 
 		            }
 
                 }

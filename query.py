@@ -1,6 +1,6 @@
 import mysql.connector as m
 import sys
-from flask import Flask, render_template, request, jsonify, json as j
+from flask import Flask, render_template, request, jsonify, json as j, send_file
 
 all_mets = ['CrCH2', 'AcAc', 'Acn', 'Ala', 'Asp', 'Cho', 'Cr', 'GABA', 'GPC', 'Glc',
         'Gln', 'Glu', 'Gua', 'Ins', 'Lac', 'Lip09', 'Lip13a', 'Lip13b', 'Lip20', 'MM09',
@@ -341,6 +341,11 @@ def format_query(query, columns, values):
     q['cols'] = cols
 
     return q
+
+@app.route('/img/<name>.png')
+def return_image(name):
+    return send_file('img/'+name+'.png', mimetype='image/gif')
+
 
 # This route will show a form to perform an AJAX request
 # jQuery is loaded to execute the request and update the
