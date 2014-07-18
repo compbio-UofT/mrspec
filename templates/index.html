@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script src="https://www.google.com/jsapi"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css"
+          rel="stylesheet">
+
+<style type="text/css">
+
+#sidebar {background-color: white;
+      width: 260px;
+      position: fixed;
+      top: 150px;
+      right: 100px;
+			border-left: 1px solid grey;
+			}
+
+#sidebar	.title {
+      font-size: 30px;
+      text-align: center;
+      padding:10px;
+}
+
+#sidebar	.content {
+      font-size: 30px;
+      text-align: right;
+      padding:10px;
+			padding-bottom:30px
+	}
+
+</style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h3 class="text-muted">MRSpec Database Query and Visualization</h3>
+      </div>
+      <hr/>
+      <div>
+      <p>
+    <form>
+        Age: <input type="text" size="5" name="age">
+        Gender: <select id = 'gender' name='gender'>
+            <option value="">Both</option>
+            <option value="M">Male</option>
+            <option value="F">Female</option>
+        </select>
+        Field Strength: <select id = 'field' name = 'field'>
+            <option value="">Both</option>
+            <option value="3">3 T</option>
+            <option value="1.5">1.5 T</option>
+        </select>
+        Metabolites: <input type="text" size="5" name="b">
+        Values: <input type="text" size="5" name="c">
+        Keyword: <input type="text" size="5" name="keyword">
+        Keyword exclude: <input type="text" size="5" name="key_exclude">
+        Limit (blank for none): <input type="text" size="5" name="limit">
+        <br>
+        Merge Graphs: <input type="checkbox" id="merge" name="Merge Graphs">
+        Log Scale: <input type="checkbox" id="scale" name="scale">
+        Trendline: <input type="checkbox" id="trendline" name="trendline"> 
+        Show tooltips on select? <input type="checkbox" id="outcomes" name="outcomes"> 
+        Keep results of previous queries: <input type="checkbox" id="keep" name="keep">
+    </form>
+    <p>
+    <a href="javascript:void();" id="query" class='query'>submit query</a> // <a href="javascript:void();" id="dump">dump query to file</a></p>
+      </form>
+      </div>
+    </div>
+	<div id="sidebar"></div>
+
+	<div id="charts"></div>
+
+	<script type="text/javascript">
+
+  $(function() {
+      $('a#query').bind('click', function() {
+        $.getJSON('/_add_numbers', {
+					keywords: $('input[name="keyword"]').val(),
+					key_exclude: $('input[name="key_exclude"]').val(),
+          age: $('input[name="age"]').val(),
+	  			limit: $('input[name="limit"]').val(),
+	  			merge: document.getElementById('merge').checked,
+          b: $('input[name="b"]').val(),
+	  			c: $('input[name="c"]').val(),
+					gender: $("#gender option:selected").val(),
+					field: $("#field option:selected").val(),
+					outcomes: document.getElementById('outcomes').checked
+        }, function(data) {
+						window.my_config =
+						{
+    				metadata_array : data.metadata_array
+    				};
+	
+						render_html(data.names)
+						drawChart(data.result);
+        });
+        return false;
+       });
+     });
+
+	$(document).keyup(function(e) {
+  	if (e.keyCode == 13) { $('.query').click(); }     // enter
+  	if (e.keyCode == 27) { $('.cancel').click(); }   // esc
+	});
+
+	function render_html(names) {
+if (document.getElementById('keep').checked != true){
+		$(".myCharts").remove()
+}
+		for (name in names) {
+			$("#charts").after("<div id = " + names[name] + " style='width: 700px; height: 400px; float: left;' class = 'myCharts'>")
+		}
+}
+
+      google.load("visualization", "1", {packages:["corechart"]});
+      //google.setOnLoadCallback(drawChart);
+      function drawChart(results) {
+	
+	//render and store DataTables in dictionary
+	allChartData = {}
+	for (result in results) {
+		allChartData[result] = new google.visualization.DataTable(results[result])
+	}
+	
+	charts = {}
+	for (c in allChartData){
+	var columns = allChartData[c].getNumberOfColumns()
+
+        var options = {
+          title: 'Age vs. ' + c,
+          hAxis: {title: 'Age', minValue: 0, maxValue: 15, 	  	    logScale: document.getElementById('scale').checked? true:false},
+          vAxis: {title: c, minValue: 0, maxValue: 5},
+          legend: (columns > 3)? {}: 'none',
+	  aggregationTarget: 'series',
+	  selectionMode: 'multiple',
+    	  pointSize: 4,
+	  explorer: {},
+	  trendlines: document.getElementById('trendline').checked? { 0: {pointSize: 0, type: 'linear'} }: null,
+chartArea: columns > 2? {width: '70%', height: '70%'}:{width: '80%', height: '70%'},
+tooltip: {isHtml: true, trigger: document.getElementById('outcomes').checked? 'selection' : 'none' //none disables tooltips
+ }
+        }
+
+	 charts[c] = new google.visualization.ScatterChart(document.getElementById(c));
+        charts[c].draw(allChartData[c], options);	
+}
+
+	for (c in charts) {
+
+	google.visualization.events.addListener(charts[c], 'select', function() {
+
+	var all_null = true
+	for (d in charts) {
+		if (charts[d].getSelection()[0] != null) {
+			all_null = false
+			update_sidebar(charts[d].getSelection()[0].row);
+} 
+}
+	if (all_null == true) {$(".sides").remove()}
+}
+)} };
+
+function update_sidebar(r){
+		
+		var metadata_names = ['ID: ','Indication:','Diagnosis: ']
+
+		for (m in window.my_config.metadata_array[r]) {
+			for (n in window.my_config.metadata_array[r][m]) {
+			$("#sidebar").append("<div id='content' class='sides'>" + '<b>'+n+'</b>' + ": " + window.my_config.metadata_array[r][m][n] + "</div>") }
+		} 
+
+}
+
+/*	for (c in charts) {
+  google.visualization.events.addListener(charts[c], 'select', select_rows(charts[c], charts));
+}
+
+
+};
+
+function select_rows (chart, charts){
+	alert("Selection!")
+	var r = [{row: chart.getSelection()[0].row}];
+	for (c in charts){
+
+	charts[c].setSelection(r);
+      }
+} */
+
+/*for(i=0; i<document.FormName.elements.length; i++) {
+    document.FormName.elements[i].disabled=true;
+} */
+    </script>
+  </body>
+</html>
