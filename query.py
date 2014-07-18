@@ -21,21 +21,55 @@ unique_desc = "ID"
 
 metadata = [
     unique_desc,
-    "`Indication (as written on MRI requisition)`",
-    "`Diagnosis (from chart)`"
+    "Indication",
+    "Diagnosis"
 ]
 
 # Initialize the Flask application
 app = Flask(__name__)
 
-#def calculate
+def windowed_SD(query, gender, field, location, unique, filter_by_sd):
+    all_sd = []
+    limit = 50
 
-def default_query(age, gender, field, location, metabolites, limit, mets_span_each, unique, filter_by_sd, keywords, key_exclude):
+    i=0
+    for row in query:
+        age = row[0]
+        patient_ID = row[-len(metadata)]
+
+        subject_metabolites_query = default_query(patient_ID, age, "", "", location, all_mets, "", False, False, filter_by_sd, [],[], [])
+
+        sd = []
+
+        j=0
+        for column in [k[0] for k in cur.description]:
+            metabolite = column[:-9]
+            if metabolite in all_mets and subject_metabolites_query[0][j] is not None:
+                subquery = ["SELECT AVG({0}), STDDEV_SAMP({0}),COUNT({0}) FROM ".format(column),""]
+
+                result = default_query('',age, gender, field, location, [metabolite], limit, True, unique,
+                             filter_by_sd, [],[],
+                             subquery)
+                #print result
+                #print subject_metabolites_query[0][i], result[0][0],result[0][1],result[0][2]
+                patient_sd = 0 if result[0][2] <= 1 else (float(subject_metabolites_query[0][j]) - float(result[0][0]))/float(result[0][1]) #N = (X-mu)/sigma
+
+                sd.append({metabolite:patient_sd})
+            j+=1
+        all_sd.append(sd)
+        i+=1
+
+    return all_sd
+
+
+
+#bug exists where could access scan information from later date
+def default_query(ID, age, gender, field, location, metabolites, limit, mets_span_each, unique, filter_by_sd, keywords, key_exclude, perform_as_subquery_with):
 
     graph_data = [
         "AgeAtScan"] + (metabolites if not filter_by_sd else ["COALESCE(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>0 AND ScanTEParameters {2} THEN {0} ELSE NULL END) as `{0}_Filtered`".format(metabolite, met_threshold[metabolite], '= 144' if metabolite in met_echo_high else '<=50') for metabolite in metabolites])
 
-    print age, gender, field, location, metabolites, limit, mets_span_each, unique, filter_by_sd, keywords
+    #print(age, gender, field, location, metabolites, limit, mets_span_each, unique, filter_by_sd, keywords, key_exclude, perform_as_subquery_with)
 
     select = ','.join(graph_data + metadata)
 
@@ -54,6 +88,11 @@ def default_query(age, gender, field, location, metabolites, limit, mets_span_ea
                             'LocationName',
                             location) if location else ''
 
+    where += " {} {} IN({})".format(
+                            'AND' if where else 'WHERE',
+                            unique_desc,
+                            ID) if ID else ''
+
     ##if mets_span_each, filter by standard deviation for each metabolite
     where += ' AND (' if where else 'WHERE ('
     where += " IS NOT NULL {} ".format('OR' if not mets_span_each else 'AND').join(
@@ -65,7 +104,7 @@ def default_query(age, gender, field, location, metabolites, limit, mets_span_ea
         where += (' AND (' if where else 'WHERE (')
         cond = []
         for keyword in keywords:
-            cond += ["`Indication (as written on MRI requisition)` LIKE '%{0}%' OR `Diagnosis (from chart)` LIKE '%{0}%' ".format(keyword)]
+            cond += ["{1} LIKE '{0}' OR {2} LIKE '{0}' ".format(keyword, metadata[1],metadata[2])]
         where += " OR ".join(cond)
         where += ") "
 
@@ -74,12 +113,12 @@ def default_query(age, gender, field, location, metabolites, limit, mets_span_ea
         where += (' AND (' if where else 'WHERE (')
         cond = []
         for key in key_exclude:
-            cond += ["`Indication (as written on MRI requisition)` NOT LIKE '%{0}%' AND `Diagnosis (from chart)` NOT LIKE '%{0}%' ".format(key)]
+            cond += ["{1} NOT LIKE '{0}' OR {2} NOT LIKE '{0}' ".format(keyword, metadata[1],metadata[2])]
         where += " AND ".join(cond)
         where += ") "
 
     ###group by statement: unique###
-    group_by = 'GROUP BY ' + unique_desc + (', AgeAtScan' if unique else '')
+    group_by = 'GROUP BY ' + unique_desc + (', AgeAtScan' if not unique else '')
 
     ##unique people
     #select AgeAtScan, GROUP_CONCAT(CASE WHEN 'Acn_%SD'<40 AND MRN = standard.MRN AND AgeAtScan = standard.AgeAtScan then Acn else null end ) as Acn_Filtered, LocationName from standard where LocationName IN('BG', 'OCC_WM') GROUP BY MRN ORDER BY AgeAtScan limit 5;
@@ -102,6 +141,9 @@ def default_query(age, gender, field, location, metabolites, limit, mets_span_ea
 
         query = "(SELECT {0} FROM {1} {2} {3} ORDER BY AgeAtScan DESC {4}) UNION ALL (SELECT {0} FROM {1} {5} {3} ORDER BY AgeAtScan {4})".format(select, table, where_less, group_by, limit, where_geq)
 
+    ##if performed as subquery, add parameters
+    if perform_as_subquery_with:
+        query = ''.join([perform_as_subquery_with[0],'(',query,') AS T ',perform_as_subquery_with[1]])
     #execute query
     print(query)
     cur.execute(query)
@@ -112,36 +154,6 @@ def default_query(age, gender, field, location, metabolites, limit, mets_span_ea
     return rows
 
 #SELECT `lap_time`, `uid` FROM `table` t1 WHERE `lap_time` =< 120 AND NOT EXISTS (SELECT 1 FROM `table` WHERE `uid` = t1.`uid` AND `lap_time` > t1.`lap_time` AND `lap_time` < 120) ORDER BY `lap_time` DESC LIMIT 5
-
-def default_query_old(age, gender, field, metabolites, values, limit, show_all, filter_by_sd):
-    print age, gender, field, metabolites, values, limit, show_all, filter_by_sd
-
-    table = "standard"
-    unique_desc = "MRN"
-
-    selection = ",".join([
-        "AgeAtScan",
-        metabolites,
-        unique_desc,
-        "`Indication (as written on MRI requisition)`",
-        "`Diagnosis (from chart)`",
-    ])
-
-    if limit == '':
-        gender_sel = '' if gender == 'Both' else "WHERE gender ='{}'".format(gender)
-        field_sel = '' if field == 'Both' else "WHERE ScanBZero = '{}'".format(field) if gender_sel == '' else " AND ScanBZero = '{}'".format(field)
-
-        cur.execute("SELECT {} FROM {} {}{} GROUP BY {} ORDER BY AgeAtScan".format(selection, table, gender_sel, field_sel, unique_desc)) #select unique entries (group by unique_desc)
-    else:
-        gender_sel = '' if gender == 'Both' else "AND gender ='{}'".format(gender)
-        field_sel = '' if field == 'Both' else "AND ScanBZero = '{}'".format(field)
-
-        cur.execute("(SELECT {2} FROM {0} WHERE AgeAtScan<{1} {4} {5} GROUP BY {6} ORDER BY AgeAtScan DESC LIMIT {3}) UNION ALL (SELECT {2} FROM {0} WHERE AgeAtScan>{1} {4} {5} GROUP BY {6} ORDER BY AgeAtScan ASC LIMIT {3})".format(table, age, selection, limit, gender_sel, field_sel, unique_desc))
-
-    rows = cur.fetchall()
-
-    #columns = [i[0] for i in cur.description]
-    return rows
 
 #adds patient as separate dataseries
 ##
@@ -357,7 +369,7 @@ def add_numbers():
     print(keywords, key_exclude)
 
 
-    q = default_query(
+    q = default_query(ID='',
         age=age,
         gender=request.args.get('gender', 0, type=str),
         field=request.args.get('field', 0, type=str),
@@ -368,7 +380,7 @@ def add_numbers():
         unique=False,
         filter_by_sd=True,
         keywords=keywords,
-        key_exclude =key_exclude)
+        key_exclude =key_exclude, perform_as_subquery_with=[])
 
     if merge == 'true':
         d = {b:format_query_with_pseries(q, ("Age," + b).split(','), (str(age) + "," + c).split(","))}
@@ -415,14 +427,19 @@ if __name__ == '__main__':
         print('Connection to database successful.\n')
 
         #example query
-        q = default_query(age=500, gender="", field="", metabolites='Acn,Cr,Glx'.split(','), limit='', location="", mets_span_each=False, unique=False, filter_by_sd=True, keywords=['MMA'], key_exclude = [])
+        q = default_query(ID='',age=500, gender="F", field="", metabolites=['Cr'], limit='50', location="", mets_span_each=True, unique=True, filter_by_sd=True, keywords=[], key_exclude = [], perform_as_subquery_with=[])
 
 
         #print j.dumps(format_query_with_pseries_names_tooltips(q, 'Age,Acn,Cr'.split(","), "500,0.5,6".split(",")), indent=1)
         #print j.dumps(format_query_with_pseries_and_names(q, 'Age,Acn,Cr'.split(","), "500,0.5,6".split(",")), indent=1)
 
-        print j.dumps(format_metadata(q), indent=1)
-        print j.dumps(format_metadata(q)[0])
+        #print j.dumps(format_metadata(q), indent=1)
+        print q
+
+        w = windowed_SD(q, gender="F", field="", location="", unique=True, filter_by_sd=True)
+
+        print j.dumps(w)
+        print bool(len(w) == len(format_metadata(q)))
 
         #close connection to database
         con.close()
