@@ -5,9 +5,12 @@ def create_table(name, query):
     if table_exists(name):
         print("Table '{}' already in database. No changes made.".format(name))
     else:
-        selection = ",".join(["CAST({0} AS {1}) AS {2}".format(c[0], c[1], c[0] if len(c) < 3 else c[2]) for c in table_schema])
+        #selection = ",".join(["CAST({0} AS {1}) AS {2}".format(c[0], c[1], c[0] if len(c) < 3 else c[2]) for c in table_schema])
 
-        cur.execute("CREATE TABLE {} SELECT {} FROM {}".format(name, selection, source))
+        #cur.execute("CREATE TABLE {} SELECT {} FROM {}".format(name, selection, source))
+
+        cur.execute(query)
+        con.commit()
 
         print("Table '{}' created successfully.".format(name))
 
@@ -15,7 +18,7 @@ def create_standardized_table(name, source, table_schema):
     if table_exists(name):
         print("Table '{}' already in database. No changes made.".format(name))
     else:
-        selection = ",".join(["CAST({0} AS {1}) AS {2}".format(c[0], c[1], c[0] if len(c) < 3 else c[2]) for c in table_schema])
+        selection = ",".join(["CAST({0} AS {1}) AS {2}".format(c[0], c[1], c[0] if len(c) < 3 else c[2]) for c in table_schema]) #c[2] is used to rename the column
 
         cur.execute("CREATE TABLE {} SELECT {} FROM {}".format(name, selection, source))
 
@@ -91,8 +94,8 @@ if __name__ == "__main__":
         for metabolite in metabolites:
             table_schema += [[metabolite, d],['`' + metabolite + "_%SD`", s]]
 
-        table_schema += [['`Indication (as written on MRI requisition)`', t],
-                         ['`Diagnosis (from chart)`', t]
+        table_schema += [['`Indication (as written on MRI requisition)`', t, 'Indication'],
+                         ['`Diagnosis (from chart)`', t, 'Diagnosis']
                          ]
 
     if sys.argv[0][-8:] == 'query.py':
