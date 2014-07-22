@@ -8,55 +8,62 @@
         rel="stylesheet">
 
         <style type="text/css">
+			#left {float:left}
+			#right {float:left}
+        
 			#sidebar {
+			
 				background-color: white;
-
-				height: 500px;
 				width: 545px;
-				position: float;
-				top: 150px;
-				right: 100px;
+				position: static;
+				left: 700px;
 
 			}
 
-			#patient {
+			#sidebar .patient {
 				border: 1px solid #eee;
 				padding: 10px;
-				margin-bottom: 10px;
+				padding-bottom: 5px;
+				margin-top: 10px;
 			}
 
-			#title {
+			#sidebar .title {
 				font-weight:600;
 				background-color: white;
 				color: #909090;
 				text-align: left;
-				padding-left: 10px
+				padding-left: 5px
 			}
 
-			#content {
+			#sidebar .content {
 				text-align: left;
-				padding-left: 20px;
+				padding-left: 15px;
 				padding-bottom: 5px
 			}
 
-			#listContainer{
-  margin-top:15px;
-}
- 
-#expList ul, li {
+			#sidebar .listContainer{
+} 
+
+ul.justify { margin-left:-2.75em; } 
+
+
+.expList ul, li {
+
     list-style: none;
     margin:0;
     padding:0;
     cursor: pointer;
+    
+
 }
-#expList p {
+.expList p {
     margin:0;
     display:block;
 }
-#expList p:hover {
+.expList p:hover {
     background-color:#121212;
 }
-#expList li {
+.expList li {
     line-height:140%;
     text-indent:0px;
     background-position: 1px 8px;
@@ -65,13 +72,19 @@
 }
  
 /* Collapsed state for list element */
-#expList .collapsed {
+.collapsed {
     background-image: url(../img/collapsed.png);
+        background-position: 1px 8px;
+    padding-left: 20px;
+    background-repeat: no-repeat;
 }
 /* Expanded state for list element
 /* NOTE: This class must be located UNDER the collapsed one */
-#expList .expanded {
+.expanded {
     background-image: url(../img/expanded.png);
+    background-position: 1px 8px;
+    padding-left: 20px;
+    background-repeat: no-repeat;
 }
         </style>
     </head>
@@ -109,72 +122,57 @@
                         Keyword exclude:
                         <input type="text"
                         size="5" name="key_exclude">
-                        Limit (blank for none):
+                        Limit:
                         <input
                         type="text" size="5" name="limit">
+                        Location:
+                        <input
+                        type="text" size="5" name="location">
                         <br>
                         Merge Graphs:
                         <input type="checkbox" id="merge" name="Merge Graphs">
                         Log Scale:
-                        <input type="checkbox" id="scale" name="scale">
+                        <input type="checkbox" id="scale" name="scale" onclick="drawChart(window.my_config.results)">
                         Trendline:
-                        <input type="checkbox" id="trendline" name="trendline">
-                        Show tooltips on select?
-                        <input type="checkbox" id="outcomes"
-                        name="outcomes">
-                        Keep results of previous queries:
+                        <input type="checkbox" id="trendline" name="trendline" onclick="drawChart(window.my_config.results)">
+                        Overlay queries:
                         <input
-                        type="checkbox" id="keep" name="keep">
+                        type="checkbox" id="overlay" name="overlay" onclick="document.getElementById('merge').disabled = true;">
+
                     </form>
                 <p>
                     <a href="javascript:void();" id="query" class='query'>submit
-                    query</a> // <a href="javascript:void();" id="dump">dump query to file</a>
+                    query</a> - <a href="javascript:void();" id='clear'>clear canvas</a> - <a href="javascript:void();" id="dump">dump query to file</a>
                 </p>
                 </form>
             </div>
         </div>
 
+		<div id = 'left'>
         <div id="charts"></div>
+        </div>
 
+		<div id='right'>
         <div id="sidebar" style="overflow-y:auto;"></div>
-
-    <div id="listContainer">
-    <ul id="expList">
-      <li>Item A
-        <ul>
-          <li>Item A.1
-            <ul>
-              <li><span>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec sagittis ultricies arcu, quis porttitor risus placerat et. Proin quis metus diam, quis bibendum dolor. Nulla nec dapibus nunc. Quisque ac erat sit amet nisl venenatis consequat nec in nibh. Aliquam viverra vestibulum elit faucibus sollicitudin.</span>
-		      </li>
-      	    </ul>
-	  	  </li>
-	      <li>Item A.2</li>
-	      <li>Item A.3
-        	<ul>
-          	  <li>
-			    <span>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec sagittis ultricies arcu, quis porttitor risus placerat et. Proin quis metus diam, quis bibendum dolor. Nulla nec dapibus nunc. Quisque ac erat sit amet nisl venenatis consequat nec in nibh. Aliquam viverra vestibulum elit faucibus sollicitudin.</span>
-		  	  </li>
-        	</ul>
-	  	  </li>
-	   </ul>
-	</li>
-	<li>Item B</li>
-	<li>Item C
-	  <ul>
-		<li>Item C.1</li>
-		<li>Item C.2
-	  	  <ul>
-			<li>
-		  	  <span>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec sagittis ultricies arcu, quis porttitor risus placerat et. Proin quis metus diam, quis bibendum dolor. Nulla nec dapibus nunc. Quisque ac erat sit amet nisl venenatis consequat nec in nibh. Aliquam viverra vestibulum elit faucibus sollicitudin.</span>
-			</li>
-	  	  </ul>
-		</li>
-  	  </ul>
-	</li>
-  </ul>
-</div>
+		</div>
 
         <script type="text/javascript">
+
+			document.getElementById('clear').onclick = clearCanvas;
+
+
+function clearCanvas() {
+  $('.patient').remove()
+  $('.myCharts').remove()
+
+  document.getElementById('merge').disabled = false
+
+  window.my_config = null
+
+  
+  return false;
+}
+        
 			 			$(function() { 
             $('a#query').bind('click', function() {
             $.getJSON('/_add_numbers', {
@@ -182,28 +180,107 @@
             key_exclude: $('input[name="key_exclude"]').val(),
             age: $('input[name="age"]').val(),
             limit: $('input[name="limit"]').val(),
+            location: $('input[name="location"]').val(),
             merge: document.getElementById('merge').checked,
             b: $('input[name="b"]').val(),
             c: $('input[name="c"]').val(),
             gender: $("#gender option:selected").val(),
             field: $("#field option:selected").val(),
-            outcomes: document.getElementById('outcomes').checked
+            overlay: (document.getElementById('overlay').checked == false || (document.getElementById('overlay').checked == true && window.my_config == null))? 0:(window.my_config.results[window.my_config.names[0]].cols.length -1)
             }, function(data) {
-            window.my_config =
-            {
-            metadata_array : data.metadata_array
-            };
-         	$(".sides").remove()
-            render_html(data.names)
-            drawChart(data.result);
+            
+            
+
+			if (document.getElementById('overlay').checked == false || (document.getElementById('overlay').checked == true && window.my_config == null)){
+
+							window.my_config = {metadata_array: data.metadata_array,
+												sd_array: data.sd_array,
+												results: data.result,
+												names: data.names
+												}
+							
+				            render_html(data.names)
+            				drawChart(data.result);
+			} else {
+
+				if (window.my_config.sd_array != null)
+					window.my_config['sd_array'] = window.my_config.sd_array.concat(data.sd_array)
+
+				window.my_config['metadata_array'] = window.my_config.metadata_array.concat(data.metadata_array)
+								console.log(data.metadata_array)
+				console.log(window.my_config.metadata_array.concat(data.metadata_array))
+				
+				
+				redraw_charts(data.result)
+			
+			}
+			
+            $(".patient").remove()
+            
             });
             return false;
             });
             });
 
+$(document).ready(function () {
 
-  $(function prepareList() {
-	$('#expList').find('li:has(ul)').unbind('click').click(function(event) {
+	setSize()
+
+    $(window).bind('resize', function() {
+		scrollControl()
+        setSize()
+    })
+
+    $(window).scroll(function () {
+    	scrollControl()
+    })
+        
+
+});
+
+
+	function setSize(){
+		var width = ($(window).width() / 2 )
+		var height = $(window).height()
+		$('#left').css({
+		'width':width+20,
+
+		})
+		$('#right').css({
+		'width':width-21,
+		})
+	}
+
+	function scrollControl(){
+
+        var scroll = $(this).scrollTop()? $(this).scrollTop():0
+        var height = $('#sidebar').height() + 'px';
+        var max_height = $(window).height()
+        var width = $(window).width()/2
+
+        if (scroll < $('#charts').offset().top) {
+
+            $('#sidebar').css({
+                'position': 'static',
+                'top': '0',
+                'max-height': max_height - (165-scroll),
+            });
+
+        } else {
+
+            $('#sidebar').css({
+                'position': 'fixed',
+                'top': '0',
+				'left':width + 20,
+                'max-height': max_height,
+
+            })
+        }
+	}
+
+  function prepareList() {
+  	for (patient in window.my_config.current_selection) {
+  		$('#'+patient).find('li:has(ul)').unbind('click').click(function(event) {
 		if(this == event.target) {
 			$(this).toggleClass('expanded');
 			$(this).children('ul').toggle('medium');
@@ -212,45 +289,40 @@
 	}).addClass('collapsed').removeClass('expanded').children('ul').hide();
  
 	//Hack to add links inside the cv
-	$('#expList a').unbind('click').click(function() {
+	$('#' + patient + 'a').unbind('click').click(function() {
 		window.open($(this).attr('href'));
 		return false;
 	});
-	//Create the button functionality
-	$('#expandList').unbind('click').click(function() {
-		$('.collapsed').addClass('expanded');
-		$('.collapsed').children().show('medium');
-	})
-	$('#collapseList').unbind('click').click(function() {
-		$('.collapsed').removeClass('expanded');
-		$('.collapsed').children().hide('medium');
-	})
-});
+
+	}
+};
 
             $(document).keyup(function(e) {
             if (e.keyCode == 13) { $('.query').click(); }     // enter
-            if (e.keyCode == 27) { 	            
+            if (e.keyCode == 27) {
+             	            
             		for (c in window.my_config.charts){
 		            	window.my_config.charts[c].setSelection()
 		            		}
 					}
-					$(".sides").remove()   // esc
+					$(".patient").remove()  // esc
             });
 
             function render_html(names) {
-            if (document.getElementById('keep').checked != true){
+            if (document.getElementById('overlay').checked != true){
             $(".myCharts").remove()
-            }
+            } else if ('charts' in window.my_config) {console.log("True")}
+            
             for (name in names) {
-            $("#charts").after("<div id = " + names[name] + " style='width: 700px; height: 400px; float: left;' class = 'myCharts'>")
+            $("#charts").after("<div id = " + names[name] + " style='width: 700px; height: 400px; float: right;' class = 'myCharts'>")
                 }
                 }
 
 
                 google.load("visualization", "1", {packages:["corechart"]});
                 // google.setOnLoadCallback(drawChart);
-                function drawChart(results) {
 
+            function drawChart(results) {
                 // render and store DataTables in dictionary
                 allChartData = {}
                 for (result in results) {
@@ -273,10 +345,7 @@
                 explorer: {},
                 trendlines: document.getElementById('trendline').checked? { 0: {pointSize: 0, type: 'linear'} }: null,
                 chartArea: columns > 2? {width: '70%', height: '70%'}:{width: '80%', height: '70%'},
-                tooltip: {isHtml: true, trigger: document.getElementById('outcomes').checked? 'selection' : 'none' // none
-																													// disables
-																													// tooltips
-                }
+                tooltip: {isHtml: true, trigger: 'none'},
                 }
 
                 charts[c] = new google.visualization.ScatterChart(document.getElementById(c));
@@ -287,19 +356,102 @@
 
                 for (c in charts) {
                 	google.visualization.events.addListener(charts[c], 'select', function() { update_sidebar() } )
+                	/*google.visualization.events.addListener(charts[c], 'onmouseover', sidebar_mouseover);
+    				google.visualization.events.addListener(charts[c], 'onmouseout', sidebar_mouseout) */
                 }
                 };
 
-                /*
-				 * var all_null = true for (d in charts) { if
-				 * (charts[d].getSelection()[0] != null) { all_null = false
-				 * update_sidebar(charts[d].getSelection()); } } if (all_null ==
-				 * true) {$(".sides").remove()} } )} };
-				 */
+				 /*function sidebar_mouseover() {
+				 	
+				 }*/
+
+			function redraw_charts(results){
+				var merged_results = window.my_config.results
+				for (d in merged_results){
+					var label = ''
+					if (d in results){
+						merged_results[d]['rows'] = merged_results[d]['rows'].concat(results[d].rows)
+						label = results[d].cols[results[d].cols.length -1].id
+						console.log(label)
+						}
+					merged_results[d]['cols'] = merged_results[d]['cols'].concat({"id": "", "label": label, "type": "number"})
+				}
+				console.log(merged_results)
+				drawChart(merged_results)
+			}
+
+			function compare_unique_dict(a,b) {
+				 var a_key = 0
+				 var b_key = 0
+				 for (c in a)
+				 	a_key = a[c]
+				 for (d in b)
+				 	b_key = b[d]
+  				if (a_key < b_key)
+     				return -1;
+  				if (a_key > b_key)
+    				return 1;
+  				return 0;
+}
+				 
+
+				function add_SD(r){
+					var complete_list = ""
+					
+					var positive = []
+					var negative = []					
+					var zero = []
+					
+					var categories = [positive,negative,zero]
+
+					//sort and order
+					var ordered_sd = window.my_config.sd_array[r].sort(compare_unique_dict)
+
+					for (m in ordered_sd){
+						if (compare_unique_dict(ordered_sd[m],{'a':0}) == 0){
+
+							zero.push(ordered_sd[m])
+						}
+						else if (compare_unique_dict(ordered_sd[m],{'a':0}) == 1){
+							positive.unshift(ordered_sd[m])
+						}
+						else {
+							negative.push(ordered_sd[m])
+						}						
+					}
+					console.log(categories)
+					var ent_list = "<div class='listContainer'><ul id='"+r+"' class='justify'>"
+
+					//render the list
+					for (c in categories){
+
+						if (categories[c].length > 0) {
+							var elem = "<li>"
+
+							for (met in categories[c][0])
+								elem +="" + met + ": " + categories[c][0][met] + " SD"
+							
+						
+							if(categories[c].length > 1){
+								elem += "<ul class='justify'>"
+								for (i = 1; i < categories[c].length; i++){
+									for (name in categories[c][i])
+										elem +="<li>" + name +": " + categories[c][i][name] + " SD </li>"
+								}
+								elem += "</ul>"
+							}
+						ent_list += elem +"</li>"
+						}
+					}
+					ent_list += "</ul></div>"
+					
+					return ent_list
+
+				}
 
                 function update_sidebar(){
 
-		            $(".sides").remove()
+		            $(".patient").remove()
 
 		            var patients = {}
 
@@ -309,33 +461,39 @@
 		            			patient = selection[i].row
 		            			if (selection[i].row in patients){} else{
 		            				patients[patient] = null
-		            				//console.log(patient)
 		            			}
 		            		}
 					}
-					console.log(patients)
+
+					window.my_config['current_selection'] = patients
 
 					for (r in patients){
 
 						var i = ""
 
-						console.log(r)
-						console.log(window.my_config.metadata_array)
-
 						for (m in window.my_config.metadata_array[r]) {
 		            		for (n in window.my_config.metadata_array[r][m]) {
 		            			if (window.my_config.metadata_array[r][m][n]) {
-		            				i+= "<div id='title'>"
-		            					+n+": </div><div id='content'>" 
+		            				i+= "<div class='title'>"
+		            					+n+": </div><div class='content'>" 
 		            					+ window.my_config.metadata_array[r][m][n] + "</div>"
 		            				}
 		            			
 		            				
 		            		}
 		            	}
-		           		$("#sidebar").append("<div id='patient' class ='sides'>"+i+"</div>") 
+		            	if (window.my_config.sd_array != null){
+		           			i+= "<div class='title'>SD for available metabolites:</div><div class='content'>" + add_SD(r) +"</div>"
+							}
+
+						$("#sidebar").append("<div id='"+window.my_config.metadata_array[r].id+"' class='patient'>"+i+"</div>")
+								            	
 		            }
 
+		            if (window.my_config.sd_array != null)
+						prepareList()
+					//needed in case of scroll bar
+					setSize()
                 }
 
                 /*

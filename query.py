@@ -1,5 +1,5 @@
 import mysql.connector as m
-import sys
+import sys, random
 from flask import Flask, render_template, request, jsonify, json as j, send_file
 
 all_mets = ['CrCH2', 'AcAc', 'Acn', 'Ala', 'Asp', 'Cho', 'Cr', 'GABA', 'GPC', 'Glc',
@@ -28,7 +28,7 @@ metadata = [
 # Initialize the Flask application
 app = Flask(__name__)
 
-def windowed_SD(query, gender, field, location, unique, filter_by_sd):
+def windowed_SD(query, gender, field, location, unique, filter_by_sd, overlay):
     all_sd = []
     limit = 50
 
@@ -37,27 +37,31 @@ def windowed_SD(query, gender, field, location, unique, filter_by_sd):
         age = row[0]
         patient_ID = row[-len(metadata)]
 
-        subject_metabolites_query = default_query(patient_ID, age, "", "", location, all_mets, "", False, False, filter_by_sd, [],[], [])
+        ##subject_metabolites_query = default_query(patient_ID, age, "", "", location, all_mets, "", False, False, filter_by_sd, [],[], [])
 
         sd = []
 
         j=0
-        for column in [k[0] for k in cur.description]:
+        for column in [met+'_Filtered' for met in met_echo_high]:##[k[0] for k in cur.description]:
             metabolite = column[:-9]
-            if metabolite in all_mets and subject_metabolites_query[0][j] is not None:
-                subquery = ["SELECT AVG({0}), STDDEV_SAMP({0}),COUNT({0}) FROM ".format(column),""]
+            if metabolite in met_echo_high: ## and subject_metabolites_query[0][j] is not None:
+                ##subquery = ["SELECT AVG({0}), STDDEV_SAMP({0}),COUNT({0}) FROM ".format(column),""]
 
-                result = default_query('',age, gender, field, location, [metabolite], limit, True, unique,
-                             filter_by_sd, [],[],
-                             subquery)
+                ##result = default_query('',age, gender, field, location, [metabolite], limit, True, unique,filter_by_sd, [],[],subquery)
+
                 #print result
                 #print subject_metabolites_query[0][i], result[0][0],result[0][1],result[0][2]
-                patient_sd = 0 if result[0][2] <= 1 else (float(subject_metabolites_query[0][j]) - float(result[0][0]))/float(result[0][1]) #N = (X-mu)/sigma
+                ##patient_sd = 0 if result[0][2] <= 1 else (float(subject_metabolites_query[0][j]) - float(result[0][0]))/float(result[0][1]) #N = (X-mu)/sigma
 
-                sd.append({metabolite:patient_sd})
+                patient_sd = random.randint(-4,4)
+
+                sd.append({metabolite:int(patient_sd)})
             j+=1
         all_sd.append(sd)
         i+=1
+
+    if overlay == 0:
+        all_sd += [[]]
 
     return all_sd
 
@@ -157,7 +161,7 @@ def default_query(ID, age, gender, field, location, metabolites, limit, mets_spa
 
 #adds patient as separate dataseries
 ##
-def format_query_with_pseries_and_names(query, columns, values):
+def format_query_with_pseries_and_names(query, columns, values, overlay):
     #values = values.split(",")
     #print rows, columns, values
 
@@ -170,18 +174,18 @@ def format_query_with_pseries_and_names(query, columns, values):
         cols = []
         rows = []
 
-        cols.append({'id': "Age", 'label': "Age", 'type': 'number'})
-        cols.append({'id': column, 'label': column, 'type': 'number'})
-        cols.append({'id': "Patient Data", 'label': "Patient Data", 'type': 'number'})
+        cols += [{'id': "Age", 'label': "Age", 'type': 'number'}] + [{'id': "", 'label': "", 'type': 'number'} for aa in range(0, overlay)] + [{'id': column, 'label': column, 'type': 'number'}]
 
         for row in query:
             #print(i,row[i+1])
-            vals = [{'v': str(row[0])},{'v': str(row[i+1])}] + [{'v': None}]
+            vals = [{'v': str(row[0])}]+[{'v':None} for nn in range(0,overlay)]+[{'v': str(row[i+1])}]
             rows.append({'c':vals})
 
         #add patient data as its own data series
+        if overlay == 0:
+            rows.append({'c':[{'v': values[0]},{'v': None},{'v':float(values[i+1])} ]})
+            cols.append({'id': "Patient Data", 'label': "Patient Data", 'type': 'number'})
 
-        rows.append({'c':[{'v': values[0]},{'v': None},{'v':float(values[i+1])} ]})
 
         q['rows'] = rows
         q['cols'] = cols
@@ -210,7 +214,7 @@ def format_query_with_pseries(query, columns, values):
         cols.append({'id': column, 'label': column, 'type': 'number'})
 
     for row in query:
-        vals = [{'v': str(value)} for value in row[:len(columns)-1]] + [{'v': None}]
+        vals = [{'v': str(value)} for value in row[:len(columns)-1]]
         rows.append({'c':vals})
 
     for val in values[1:]:
@@ -221,10 +225,13 @@ def format_query_with_pseries(query, columns, values):
 
     return q
 
-def format_metadata(query):
+def format_metadata(query, overlay):
     array = []
     for row in query:
         array.append([{metadata[i]:r} for i, r in enumerate(row[-len(metadata):])])
+
+    if overlay == 0:
+        array += [[{'id':'query patient'}]]
 
     return array
 
@@ -363,36 +370,42 @@ def add_numbers():
     c = request.args.get('c', 0, type=str) #values
     merge = request.args.get('merge', 0, type=str)
     age = request.args.get('age', 0, type=int)
+    gender = request.args.get('gender', 0, type=str)
+    field = request.args.get('field', 0, type=str)
+    filter_by_sd=True
+    unique=False
+    location = request.args.get('location', '', type=str)
+    overlay = request.args.get('overlay', 0, type=int)
+
+    print(overlay)
+
 
     k_inc = request.args.get('keywords', 0, type=str)
     k_exc = request.args.get('key_exclude', 0, type=str)
     keywords = k_inc if not k_inc else k_inc.split(',')
     key_exclude = k_exc if not k_exc else k_exc.split(',')
-    #keywords = request.args.get('keywords', 0, type=str) if request.args.get('keywords', 0, type=str).split(",") else request.args.get('keywords', 0, type=str).split(",").split(",")
-    #key_exclude = request.args.get('key_exclude', 0, type=str) if request.args.get('key_exclude', 0, type=str).split(",") else request.args.get('key_exclude', 0, type=str).split(",").split(",")
-
-    print(keywords, key_exclude)
-
 
     q = default_query(ID='',
         age=age,
-        gender=request.args.get('gender', 0, type=str),
-        field=request.args.get('field', 0, type=str),
+        gender=gender,
+        field=field,
         metabolites=b.split(','),
         limit=request.args.get('limit', 0, type=str),
-        location = '',
+        location = location,
         mets_span_each=True,
-        unique=False,
-        filter_by_sd=True,
+        unique=unique,
+        filter_by_sd=filter_by_sd,
         keywords=keywords,
-        key_exclude =key_exclude, perform_as_subquery_with=[])
+        key_exclude = key_exclude, perform_as_subquery_with=[])
 
     if merge == 'true':
         d = {b:format_query_with_pseries(q, ("Age," + b).split(','), (str(age) + "," + c).split(","))}
     else:
-        d = format_query_with_pseries_and_names(q, ("Age," + b).split(','), (str(age) + "," + c).split(","))
+        d = format_query_with_pseries_and_names(q, ("Age," + b).split(','), (str(age) + "," + c).split(","), overlay)
 
-    return jsonify(result=d, names = [b] if merge == "true" else b.split(','), metadata_array=format_metadata(q) )
+    sd_array = windowed_SD(q, gender, field, location, unique, filter_by_sd,overlay)
+
+    return jsonify(result=d, names = [b] if merge == "true" else b.split(','), metadata_array=format_metadata(q,overlay), sd_array = sd_array)
 
 if __name__ == '__main__':
 
@@ -435,16 +448,15 @@ if __name__ == '__main__':
         q = default_query(ID='',age=500, gender="F", field="", metabolites=['Cr'], limit='50', location="", mets_span_each=True, unique=True, filter_by_sd=True, keywords=[], key_exclude = [], perform_as_subquery_with=[])
 
 
-        #print j.dumps(format_query_with_pseries_names_tooltips(q, 'Age,Acn,Cr'.split(","), "500,0.5,6".split(",")), indent=1)
+        print j.dumps(format_query_with_pseries(q, 'Age,Acn'.split(","), "500,0.5".split(",")))
         #print j.dumps(format_query_with_pseries_and_names(q, 'Age,Acn,Cr'.split(","), "500,0.5,6".split(",")), indent=1)
 
-        #print j.dumps(format_metadata(q), indent=1)
         print q
 
-        w = windowed_SD(q, gender="F", field="", location="", unique=True, filter_by_sd=True)
+        #w = windowed_SD(q, gender="F", field="", location="", unique=True, filter_by_sd=True)
 
-        print j.dumps(w)
-        print bool(len(w) == len(format_metadata(q)))
+        #print j.dumps(w)
+        #print bool(len(w) == len(format_metadata(q)))
 
         #close connection to database
         con.close()
