@@ -86,10 +86,60 @@ ul.justify { margin-left:-2.75em; }
     padding-left: 20px;
     background-repeat: no-repeat;
 }
+
+.blackout {
+	background-color:#000;
+	opacity:.7;
+	filter:alpha(opacity=70);
+	height:100%;
+	width:100%;
+	position:fixed;
+	top:0;
+	left:0;
+	z-index:100;
+	display:none;
+	cursor:pointer;
+	}
+.msgbox {
+	background-color:#ccc;
+	border:1px solid #ccc;
+	color:#000;
+	width:30%;
+	height:30%;
+	position:fixed;
+	top:20%;
+	left:15%;
+	border-radius:20px;
+	padding:10px;
+	z-index:101;
+	display:none;
+	margin-left: 20%;
+	}
+.closeBox {
+	background-color:#CC0000;
+	color:#FFFFFF;
+	padding:8px;
+	float:right;
+	border-radius:3px;
+	cursor:pointer;
+	text-transform:uppercase;
+
+	}
+
+.optionBox {
+	outline: 1px solid #B0B0B0;
+	display:inline;
+	padding-top:2px;
+	padding-bottom: 2px;
+}
+
+.optionBox:hover {
+   overflow:visible;
+   }
         </style>
     </head>
     <body>
-        <div class="container">
+        <div id ='top_header' class="container">
             <div class="header">
                 <h3 class="text-muted">MRSpec Database Query and Visualization</h3>
             </div>
@@ -98,36 +148,37 @@ ul.justify { margin-left:-2.75em; }
                 <p>
                     <form>
                         Age:
-                        <input type="text" size="5" name="age">
+                        <div class ='optionBox'><input type="text" size="2" name="age" placeholder="Days"style="border:0px solid;"><img onclick=none src="../img/new_window.png" style="padding-bottom:3px" /></div>
+							
                         Gender:
                         <select id='gender' name='gender'>
                             <option value="">Both</option>
-                            <option value="M">Male</option>
-                            <option value="F">Female</option>
+                            <option value="M">M</option>
+                            <option value="F">F</option>
                         </select>
                         Field Strength:
                         <select id='field' name='field'>
                             <option value="">Both</option>
-                            <option value="3">3 T</option>
-                            <option value="1.5">1.5 T</option>
+                            <option value="3">3T</option>
+                            <option value="1.5">1.5T</option>
                         </select>
                         Metabolites:
-                        <input type="text" size="5" name="b">
+                        <div class ='optionBox'><input type="text" size="4" name="b" style="border:0px solid"><img onclick=none src="../img/new_window.png" style="padding-bottom:3px" /></div>
                         Values:
-                        <input
-                        type="text" size="5" name="c">
-                        Keyword:
-                        <input type="text"
-                        size="5" name="keyword">
-                        Keyword exclude:
-                        <input type="text"
-                        size="5" name="key_exclude">
-                        Limit:
-                        <input
-                        type="text" size="5" name="limit">
+                        <input type="text" size="5" name="c">
+                        Keywords:
+                        <div class ='optionBox'><input type="text" size="4" name="keyword" style="border:0px solid"><img onclick=none src="../img/new_window.png" style="padding-bottom:3px" /></div>                        
+                        
                         Location:
-                        <input
-                        type="text" size="5" name="location">
+                        <select id='location' name='location'>
+                            <option value="">Any</option>
+                            <option value="BG">BG</option>
+                            <option value="OCC_WM">OCC WM</option>
+							<option value="FT_WM">FT WM</option>
+							<option value="Cerebellum">CRBL</option>
+                        </select>
+                        Limit:
+                        <input type="text" size="2" name="limit">
                         <br>
                         Merge Graphs:
                         <input type="checkbox" id="merge" name="Merge Graphs">
@@ -158,6 +209,28 @@ ul.justify { margin-left:-2.75em; }
 
         <script type="text/javascript">
 
+        //This is the function that closes the pop-up
+function endBlackout(){
+$(".blackout").css("display", "none");
+$(".msgbox").css("display", "none");
+}
+
+//This is the function that starts the pop-up
+function strtBlackout(){
+$(".msgbox").css("display", "block");
+$(".blackout").css("display", "block");
+}
+
+//Sets the buttons to trigger the blackout on clicks
+$(document).ready(function(){
+$("#ageInput").click(strtBlackout); // open if btn is pressed
+$(".blackout").click(endBlackout); // close if click outside of popup
+$(".closeBox").click(endBlackout); // close if close btn clicked
+
+// Automatically trigger the pop-up after 10 seconds
+//setTimeout( strtBlackout, 10000);
+});
+
 			document.getElementById('clear').onclick = clearCanvas;
 
 
@@ -180,7 +253,7 @@ function clearCanvas() {
             key_exclude: $('input[name="key_exclude"]').val(),
             age: $('input[name="age"]').val(),
             limit: $('input[name="limit"]').val(),
-            location: $('input[name="location"]').val(),
+			location: $('#location option:selected').val(),
             merge: document.getElementById('merge').checked,
             b: $('input[name="b"]').val(),
             c: $('input[name="c"]').val(),
@@ -247,7 +320,7 @@ $(document).ready(function () {
 
 		})
 		$('#right').css({
-		'width':width-21,
+		'width':width-20,
 		})
 	}
 
@@ -257,13 +330,14 @@ $(document).ready(function () {
         var height = $('#sidebar').height() + 'px';
         var max_height = $(window).height()
         var width = $(window).width()/2
+        var top_height = document.getElementById('top_header').offsetHeight
 
         if (scroll < $('#charts').offset().top) {
 
             $('#sidebar').css({
                 'position': 'static',
                 'top': '0',
-                'max-height': max_height - (165-scroll),
+                'max-height': max_height - (top_height-scroll),
             });
 
         } else {
@@ -271,7 +345,7 @@ $(document).ready(function () {
             $('#sidebar').css({
                 'position': 'fixed',
                 'top': '0',
-				'left':width + 20,
+				'left': width + 20,
                 'max-height': max_height,
 
             })
@@ -310,11 +384,11 @@ $(document).ready(function () {
 
             function render_html(names) {
             if (document.getElementById('overlay').checked != true){
-            $(".myCharts").remove()
+            	$(".myCharts").remove()
             } else if ('charts' in window.my_config) {console.log("True")}
             
             for (name in names) {
-            $("#charts").after("<div id = " + names[name] + " style='width: 700px; height: 400px; float: right;' class = 'myCharts'>")
+            $("#charts").after("<div id = " + names[name] + " style='max-width: 700px; width: 100%; height: 400px; float: right;' class = 'myCharts'>")
                 }
                 }
 
@@ -355,7 +429,11 @@ $(document).ready(function () {
                 window.my_config['charts'] = charts;
 
                 for (c in charts) {
-                	google.visualization.events.addListener(charts[c], 'select', function() { update_sidebar() } )
+                	google.visualization.events.addListener(charts[c], 'select', function() {
+                	    showHideSeries()
+                		update_sidebar()
+                	 } )
+                	
                 	/*google.visualization.events.addListener(charts[c], 'onmouseover', sidebar_mouseover);
     				google.visualization.events.addListener(charts[c], 'onmouseout', sidebar_mouseout) */
                 }
@@ -449,6 +527,29 @@ $(document).ready(function () {
 
 				}
 
+	function showHideSeries () {
+
+		for(chart in window.my_config.charts) {
+		
+		var data = new google.visualization.DataTable(window.my_config.results[chart])
+        var sel = window.my_config.charts[chart].getSelection();
+        var cols = []
+        // if selection length is 0, we deselected an element
+        if (sel.length > 0) {
+            // if row is undefined, we clicked on the legend
+            if (sel[0].row == null) {
+                //cols += sel[0].column
+                //console.log(cols)
+
+				var view = new google.visualization.DataView(data)
+				view.setColumns(sel[0].column)
+				chart.draw(view)
+                    
+            }        	
+        }
+    }
+}
+
                 function update_sidebar(){
 
 		            $(".patient").remove()
@@ -459,7 +560,7 @@ $(document).ready(function () {
 		            	selection = window.my_config.charts[c].getSelection()
 		            		for (i = 0; i < selection.length; i++){
 		            			patient = selection[i].row
-		            			if (selection[i].row in patients){} else{
+		            			if (selection[i].row in patients || selection[i].row == null){} else{
 		            				patients[patient] = null
 		            			}
 		            		}
@@ -492,7 +593,7 @@ $(document).ready(function () {
 
 		            if (window.my_config.sd_array != null)
 						prepareList()
-					//needed in case of scroll bar
+					//needed in case scroll bar results from overflow of
 					setSize()
                 }
 
