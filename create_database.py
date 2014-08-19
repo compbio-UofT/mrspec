@@ -14,14 +14,17 @@ def create_table(name, query):
 
         print("Table '{}' created successfully.".format(name))
 
-def create_standardized_table(name, source, table_schema):
+def create_standardized_table(name, source, table_schema, fulltexts):
     if table_exists(name):
         print("Table '{}' already in database. No changes made.".format(name))
     else:
         selection = ",".join(["CAST({0} AS {1}) AS {2}".format(c[0], c[1], c[0] if len(c) < 3 else c[2]) for c in table_schema]) #c[2] is used to rename the column
 
-        cur.execute("CREATE TABLE {} SELECT {} FROM {}".format(name, selection, source))
-
+        cur.execute("CREATE TABLE {} SELECT {} FROM {}".format(name, selection, source)) ##GROUP BY ID,AgeAtScan
+        
+        if fulltexts:
+            cur.execute("ALTER TABLE {} ADD FULLTEXT({})".format(name,fulltexts))
+            
         print("Table '{}' created successfully.".format(name))
 
 def table_exists(tablename):
@@ -97,6 +100,23 @@ if __name__ == "__main__":
         table_schema += [['`Indication (as written on MRI requisition)`', t, 'Indication'],
                          ['`Diagnosis (from chart)`', t, 'Diagnosis']
                          ]
+        
+        sd_table_schema = [
+            ['ID', t, 'ID'],
+            ['AgeAtScan', s],
+            ['Gender', t],
+            ['ScanBZero', t],
+            ['LocationName', t],
+            ['Location_ID', s],
+            ['ScanTEParameters', u]
+        ]
+        
+        for metabolite in metabolites:
+            sd_table_schema.append([metabolite, d])
+        
+        sd_table_schema += [['`Indication`', t, 'Indication'],
+                         ['`Diagnosis`', t, 'Diagnosis']
+                         ]        
 
     if sys.argv[0][-8:] == 'query.py':
         #Initialize connection to MySQL database
@@ -144,9 +164,10 @@ if __name__ == "__main__":
     create_table('merged', "CREATE TABLE IF NOT EXISTS merged SELECT * FROM OUTCOMES_GROUPED RIGHT JOIN mrspec_MRN ON OUTCOMES_GROUPED.`MRN (column to be removed once study is in analysis phase)` = mrspec_MRN.MRN AND str_to_date(OUTCOMES_GROUPED.Date, '%Y-%m-%d') = str_to_date(mrspec_MRN.procedureDate, '%y-%m-%d')")
 
     #create standardized table
-    create_standardized_table('standard', 'merged', table_schema)
+    create_standardized_table('standard', 'merged', table_schema, 'Indication,Diagnosis')
 
     print('\nAll operations completed successfully.')
 
     #close the connection to the database
-    con.close()
+    #con.close()
+    ##create_standardized_table('SD', "sd_both_both_alllocations", sd_table_schema)

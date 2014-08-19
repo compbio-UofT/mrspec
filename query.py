@@ -2,30 +2,30 @@ import mysql.connector as m
 import sys, random, time
 from flask import Flask, render_template, request, jsonify, json as j, send_file
 
-'''all_mets = ['CrCH2', 'AcAc', 'Acn', 'Ala', 'Asp', 'Cho', 'Cr', 'GABA', 'GPC', 'Glc',
-        'Gln', 'Glu', 'Gua', 'Ins', 'Lac', 'Lip09', 'Lip13a', 'Lip13b', 'Lip20', 'MM09',
-        'MM12', 'MM14', 'MM17', 'MM20', 'NAA', 'NAAG', 'PCh', 'PCr', 'Scyllo', 'Tau',
-        'tCr', 'tNAA', 'tCho', 'Glx'] '''
-
 #metabolites stored as dictionaries for performance reasons
 met_threshold = {'CrCH2':40, 'AcAc':40, 'Acn':40, 'Ala':40, 'Asp':40, 'Cho':20, 'Cr':30,
                  'GABA':40, 'GPC':40, 'Glc':40, 'Gln':40, 'Glu':30, 'Gua':40, 'Ins':30, 'Lac':40, 'Lip09':40,
                  'Lip13a':40, 'Lip13b':40, 'Lip20':40, 'MM09':40, 'MM12':40, 'MM14':40, 'MM17':40, 'MM20':40,
                  'NAA':20, 'NAAG':40, 'PCh':30, 'PCr':40, 'Scyllo':40, 'Tau':40, 'tCr':30, 'tNAA':20, 'tCho':20, 'Glx':30}
 
-##met_echo_high = ["CrCH2", "AcAc", "Acn", "Cho", "Cr", "Gua", "Lac", "NAA", "tCr", "tNAA", "tCho"] #Cr = tCr for 1.5T
-#met_echo_high = {'CrCH2':40, 'AcAc':40, 'Acn':40, 'Cho':20, 'Cr':30, 'Gua':40, 'Lac':40, 'NAA':20, 'tCr':30, 'tNAA':20, 'tCho':20}
-#met_echo_high = {'CrCH2':high, 'AcAc':high, 'Acn':high, 'Cho':high, 'Cr':high, 'Gua':high, 'Lac':high, 'NAA':high, 'tCr':high, 'tNAA':high, 'tCho':high}
-high = '=144'
-low = '<50'
+high = '= 144'
+low = '< 50'
 met_echo_high = {'CrCH2':high, 'AcAc':high, 'Acn':high, 'Ala':low, 'Asp':low, 'Cho':high, 'Cr':high,
                  'GABA':low, 'GPC':low, 'Glc':low, 'Gln':low, 'Glu':low, 'Gua':high, 'Ins':low, 'Lac':high, 'Lip09':low,
                  'Lip13a':low, 'Lip13b':low, 'Lip20':low, 'MM09':low, 'MM12':low, 'MM14':low, 'MM17':low, 'MM20':low,
                  'NAA':high, 'NAAG':low, 'PCh':low, 'PCr':low, 'Scyllo':low, 'Tau':low, 'tCr':high, 'tNAA':high, 'tCho':high, 'Glx':low}
 
-#met_echo_low = [met for met in all_mets if met not in met_echo_high]
+#met_echo_low = [met for met in met_threshold if met not in met_echo_high]
 
 table = "standard"
+
+sd_both_both_all = 'sd_both_both_alllocations'
+sd_M_3_all = ''
+sd_F_3_all = ''
+sd_M_15_all = ''
+sd_table = 'sd_both_both_alllocations'
+
+
 unique_desc = "ID"
 
 metadata = [
@@ -38,16 +38,211 @@ metadata = [
 # Initialize the Flask application
 app = Flask(__name__)
 
+#bug exists where could access scan information from later date
+def default_query(ID, age, gender, field, location, metabolites, limit, mets_span_each, unique, filter_by_sd, keywords, key_exclude, perform_as_subquery_with):
+
+    graph_data = [
+        table + ".AgeAtScan"] + (metabolites if not filter_by_sd else ["COALESCE(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>0 AND ScanTEParameters {2} THEN {0} ELSE NULL END) as `{0}_Filtered`".format(metabolite, met_threshold[metabolite], '= 144' if metabolite in met_echo_high else '<=50') for metabolite in metabolites])
+    
+    #print(age, gender, field, location, metabolites, limit, mets_span_each, unique, filter_by_sd, keywords, key_exclude, perform_as_subquery_with)
+
+    select = ','.join(graph_data + metadata)
+
+    ###compile options for where: gender, field, location, met null and or###
+    where = ''
+    constraints = {'Gender':gender, 'ScanBZero':field, 'LocationName':location, 'ID':ID}
+    for constraint in constraints:
+        if constraints[constraint]:
+            where += " {} {} = '{}'".format(
+                'AND' if where else 'WHERE',
+                constraint,
+                constraints[constraint])
+    ##add location to where: location
+    #where += " {} {} IN({})".format(
+                            #'AND' if where else 'WHERE',
+                            #'LocationName',
+                            #location) if location else ''
+
+    #where += " {} {} IN({})".format(
+                            #'AND' if where else 'WHERE',
+                            #unique_desc,
+                            #ID) if ID else ''
+
+    ##if mets_span_each, filter by standard deviation for each metabolite
+    where += ' AND (' if where else 'WHERE ('
+    where += " IS NOT NULL {} ".format('OR' if not mets_span_each else 'AND').join(
+                metabolites)
+    where += ' IS NOT NULL)'
+
+    ##keywords
+    if keywords:
+        where += (' AND (' if where else 'WHERE (')
+        cond = []
+        for keyword in keywords:
+            cond += ["{1} LIKE '{0}' OR {2} LIKE '{0}' ".format(keyword, metadata[1],metadata[2])]
+        where += " OR ".join(cond)
+        where += ") "
+
+    ##keywords to exclude
+    if key_exclude:
+        where += (' AND (' if where else 'WHERE (')
+        cond = []
+        for key in key_exclude:
+            cond += ["{1} NOT LIKE '{0}' OR {2} NOT LIKE '{0}' ".format(keyword, metadata[1],metadata[2])]
+        where += " AND ".join(cond)
+        where += ") "
+
+    ###group by statement: unique###
+    group_by = 'GROUP BY ' + unique_desc + (', AgeAtScan' if not unique else '')
+
+    ###finally, compile query###
+    query = ''
+    if limit == '':
+        query = "SELECT {} FROM {} {} {} ORDER BY AgeAtScan".format(select, table, where, group_by)
+    else:
+        ###limit: limit###
+        limit = 'LIMIT {}'.format(limit)
+        where_less = where + ' AND AgeAtScan < {}'.format(age)
+        where_geq = where + ' AND AgeAtScan >= {}'.format(age)
+
+        query = "(SELECT {0} FROM {1} {2} {3} ORDER BY AgeAtScan DESC {4}) UNION ALL (SELECT {0} FROM {1} {5} {3} ORDER BY AgeAtScan {4})".format(select, table, where_less, group_by, limit, where_geq)
+
+    ##if performed as subquery, add parameters
+    if perform_as_subquery_with:
+        query = ''.join([perform_as_subquery_with[0],'(',query,') AS T ',perform_as_subquery_with[1]])
+    #execute query
+    ##print(query)
+    cur.execute(query)
+
+    rows = cur.fetchall()
+
+    #columns = [i[0] for i in cur.description]
+    return rows
+
+def create_SD_table(cols, query, gender, field, location, unique, filter_by_sd, overlay):
+    #all_sd = []
+    limit = 50
+
+    i=0
+    for row in query:
+        age = row[0]
+        patient_ID = row[-len(metadata)]
+
+        subject_metabolites_query = default_query(patient_ID, age, "", "", location, met_threshold, "", False, False, filter_by_sd, [],[], [])
+
+        #sd = []
+
+        j=0
+        for column in cols:
+            metabolite = column[:-9] if filter_by_sd else column
+            if metabolite in met_threshold and subject_metabolites_query[0][j] is not None:
+                subquery = ["SELECT AVG({0}), STDDEV_SAMP({0}),COUNT({0}) FROM ".format(column),""]
+
+                result = default_query('',age, gender, field, location, [metabolite], limit, True, unique,filter_by_sd, [],[],subquery)
+
+                #print result
+                #print subject_metabolites_query[0][i], result[0][0],result[0][1],result[0][2]
+                patient_sd = 0 if result[0][2] <= 1 else (float(subject_metabolites_query[0][j]) - float(result[0][0]))/float(result[0][1]) #N = (X-mu)/sigma
+
+                ##patient_sd = random.randint(-4,4)
+                qq = "UPDATE {} SET {}={} WHERE {} = {} AND AgeAtScan = {}".format(sd_table, metabolite, patient_sd, unique_desc, patient_ID, age)
+                print qq
+                cur.execute(qq)
+                
+                #sd.append({metabolite:int(patient_sd)})
+            j+=1
+        #all_sd.append(sd)
+        i+=1
+        
 def windowed_SD(cols, query, gender, field, location, unique, filter_by_sd, overlay):
+    all_sd = []
+
+    i=0
+    for row in query:
+        age = row[0]
+        patient_ID = row[-len(metadata)]
+
+        #subject_metabolites_query = default_query(patient_ID, age, "", "", location, met_threshold.keys(), "", False, False, filter_by_sd, [],[], [])
+
+        sd = []
+
+        j=2
+        for column in cols[2:-len(metadata)]:
+            #print column
+            metabolite = column[:-3]
+            if metabolite in met_echo_high and row[j] is not None:
+                #subquery = ["SELECT AVG({0}), STDDEV_SAMP({0}),COUNT({0}) FROM ".format(column),""]
+
+                #result = default_query('',age, gender, field, location, [metabolite], limit, True, unique,filter_by_sd, [],[],subquery)
+
+                #print result
+                #print subject_metabolites_query[0][i], result[0][0],result[0][1],result[0][2]
+                #patient_sd = 0 if result[0][2] <= 1 else (float(subject_metabolites_query[0][j]) - float(result[0][0]))/float(result[0][1]) #N = (X-mu)/sigma
+
+                ##patient_sd = random.randint(-4,4)
+
+                sd.append({metabolite: float(row[j])})
+            j+=1
+        all_sd.append(sd)
+        i+=1
+
+    if overlay == 0:
+        all_sd += [[]]
+
+    return all_sd
+
+def windowed_SD_dynamic(cols, query, gender, field, location, unique, filter_by_sd, overlay):
+    all_sd = []
+    limit = 50
+
+    i=0
+    for row in query:
+        age = row[0]
+        patient_ID = row[-len(metadata)]
+
+        subject_metabolites_query = default_query(patient_ID, age, "", "", location, met_threshold.keys(), "", False, False, filter_by_sd, [],[], [])
+
+        sd = []
+
+        j=0
+        for column in cols:
+            metabolite = column[:-9]
+            if metabolite in met_echo_high and subject_metabolites_query[0][j] is not None:
+                subquery = ["SELECT AVG({0}), STDDEV_SAMP({0}),COUNT({0}) FROM ".format(column),""]
+
+                result = default_query('',age, gender, field, location, [metabolite], limit, True, unique,filter_by_sd, [],[],subquery)
+
+                #print result
+                #print subject_metabolites_query[0][i], result[0][0],result[0][1],result[0][2]
+                patient_sd = 0 if result[0][2] <= 1 else (float(subject_metabolites_query[0][j]) - float(result[0][0]))/float(result[0][1]) #N = (X-mu)/sigma
+
+                ##patient_sd = random.randint(-4,4)
+
+                sd.append({metabolite:int(patient_sd)})
+            j+=1
+        all_sd.append(sd)
+        i+=1
+
+    if overlay == 0:
+        all_sd += [[]]
+
+    return all_sd
+
+def windowed_SD_notworking(cols, query, gender, field, location, unique, filter_by_sd, overlay):
     #complete query
     all_sd = []
     limit = 50
+    parsed_query = ''
+    
+    
+    all_queries = []    
+    met_threshold = []
 
     for row in query:
         age = row[0]
         patient_ID = row[-len(metadata)]
         
-        mets_to_compare = {}
+        mets_to_compare = []
         sd_queries = []        
 
         sd = []
@@ -57,7 +252,8 @@ def windowed_SD(cols, query, gender, field, location, unique, filter_by_sd, over
             
             if row[i] is not None:
                 met = cols[i][:-9]
-                mets_to_compare[met] = row[i]
+                mets_to_compare.append({met: row[i]})
+                
                 subquery = parse_query('', age, gender, field, location, 
                                       [met], 
                                       limit, 
@@ -67,28 +263,40 @@ def windowed_SD(cols, query, gender, field, location, unique, filter_by_sd, over
                                       [], 
                                       [])
                 query = "SELECT AVG({0}), STDDEV_SAMP({0}),COUNT({0}) FROM ({1}) AS T".format(cols[i],subquery)
-                sd_queries.append(query)
+                sd_queries.append(query)                
                 
-        all_queries = '(' + ') UNION ALL ('.join(sd_queries) + ')'
-        print patient_ID, all_queries
+        if sd_queries:
+            pt_queries = '(' + ')\n\t UNION ALL \n\t('.join(sd_queries) + ')'            
+            all_queries.append(pt_queries)
+            met_threshold.append(mets_to_compare)
             
-        if all_queries != '()':
-            c,rows = execute_query(all_queries)
+            
+        #print pt_queries
+        #print all_queries
+        #print met_threshold
+            #union()
+        #assert len(met_threshold) == len(all_queries)
         
-            j=0
-            for m in mets_to_compare:
-                print rows[j],rows[j][0],rows[j][1],rows[j][2],mets_to_compare[m]
+    all_queries =  '\nUNION ALL \n'.join(all_queries)
+    
+    #print all_queries
+            
+    c,rows = execute_query(all_queries)
+        
+            #j=0
+            #for m in mets_to_compare:
+                #print rows[j],rows[j][0],rows[j][1],rows[j][2],mets_to_compare[m]
 
-                patient_sd = 0 if rows[j][2] <= 1 else (float(mets_to_compare[m]) - float(rows[j][0]))/float(rows[j][1]) #N = (X-mu)/sigma
+                #patient_sd = 0 if rows[j][2] <= 1 else (float(mets_to_compare[m]) - float(rows[j][0]))/float(rows[j][1]) #N = (X-mu)/sigma
 
 
-                sd.append({m:int(patient_sd)})
-                j+=1
+                #sd.append({m:int(patient_sd)})
+                #j+=1
                 
-        all_sd.append(sd)
+        #all_sd.append(sd)
 
-    if overlay == 0:
-        all_sd += [[]]
+    #if overlay == 0:
+        #all_sd += [[]]
 
     return all_sd
 
@@ -118,11 +326,14 @@ def execute_query(query):
 #bug exists where could access scan information from later date
 def parse_query(ID, age, gender, field, location, metabolites, limit, mets_span_each, unique, filter_by_sd, keywords, key_exclude):
         
-    graph_data = ["AgeAtScan"]
+    graph_data = [table + ".AgeAtScan"]
     #faster than list concatenation
-    graph_data.extend(metabolites if not filter_by_sd else ["COALESCE(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>=0 AND ScanTEParameters {2} THEN {0} ELSE NULL END) as `{0}_Filtered`".format(metabolite, met_threshold[metabolite], met_echo_high[metabolite]) for metabolite in metabolites])
-    graph_data.extend(metadata)
+    graph_data.extend(metabolites if not filter_by_sd else ["COALESCE(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>=0 AND {3}.ScanTEParameters {2} THEN {0} ELSE NULL END) as `{0}_Filtered`".format(metabolite, met_threshold[metabolite], met_echo_high[metabolite],table) for metabolite in metabolites])
+
+    graph_data.extend([met+'_SD' for met in met_threshold.keys()])    
     
+    graph_data.extend([table + ".{}".format(m) for m in metadata])
+        
     select = ','.join(graph_data)
 
     ###compile options for where: gender, field, location, met null and or###
@@ -130,15 +341,11 @@ def parse_query(ID, age, gender, field, location, metabolites, limit, mets_span_
     parsed_where = ''
     parsed_options = []
         
-    constraints = {'Gender':gender, 'ScanBZero':field, 'LocationName':location}
+    constraints = {'Gender':gender, 'ScanBZero':field, 'LocationName':location, 'ID':ID}
     for constraint in constraints:
         if constraints[constraint]:
-            parsed_options.append("{} = '{}'".format(constraint,
+            parsed_options.append("{}.{} = '{}'".format(table,constraint,
                 constraints[constraint]))
-            
-    ##add ID to where
-    if ID:
-        parsed_options.append("{} IN({})".format(unique_desc,ID))
 
     ##if mets_span_each, filter by standard deviation for each metabolite
     #where += ' AND (' if where else 'WHERE ('
@@ -150,7 +357,7 @@ def parse_query(ID, age, gender, field, location, metabolites, limit, mets_span_
     if keywords:
         cond = []
         for keyword in keywords:
-            cond += ["{1} LIKE '{0}' OR {2} LIKE '{0}' ".format(keyword, metadata[1],metadata[2])]
+            cond += ["{3}.{1} LIKE '{0}' OR {3}.{2} LIKE '{0}' ".format(keyword, metadata[1],metadata[2], table)]
         parsed_keys = " AND ".join(cond)
         parsed_keys = ''.join(['(', parsed_keys, ')'])
         parsed_options.append(parsed_keys)
@@ -158,8 +365,8 @@ def parse_query(ID, age, gender, field, location, metabolites, limit, mets_span_
     ##keywords to exclude
     if key_exclude:
         cond = []
-        for key in key_exclude:
-            cond += ["{1} NOT LIKE '{0}' OR {2} NOT LIKE '{0}' ".format(keyword, metadata[1],metadata[2])]
+        for keyword in keywords:
+            cond += ["{3}.{1} NOT LIKE '{0}' AND {3}.{2} NOT LIKE '{0}' ".format(keyword, metadata[1],metadata[2], table)]
         parsed_keys = " AND ".join(cond)
         parsed_keys = ''.join(['(', parsed_keys, ')'])
         parsed_options.append(parsed_keys)
@@ -173,24 +380,29 @@ def parse_query(ID, age, gender, field, location, metabolites, limit, mets_span_
 
     ###finally, compile query###
     query = ''
+    
+    join = " LEFT JOIN `{1}` ON `{1}`.{2} = {3}.{2} AND `{1}`.AgeAtScan = {3}.AgeAtScan ".format(','.join(met_threshold.keys()), sd_table, unique_desc, table)
+    
     ##limit_parser = {True: _parse_limit, False: _parse_no_limit}
     if limit == '':
-        query = "SELECT {} FROM {} {} {} ORDER BY AgeAtScan".format(select, table, parsed_where, group_by)
+        query = "SELECT {} FROM {} {} {} {} ORDER BY ID".format(select, table, join, parsed_where, group_by)
     else:
         ###limit: limit###
         limit = 'LIMIT {}'.format(limit)
         if parsed_where:
             linker = 'AND'
         else: linker = "WHERE"
-        where_less = parsed_where + ' {} AgeAtScan < {}'.format(linker,age)
-        where_geq = parsed_where + ' {} AgeAtScan >= {}'.format(linker,age)
+        where_less = parsed_where + ' {} {}.AgeAtScan < {}'.format(linker,table,age)
+        where_geq = parsed_where + ' {} {}.AgeAtScan >= {}'.format(linker,table,age)
 
-        query = "(SELECT {0} FROM {1} {2} {3} ORDER BY AgeAtScan DESC {4}) UNION ALL (SELECT {0} FROM {1} {5} {3} ORDER BY AgeAtScan {4})".format(select, table, where_less, group_by, limit, where_geq)
-    ###print query    
+        query = "(SELECT {0} FROM {1} {6} {2} {3} ORDER BY {1}.AgeAtScan DESC {4}) UNION ALL (SELECT {0} FROM {1} {6} {5} {3} ORDER BY {1}.AgeAtScan {4})".format(select, table, where_less, group_by, limit, where_geq, join)
+    print query
     
+    ##parse sd table name (eventually)
+    
+    
+        
     return query
-
-#SELECT `lap_time`, `uid` FROM `table` t1 WHERE `lap_time` =< 120 AND NOT EXISTS (SELECT 1 FROM `table` WHERE `uid` = t1.`uid` AND `lap_time` > t1.`lap_time` AND `lap_time` < 120) ORDER BY `lap_time` DESC LIMIT 5
 
 #adds patient as separate dataseries
 ##
@@ -283,7 +495,7 @@ def format_query_with_pseries_names_tooltips(query, columns, values):
         rows = []
 
         cols.append({'id': "Age", 'label': "Age", 'type': 'number'})
-        cols.append({'id': column, 'label': column, 'type': 'number'})
+        cols.append({'id': column, 'label': column, '+': 'number'})
         cols.append({"id": None, "role": "tooltip", "type": "string", "p" : { "role" : "tooltip" } } )
         cols.append({'id': "Patient Data", 'label': "Patient Data", 'type': 'number'})
         cols.append({"id": None, "role": "tooltip", "type": "string", "p" : { "role" : "tooltip" } } )
@@ -415,27 +627,7 @@ def add_numbers():
     keywords = k_inc if not k_inc else k_inc.split(',')
     key_exclude = k_exc if not k_exc else k_exc.split(',')
     
-    if calc_sd:
-    
-        asdf = parse_query(ID='',
-        age=age,
-        gender=gender,
-        field=field,
-        metabolites=met_threshold.keys(),
-        limit=request.args.get('limit', 0, type=str),
-        location = location,
-        mets_span_each=False,
-        unique=unique,
-        filter_by_sd=filter_by_sd,
-        keywords=keywords,
-        key_exclude = key_exclude)
-    
-        cols,q = execute_query(asdf)
-        
-        sd_array = windowed_SD(cols, q, gender, field, location, unique, filter_by_sd, overlay)        
-    
-    else:
-        asdf = parse_query(ID='',
+    asdf = parse_query(ID='',
         age=age,
         gender=gender,
         field=field,
@@ -448,10 +640,9 @@ def add_numbers():
         keywords=keywords,
         key_exclude = key_exclude)
     
-        cols,q = execute_query(asdf)
+    cols,q = execute_query(asdf)
         
-        sd_array = None            
-        
+    sd_array = windowed_SD(cols, q, gender, field, location, unique, filter_by_sd, overlay)           
 
     if merge == 'true':
         d = {b:format_query_with_pseries(q, ("Age," + b).split(','), (str(age) + "," + c).split(","))}
@@ -499,13 +690,23 @@ if __name__ == '__main__':
 
         #example query
         
+        #for met in met_threshold.keys():
+            #cur.execute("ALTER TABLE sd_both_both_alllocations CHANGE {0} {0}_SD Decimal(11,6)".format(met))
+        
+        
         start = time.clock()
         
-        for i in range(0,100):
-            asdf = parse_query(ID='',age=500, gender="", field="", metabolites=['Cr','Tau','GPC'], limit='50', location="", mets_span_each=True, unique=True, filter_by_sd=True, keywords=[], key_exclude = [])
-            col,q = execute_query(asdf)
+        #asdf = parse_query(ID='',age=500, gender="", field="", metabolites=['Cr','Tau','GPC'], limit='', location="", mets_span_each=True, unique=True, filter_by_sd=True, keywords=[], key_exclude = [])
+        col,q = execute_query(parse_query('', 0, '', '', '', 
+                                         ['Cr'], 
+                                         '', 
+                                         False,
+                                         True, 
+                                         True, 
+                                         [], 
+                                         []))
         
-        
+        #create_SD_table(col,q, '', '', '', True, True, 0)
 
         
 
@@ -513,9 +714,9 @@ if __name__ == '__main__':
         ##print j.dumps(format_query_with_pseries(q, 'Age,Acn'.split(","), "500,0.5".split(",")))
         ##print j.dumps(format_query_with_pseries_and_names(q, 'Age,Acn,Cr'.split(","), "500,0.5,6".split(",")), indent=1)
 
-        ##print q
+        #print q
 
-        w = windowed_SD(col,q, gender="F", field="", location="", unique=True, filter_by_sd=True, overlay=0)
+        #w = windowed_SD(q, gender="M", field="3", location='', unique=True, filter_by_sd=True, overlay=0)
         end = time.clock()
         
         print end-start        
@@ -523,5 +724,9 @@ if __name__ == '__main__':
        # #print j.dumps(w, indent=1)
         ##print bool(len(w) == len(format_metadata(q,0)))
 
+        #for met in met_echo_high:
+           # print("UPDATE sd_both_both_alllocations SET {}=NULL;".format(met))
+        #print(' IS NULL AND '.join(met_echo_high.keys()) + ' IS NULL ')
+        #print(','.join(met_echo_high.keys()))
         #close connection to database
         con.close()

@@ -9,10 +9,11 @@
 
         <style type="text/css">
 			#left {float:left}
-			#right {float:left}
+			#right {float:left;      
+                    }
         
 			#sidebar {
-			
+			    overflow-y:auto;
 				background-color: white;
 				width: 545px;
 				position: static;
@@ -89,7 +90,7 @@ ul.justify { margin-left:-2.75em; }
 
 .blackout {
 	background-color:#000;
-	opacity:.7;
+	opacity:.2;
 	filter:alpha(opacity=70);
 	height:100%;
 	width:100%;
@@ -148,8 +149,7 @@ ul.justify { margin-left:-2.75em; }
                 <p>
                     <form>
                         Age:
-                        <div class ='optionBox'><input type="text" size="2" name="age" placeholder="Days"style="border:0px solid;"><img onclick=none src="../img/new_window.png" style="padding-bottom:3px" /></div>
-							
+                        <div class ='optionBox'><input type="text" size="2" name="age" placeholder="Days"style="border:0px solid;"><img id='ageOpt' src="../img/new_window.png" style="padding-bottom:3px" /></div>							
                         Gender:
                         <select id='gender' name='gender'>
                             <option value="">Both</option>
@@ -163,11 +163,11 @@ ul.justify { margin-left:-2.75em; }
                             <option value="1.5">1.5T</option>
                         </select>
                         Metabolites:
-                        <div class ='optionBox'><input type="text" size="4" name="b" style="border:0px solid"><img onclick=none src="../img/new_window.png" style="padding-bottom:3px" /></div>
+                        <div class ='optionBox'><input type="text" size="4" name="b" style="border:0px solid"><img id='metOpt' src="../img/new_window.png" style="padding-bottom:3px" /></div>
                         Values:
                         <input type="text" size="5" name="c">
                         Keywords:
-                        <div class ='optionBox'><input type="text" size="4" name="keyword" style="border:0px solid"><img onclick=none src="../img/new_window.png" style="padding-bottom:3px" /></div>                        
+                        <div class ='optionBox'><input type="text" size="4" name="keyword" style="border:0px solid"><img id='keyOpt' src="../img/new_window.png" style="padding-bottom:3px" /></div>                        
                         
                         Location:
                         <select id='location' name='location'>
@@ -179,6 +179,7 @@ ul.justify { margin-left:-2.75em; }
                         </select>
                         Limit:
                         <input type="text" size="2" name="limit">
+                        More options <img id='allOpt' src="../img/new_window.png" style="padding-bottom:3px" />
                         <br>
                         Merge Graphs:
                         <input type="checkbox" id="merge" name="Merge Graphs">
@@ -193,7 +194,7 @@ ul.justify { margin-left:-2.75em; }
                     </form>
                 <p>
                     <a href="javascript:void();" id="query" class='query'>submit
-                    query</a> - <a href="javascript:void();" id='clear'>clear canvas</a> - <a href="javascript:void();" id="dump">dump query to file</a>
+                    query</a> - <a href="javascript:void();" id='clear'>clear canvas</a> - <a href="javascript:void();" id="dump" onclick="exportToCsv()">export canvas to file</a> - <a href="javascript:void();" id="png_dump" onclick="exportChartsAsPng()"> export charts as .png</a>
                 </p>
                 </form>
             </div>
@@ -204,10 +205,168 @@ ul.justify { margin-left:-2.75em; }
         </div>
 
 		<div id='right'>
-        <div id="sidebar" style="overflow-y:auto;"></div>
+        <div id="sidebar" ></div>
+
 		</div>
 
+
+<div class="blackout">
+</div>
+<div id='ageWindow' class="msgbox">
+<div class="closeBox">
+Close</div>
+<left>
+<form action="#" method="post"><br />
+
+<label>Years:<input type="text" size="4" id='years' name='years' onKeyUp="calculateAge()"> <br>
+        Months:<input type="text" size="4" id='months' name='months'> <br>
+        Weeks:<input type="text" size="4" id='weeks' name='weeks'><br>
+        Days:<input type="text" size="4" id='days' name='days'> </label>
+
+</form>
+</left>
+</div>
+
+<div class="blackout">
+</div>
+<div id='metWindow' class="msgbox">
+<div class="closeBox">
+Close</div>
+<left>
+<form action="#" method="post"><br />
+
+<label>Select all:<input type='checkbox' id='selAll' onchange='checkAll()'><br>
+AcAc:<input type='checkbox' id=AcAc name=AcAc class='met'>
+Acn:<input type='checkbox' id=Acn name=Acn class='met'>
+Ala:<input type='checkbox' id=Ala name=Ala class='met'>
+Asp:<input type='checkbox' id=Asp name=Asp class='met'>
+Cho:<input type='checkbox' id=Cho name=Cho class='met'>
+Cr:<input type='checkbox' id=Cr name=Cr class='met'>
+CrCH2:<input type='checkbox' id=CrCH2 name=CrCH2 class='met'>
+GABA:<input type='checkbox' id=GABA name=GABA class='met'>
+GPC:<input type='checkbox' id=GPC name=GPC class='met'>
+Glc:<input type='checkbox' id=Glc name=Glc class='met'>
+Gln:<input type='checkbox' id=Gln name=Gln class='met'>
+Glu:<input type='checkbox' id=Glu name=Glu class='met'>
+Glx:<input type='checkbox' id=Glx name=Glx class='met'>
+Gua:<input type='checkbox' id=Gua name=Gua class='met'>
+Ins:<input type='checkbox' id=Ins name=Ins class='met'>
+Lac:<input type='checkbox' id=Lac name=Lac class='met'>
+Lip09:<input type='checkbox' id=Lip09 name=Lip09 class='met'>
+Lip13a:<input type='checkbox' id=Lip13a name=Lip13a class='met'>
+Lip13b:<input type='checkbox' id=Lip13b name=Lip13b class='met'>
+Lip20:<input type='checkbox' id=Lip20 name=Lip20 class='met'>
+MM09:<input type='checkbox' id=MM09 name=MM09 class='met'>
+MM12:<input type='checkbox' id=MM12 name=MM12 class='met'>
+MM14:<input type='checkbox' id=MM14 name=MM14 class='met'>
+MM17:<input type='checkbox' id=MM17 name=MM17 class='met'>
+MM20:<input type='checkbox' id=MM20 name=MM20 class='met'>
+NAA:<input type='checkbox' id=NAA name=NAA class='met'>
+NAAG:<input type='checkbox' id=NAAG name=NAAG class='met'>
+PCh:<input type='checkbox' id=PCh name=PCh class='met'>
+PCr:<input type='checkbox' id=PCr name=PCr class='met'>
+Scyllo:<input type='checkbox' id=Scyllo name=Scyllo class='met'>
+Tau:<input type='checkbox' id=Tau name=Tau class='met'>
+tCho:<input type='checkbox' id=tCho name=tCho class='met'>
+tCr:<input type='checkbox' id=tCr name=tCr class='met'>
+tNAA:<input type='checkbox' id=tNAA name=tNAA class='met'>
+</label>
+
+</form>
+</left>
+</div>
+
+<div class="blackout">
+</div>
+<div id='keyWindow' class="msgbox">
+<div class="closeBox">
+Close</div>
+<left>
+<form action="#" method="post"><br />
+
+<label>test2
+</label>
+
+</form>
+</left>
+</div>
+
+<div class="blackout">
+</div>
+<div id='allWindow' class="msgbox">
+<div class="closeBox">
+Close</div>
+<left>
+<form action="#" method="post"><br />
+
+<label>test3
+</label>
+
+</form>
+</left>
+</div>
         <script type="text/javascript">
+
+        function calculateAge(){
+            var years = $('#years').val()
+            var months = $('#months').val()
+            var weeks = $('#weeks').val()
+            var days = $('#days').val()
+
+            var total = parseInt(days) + parseInt(weeks)*7 + parseInt(months)*30 + parseInt(years)*365
+
+            $("input[name='age']").val(total)
+
+        }
+
+         function checkAll() {
+     checkboxes = document.getElementsByClassName('met');
+
+     for (i = 0; i < checkboxes.length; i++) {
+         if (document.getElementById('selAll').checked == true) {
+            $('input[name="b"]').val('AcAc,Acn,Ala,Asp,Cho,Cr,CrCH2,GABA,GPC,Glc,Gln,Glu,Glx,Gua,Ins,Lac,Lip09,Lip13a,Lip13b,Lip20,MM09,MM12,MM14,MM17,MM20,NAA,NAAG,PCh,PCr,Scyllo,Tau,tCho,tCr,tNAA')
+            $('input[name="c"]').val('0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')
+             checkboxes[i].checked = true
+             document.getElementById('metabolites')
+         } else {checkboxes[i].checked = false 
+            $('input[name="b"]').val('')}
+     }
+ }
+
+        function exportToCsv(){
+            for (result in window.my_config.results){
+                data = new google.visualization.DataTable(window.my_config.results[result])
+                csv = dataTableAndMetadataToCSV(data)
+                downloadCSV(csv, result)
+            }
+        }
+
+        function exportChartsAsPng(){
+            for (chart in window.my_config.charts){
+                downloadPNG(window.my_config.charts[chart].getImageURI(), chart)
+            }
+        }
+
+        function downloadPNG (png_out, name) {
+
+        var data = atob( png_out.substring( "data:image/png;base64,".length ) ),
+        asArray = new Uint8Array(data.length);
+
+        for( var i = 0, len = data.length; i < len; ++i ) {
+            asArray[i] = data.charCodeAt(i);    
+        }
+
+            var blob = new Blob( [ asArray.buffer ], {type: "image/png"} );
+
+            var url  = window.URL || window.webkitURL;
+            var link = document.createElementNS("http://www.w3.org/1999/xhtml", "a");
+            link.href = url.createObjectURL(blob);
+            link.download = name + ".png"; 
+
+            var event = document.createEvent("MouseEvents");
+            event.initEvent("click", true, false);
+            link.dispatchEvent(event); 
+}
 
         //This is the function that closes the pop-up
 function endBlackout(){
@@ -216,14 +375,18 @@ $(".msgbox").css("display", "none");
 }
 
 //This is the function that starts the pop-up
-function strtBlackout(){
-$(".msgbox").css("display", "block");
+function strtBlackout(id){
+$("#"+id).css("display", "block");
 $(".blackout").css("display", "block");
 }
 
 //Sets the buttons to trigger the blackout on clicks
 $(document).ready(function(){
-$("#ageInput").click(strtBlackout); // open if btn is pressed
+$("#ageOpt").click(function() {strtBlackout('ageWindow') }); // open if btn is pressed
+$("#metOpt").click(function() {strtBlackout('metWindow') }); // open if btn is pressed
+$("#keyOpt").click(function() {strtBlackout('keyWindow') }); // open if btn is pressed
+$("#allOpt").click(function() {strtBlackout('allWindow') }); // open if btn is pressed
+
 $(".blackout").click(endBlackout); // close if click outside of popup
 $(".closeBox").click(endBlackout); // close if close btn clicked
 
@@ -310,6 +473,92 @@ $(document).ready(function () {
         
 
 });
+
+/**
+ * Convert an instance of google.visualization.DataTable to CSV
+ * @param {google.visualization.DataTable} dataTable_arg DataTable to convert
+ * @return {String} Converted CSV String
+ */
+function dataTableToCSV(dataTable_arg) {
+    var dt_cols = dataTable_arg.getNumberOfColumns();
+    var dt_rows = dataTable_arg.getNumberOfRows();
+    
+    var csv_cols = [];
+    var csv_out;
+    
+    // Iterate columns
+    for (var i=0; i<dt_cols; i++) {
+        // Replace any commas in column labels
+        csv_cols.push(dataTable_arg.getColumnLabel(i).replace(/,/g,""));
+    }
+    
+    // Create column row of CSV
+    csv_out = csv_cols.join(",")+"\r\n";
+    
+    // Iterate rows
+    for (i=0; i<dt_rows; i++) {
+        var raw_col = [];
+        for (var j=0; j<dt_cols; j++) {
+            // Replace any commas in row values
+            raw_col.push(dataTable_arg.getFormattedValue(i, j, 'label').replace(/,/g,""));
+        }
+        // Add row to CSV text
+        csv_out += raw_col.join(",")+"\r\n";
+    }
+ 
+    return csv_out;
+}
+
+/**
+ * Convert an instance of google.visualization.DataTable to CSV
+ * @param {google.visualization.DataTable} dataTable_arg DataTable to convert
+ * @return {String} Converted CSV String
+ */
+function dataTableAndMetadataToCSV(dataTable_arg) {
+    var dt_cols = dataTable_arg.getNumberOfColumns();
+    var dt_rows = dataTable_arg.getNumberOfRows();
+    
+    var csv_cols = [];
+    var csv_out;
+    
+    csv_cols.push('Patient ID')
+    // Iterate columns
+    for (var i=0; i<dt_cols; i++) {
+        // Replace any commas in column labels
+        csv_cols.push(dataTable_arg.getColumnLabel(i).replace(/,/g,""));
+    }
+    
+    // Create column row of CSV
+    csv_out = csv_cols.join(",")+"\r\n";
+    
+    // Iterate rows
+    for (i=0; i<dt_rows; i++) {
+        var raw_col = [];
+        raw_col.push(window.my_config.metadata_array[i][0].ID)
+        for (var j=0; j<dt_cols; j++) {
+            // Replace any commas in row values
+            raw_col.push(dataTable_arg.getFormattedValue(i, j, 'label').replace(/,/g,""));
+        }
+        //for (sd in window.sd_array[i])
+        //raw_col.push(window.sd_array[])
+        // Add row to CSV text
+        csv_out += raw_col.join(",")+"\r\n";
+    }
+ 
+    return csv_out;
+}
+
+function downloadCSV (csv_out, name) {
+            var blob = new Blob([csv_out], {type: 'text/csv;charset=utf-8'});
+            var url  = window.URL || window.webkitURL;
+            var link = document.createElementNS("http://www.w3.org/1999/xhtml", "a");
+            link.href = url.createObjectURL(blob);
+            link.download = name + ".csv"; 
+
+            var event = document.createEvent("MouseEvents");
+            event.initEvent("click", true, false);
+            link.dispatchEvent(event); 
+}
 
 
 	function setSize(){
@@ -471,6 +720,20 @@ $(document).ready(function () {
     				return 1;
   				return 0;
 }
+
+            function compare_unique_dict2(a,b) {
+                 var a_key = 0
+                 var b_key = 0
+                 for (c in a)
+                    a_key = Math.round(a[c])
+                 for (d in b)
+                    b_key = Math.round(b[d])
+                if (a_key < b_key)
+                    return -1;
+                if (a_key > b_key)
+                    return 1;
+                return 0;
+}
 				 
 
 				function add_SD(r){
@@ -483,14 +746,14 @@ $(document).ready(function () {
 					var categories = [positive,negative,zero]
 
 					//sort and order
-					var ordered_sd = window.my_config.sd_array[r].sort(compare_unique_dict)
+					var ordered_sd = window.my_config.sd_array[r].sort(compare_unique_dict2)
 
 					for (m in ordered_sd){
-						if (compare_unique_dict(ordered_sd[m],{'a':0}) == 0){
+						if (compare_unique_dict2(ordered_sd[m],{'a':0}) == 0){
 
 							zero.push(ordered_sd[m])
 						}
-						else if (compare_unique_dict(ordered_sd[m],{'a':0}) == 1){
+						else if (compare_unique_dict2(ordered_sd[m],{'a':0}) == 1){
 							positive.unshift(ordered_sd[m])
 						}
 						else {
@@ -507,14 +770,14 @@ $(document).ready(function () {
 							var elem = "<li>"
 
 							for (met in categories[c][0])
-								elem +="" + met + ": " + categories[c][0][met] + " SD"
+								elem +="" + met + ": " + Math.round(categories[c][0][met]) + " SD"
 							
 						
 							if(categories[c].length > 1){
 								elem += "<ul class='justify'>"
 								for (i = 1; i < categories[c].length; i++){
 									for (name in categories[c][i])
-										elem +="<li>" + name +": " + categories[c][i][name] + " SD </li>"
+										elem +="<li>" + name +": " + Math.round(categories[c][i][name]) + " SD </li>"
 								}
 								elem += "</ul>"
 							}
