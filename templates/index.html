@@ -148,6 +148,7 @@ ul.justify { margin-left:-2.75em; }
             <div>
                 <p>
                     <form>
+                        IDs: <input type="text" size="2" name="ID">
                         Age:
                         <div class ='optionBox'><input type="text" size="2" name="age" placeholder="Days"style="border:0px solid;"><img id='ageOpt' src="../img/new_window.png" style="padding-bottom:3px" /></div>							
                         Gender:
@@ -319,6 +320,56 @@ Close</div>
 
         }
 
+        var all_mets = ['CrCH2', 'AcAc', 'Acn', 'Ala', 'Asp', 'Cho', 'Cr', 'GABA', 'GPC', 'Glc',
+        'Gln', 'Glu', 'Gua', 'Ins', 'Lac', 'Lip09', 'Lip13a', 'Lip13b', 'Lip20', 'MM09',
+        'MM12', 'MM14', 'MM17', 'MM20', 'NAA', 'NAAG', 'PCh', 'PCr', 'Scyllo', 'Tau',
+        'tCr', 'tNAA', 'tCho', 'Glx']
+
+        function inputValid(){
+            var num_list = /^[0-9](,[0-9])*$/i;
+            var opt_num_list = /^([0-9](,[0-9])*)*$/i
+
+             
+            mets = $('input[name="b"]').val().split(',')
+            for (met in mets){
+                console.log(mets[met])
+                if ($.inArray(mets[met], all_mets) === -1){
+                    alert('You entered\n\n' +$('input[name="b"]').val()+ '\n\nPlease enter valid query metabolites, separated by dashes.')
+
+                    return false
+                }
+            }
+
+            if ($('input[name="c"]').val().search(num_list) < 0){
+                alert('You entered\n\n' +$('input[name="c"]').val()+ '\n\nPlease enter metabolite values separated by dashes.')
+                return false
+            }
+
+            if ($('input[name="ID"]').val().search(opt_num_list) < 0){
+                alert('You entered\n\n' +$('input[name="ID"]').val()+ '\n\nPlease enter ID values separated by dashes.')
+                return false
+            }
+
+            if ($('input[name="limit"]').val().search(/^[0-9]?$/) < 0){
+                alert('Limit must be a number.')
+                return false
+            }
+
+            if ($('input[name="age"]').val().search(/^[0-9]?$/) < 0){
+                alert('Age must be a number.')
+                return false
+            }
+
+            /*keywords: $('input[name="keyword"]').val(),
+            key_exclude: $('input[name="key_exclude"]').val(),
+            age: $('input[name="age"]').val(),
+            location: $('#location option:selected').val(),
+            merge: document.getElementById('merge').checked,
+            ID: $('input[name="ID"]').val(),*/
+
+            return true
+        }
+
          function checkAll() {
      checkboxes = document.getElementsByClassName('met');
 
@@ -409,8 +460,10 @@ function clearCanvas() {
   return false;
 }
         
-			 			$(function() { 
+			 			$(function() {
             $('a#query').bind('click', function() {
+
+                if               (inputValid() == true){
             $.getJSON('/_add_numbers', {
             keywords: $('input[name="keyword"]').val(),
             key_exclude: $('input[name="key_exclude"]').val(),
@@ -422,6 +475,7 @@ function clearCanvas() {
             c: $('input[name="c"]').val(),
             gender: $("#gender option:selected").val(),
             field: $("#field option:selected").val(),
+            ID: $('input[name="ID"]').val(),
             overlay: (document.getElementById('overlay').checked == false || (document.getElementById('overlay').checked == true && window.my_config == null))? 0:(window.my_config.results[window.my_config.names[0]].cols.length -1)
             }, function(data) {
             
@@ -450,12 +504,13 @@ function clearCanvas() {
 				redraw_charts(data.result)
 			
 			}
+
 			
             $(".patient").remove()
             
             });
             return false;
-            });
+           } });
             });
 
 $(document).ready(function () {

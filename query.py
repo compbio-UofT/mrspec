@@ -10,6 +10,7 @@ met_threshold = {'CrCH2':40, 'AcAc':40, 'Acn':40, 'Ala':40, 'Asp':40, 'Cho':20, 
 
 high = '= 144'
 low = '< 50'
+#both = 'IS NOT NULL'
 met_echo_high = {'CrCH2':high, 'AcAc':high, 'Acn':high, 'Ala':low, 'Asp':low, 'Cho':high, 'Cr':high,
                  'GABA':low, 'GPC':low, 'Glc':low, 'Gln':low, 'Glu':low, 'Gua':high, 'Ins':low, 'Lac':high, 'Lip09':low,
                  'Lip13a':low, 'Lip13b':low, 'Lip20':low, 'MM09':low, 'MM12':low, 'MM14':low, 'MM17':low, 'MM20':low,
@@ -344,7 +345,7 @@ def parse_query(ID, age, gender, field, location, metabolites, limit, mets_span_
     constraints = {'Gender':gender, 'ScanBZero':field, 'LocationName':location, 'ID':ID}
     for constraint in constraints:
         if constraints[constraint]:
-            parsed_options.append("{}.{} = '{}'".format(table,constraint,
+            parsed_options.append("{}.{} IN ('{}')".format(table,constraint,
                 constraints[constraint]))
 
     ##if mets_span_each, filter by standard deviation for each metabolite
@@ -610,6 +611,9 @@ def index():
 # result as a proper JSON response (Content-Type, etc.)
 @app.route('/_add_numbers')
 def add_numbers():
+    ID = request.args.get('ID', 0, type=str)
+    #ID = '' if not ID else ''.join(ID.split(','))
+    
     b = request.args.get('b', 0, type=str) #metabolites
     c = request.args.get('c', 0, type=str) #values
     merge = request.args.get('merge', 0, type=str)
@@ -621,13 +625,13 @@ def add_numbers():
     location = request.args.get('location', '', type=str)
     overlay = request.args.get('overlay', 0, type=int)
     calc_sd = True
-
+    print(ID)
     k_inc = request.args.get('keywords', 0, type=str)
     k_exc = request.args.get('key_exclude', 0, type=str)
     keywords = k_inc if not k_inc else k_inc.split(',')
     key_exclude = k_exc if not k_exc else k_exc.split(',')
     
-    asdf = parse_query(ID='',
+    asdf = parse_query(ID=ID,
         age=age,
         gender=gender,
         field=field,
@@ -662,7 +666,7 @@ if __name__ == '__main__':
         #initialize the Flask application
         app.run(
             host="0.0.0.0",
-            port=int("8080"),
+            port=int("8081"),
             debug=True
         )
     else:
