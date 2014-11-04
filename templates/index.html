@@ -326,8 +326,8 @@ Close</div>
         'tCr', 'tNAA', 'tCho', 'Glx']
 
         function inputValid(){
-            var num_list = /^[0-9](,[0-9])*$/i;
-            var opt_num_list = /^([0-9](,[0-9])*)*$/i
+            var num_list = /^[0-9]+(,[0-9]+)*$/i;
+            var opt_num_list = /^([0-9]+(,[0-9]+)*)*$/i
 
              
             mets = $('input[name="b"]').val().split(',')
@@ -350,12 +350,12 @@ Close</div>
                 return false
             }
 
-            if ($('input[name="limit"]').val().search(/^[0-9]?$/) < 0){
+            if ($('input[name="limit"]').val().search(/^[0-9]*$/) < 0){
                 alert('Limit must be a number.')
                 return false
             }
 
-            if ($('input[name="age"]').val().search(/^[0-9]?$/) < 0){
+            if ($('input[name="age"]').val().search(/^[0-9]*$/) < 0){
                 alert('Age must be a number.')
                 return false
             }
