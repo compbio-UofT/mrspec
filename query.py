@@ -1,5 +1,7 @@
 import mysql.connector as m
 import sys, random, time
+import os
+from os import path
 from flask import Flask, render_template, request, jsonify, json as j, send_file
 
 #metabolites stored as dictionaries for performance reasons
@@ -657,6 +659,17 @@ def add_numbers():
 
 if __name__ == '__main__':
 
+    # Reload Flask app when template file changes
+    # http://stackoverflow.com/questions/9508667/reload-flask-app-when-template-file-changes
+    extra_dirs = ['templates',]
+    extra_files = extra_dirs[:]
+    for extra_dir in extra_dirs:
+        for dirname, dirs, files in os.walk(extra_dir):
+            for filename in files:
+                filename = path.join(dirname, filename)
+                if path.isfile(filename):
+                    extra_files.append(filename)
+
     if sys.argv[0][-8:] == 'query.py':
         #Initialize connection to MySQL database
         #usage: python query.py <user> <password>
@@ -667,7 +680,8 @@ if __name__ == '__main__':
         app.run(
             host="0.0.0.0",
             port=int("8081"),
-            debug=True
+            debug=True,
+            extra_files=extra_files
         )
     else:
         #Initialize connection to MySQL database
