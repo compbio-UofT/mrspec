@@ -370,18 +370,20 @@ Close</div>
         }
 
          function checkAll() {
-     checkboxes = document.getElementsByClassName('met');
+             checkboxes = document.getElementsByClassName('met');
 
-     for (i = 0; i < checkboxes.length; i++) {
-         if (document.getElementById('selAll').checked == true) {
-            $('input[name="b"]').val('AcAc,Acn,Ala,Asp,Cho,Cr,CrCH2,GABA,GPC,Glc,Gln,Glu,Glx,Gua,Ins,Lac,Lip09,Lip13a,Lip13b,Lip20,MM09,MM12,MM14,MM17,MM20,NAA,NAAG,PCh,PCr,Scyllo,Tau,tCho,tCr,tNAA')
-            $('input[name="c"]').val('0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')
-             checkboxes[i].checked = true
-             document.getElementById('metabolites')
-         } else {checkboxes[i].checked = false 
-            $('input[name="b"]').val('')}
-     }
- }
+             for (i = 0; i < checkboxes.length; i++) {
+                 if (document.getElementById('selAll').checked == true) {
+                     $('input[name="b"]').val('AcAc,Acn,Ala,Asp,Cho,Cr,CrCH2,GABA,GPC,Glc,Gln,Glu,Glx,Gua,Ins,Lac,Lip09,Lip13a,Lip13b,Lip20,MM09,MM12,MM14,MM17,MM20,NAA,NAAG,PCh,PCr,Scyllo,Tau,tCho,tCr,tNAA')
+                     $('input[name="c"]').val('0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')
+                     checkboxes[i].checked = true
+                     document.getElementById('metabolites')
+                 } else {
+                    checkboxes[i].checked = false 
+                    $('input[name="b"]').val('')
+                 }
+             }
+         }
 
         function exportToCsv(){
             for (result in window.my_config.results){
