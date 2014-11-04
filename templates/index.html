@@ -148,49 +148,49 @@ ul.justify { margin-left:-2.75em; }
             <div>
                 <p>
                     <form>
-                        IDs: <input type="text" size="2" name="ID">
-                        Age:
-                        <div class ='optionBox'><input type="text" size="2" name="age" placeholder="Days"style="border:0px solid;"><img id='ageOpt' src="../img/new_window.png" style="padding-bottom:3px" /></div>							
-                        Gender:
+                        <span title="Search for a tabPatientID.">IDs: <input type="text" size="2" name="ID"></span>
+                        <span title="The age of the query. Used to set the center of the limit.">Age:
+                        <div class ='optionBox'><input type="text" size="2" name="age" placeholder="Days"style="border:0px solid;"><img id='ageOpt' src="../img/new_window.png" style="padding-bottom:3px" /></div></span>
+                        <span title="Gender of the query.">Gender:
                         <select id='gender' name='gender'>
                             <option value="">Both</option>
                             <option value="M">M</option>
                             <option value="F">F</option>
-                        </select>
-                        Field Strength:
+                        </select></span>
+                        <span title="Field strength of the query."">Field Strength:
                         <select id='field' name='field'>
                             <option value="">Both</option>
                             <option value="3">3T</option>
                             <option value="1.5">1.5T</option>
-                        </select>
-                        Metabolites:
-                        <div class ='optionBox'><input type="text" size="4" name="b" style="border:0px solid"><img id='metOpt' src="../img/new_window.png" style="padding-bottom:3px" /></div>
-                        Values:
-                        <input type="text" size="5" name="c">
-                        Keywords:
-                        <div class ='optionBox'><input type="text" size="4" name="keyword" style="border:0px solid"><img id='keyOpt' src="../img/new_window.png" style="padding-bottom:3px" /></div>                        
+                        </select></span>
+                        <span title="Metabolite of the query.">Metabolites:
+                        <div class ='optionBox'><input type="text" size="4" name="b" style="border:0px solid"><img id='metOpt' src="../img/new_window.png" style="padding-bottom:3px" /></div></span>
+                        <span title="Values of the query.">Values:
+                        <input type="text" size="5" name="c"></span>
+                        <span title="Keywords of the query.">Keywords:
+                        <div class ='optionBox'><input type="text" size="4" name="keyword" style="border:0px solid"><img id='keyOpt' src="../img/new_window.png" style="padding-bottom:3px" /></div></span>
                         
-                        Location:
+                        <span title="Location of the query.">Location:
                         <select id='location' name='location'>
                             <option value="">Any</option>
                             <option value="BG">BG</option>
                             <option value="OCC_WM">OCC WM</option>
 							<option value="FT_WM">FT WM</option>
 							<option value="Cerebellum">CRBL</option>
-                        </select>
-                        Limit:
-                        <input type="text" size="2" name="limit">
-                        More options <img id='allOpt' src="../img/new_window.png" style="padding-bottom:3px" />
+                        </select></span>
+                        <span title="Limit of the query.">Limit:
+                        <input type="text" size="2" name="limit"></span>
+                        <span title="More options.">More options <img id='allOpt' src="../img/new_window.png" style="padding-bottom:3px" /></span>
                         <br>
-                        Merge Graphs:
-                        <input type="checkbox" id="merge" name="Merge Graphs">
-                        Log Scale:
-                        <input type="checkbox" id="scale" name="scale" onclick="drawChart(window.my_config.results)">
-                        Trendline:
-                        <input type="checkbox" id="trendline" name="trendline" onclick="drawChart(window.my_config.results)">
+                        <span title="Merge graphs.">Merge Graphs:
+                        <input type="checkbox" id="merge" name="Merge Graphs"></span>
+                        <span title="Log scale.">Log Scale:
+                        <input type="checkbox" id="scale" name="scale" onclick="drawChart(window.my_config.results)"></span>
+                        <span title="Trendline.">Trendline:
+                        <span title="Overlay queries."><input type="checkbox" id="trendline" name="trendline" onclick="drawChart(window.my_config.results)">
                         Overlay queries:
                         <input
-                        type="checkbox" id="overlay" name="overlay" onclick="document.getElementById('merge').disabled = true;">
+                        type="checkbox" id="overlay" name="overlay" onclick="document.getElementById('merge').disabled = true;"></span>
 
                     </form>
                 <p>
