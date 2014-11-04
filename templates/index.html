@@ -234,9 +234,9 @@ Close</div>
 <div class="closeBox">
 Close</div>
 <left>
-<form action="#" method="post"><br />
+<form action="#" method="post" onchange='updateMetabolites()'><br />
 
-<label>Select all:<input type='checkbox' id='selAll' onchange='checkAll()'></label><br>
+<label>Select all:<input type='checkbox' id='selAll' onclick='checkAll()'></label><br>
 <label>AcAc:<input type='checkbox' id=AcAc name=AcAc class='met'></label>
 <label>Acn:<input type='checkbox' id=Acn name=Acn class='met'></label>
 <label>Ala:<input type='checkbox' id=Ala name=Ala class='met'></label>
@@ -374,15 +374,30 @@ Close</div>
 
              for (i = 0; i < checkboxes.length; i++) {
                  if (document.getElementById('selAll').checked == true) {
-                     $('input[name="b"]').val('AcAc,Acn,Ala,Asp,Cho,Cr,CrCH2,GABA,GPC,Glc,Gln,Glu,Glx,Gua,Ins,Lac,Lip09,Lip13a,Lip13b,Lip20,MM09,MM12,MM14,MM17,MM20,NAA,NAAG,PCh,PCr,Scyllo,Tau,tCho,tCr,tNAA')
-                     $('input[name="c"]').val('0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0')
                      checkboxes[i].checked = true
-                     document.getElementById('metabolites')
                  } else {
                     checkboxes[i].checked = false 
-                    $('input[name="b"]').val('')
                  }
              }
+
+             updateMetabolites()
+
+         }
+
+         function updateMetabolites() {
+             checkboxes = document.getElementsByClassName('met');
+
+             $('input[name="b"]').val("")
+             $('input[name="c"]').val("")
+
+             for (i = 0; i < checkboxes.length; i++) {
+                 if (checkboxes[i].checked == true) {
+                     $('input[name="b"]').val($('input[name="b"]').val() + "," + checkboxes[i].name)
+                     $('input[name="c"]').val($('input[name="c"]').val() + ",0")
+                 }
+             }
+             $('input[name="b"]').val($('input[name="b"]').val().substring(1))
+             $('input[name="c"]').val($('input[name="c"]').val().substring(1))
          }
 
         function exportToCsv(){
