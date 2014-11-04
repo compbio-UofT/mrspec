@@ -674,7 +674,7 @@ if __name__ == '__main__':
         #Initialize connection to MySQL database
         #usage: python query.py <user> <password>
         con = m.connect(user=sys.argv[1], password=sys.argv[2],
-                        database='mrspec')
+                        database='mrspec', port=sys.argv[3])
         cur = con.cursor()
         #initialize the Flask application
         app.run(
