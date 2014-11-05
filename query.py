@@ -385,6 +385,12 @@ def parse_query(ID, age, gender, field, location, metabolites, limit, mets_span_
     query = ''
     
     join = " LEFT JOIN `{1}` ON `{1}`.{2} = {3}.{2} AND `{1}`.AgeAtScan = {3}.AgeAtScan ".format(','.join(met_threshold.keys()), sd_table, unique_desc, table)
+
+    print "select: ", select
+    print "table: ", table
+    print "join: ", join
+    print "parsed_where: ", parsed_where
+    print "group_by: ", group_by
     
     ##limit_parser = {True: _parse_limit, False: _parse_no_limit}
     if limit == '':
@@ -399,7 +405,13 @@ def parse_query(ID, age, gender, field, location, metabolites, limit, mets_span_
         where_geq = parsed_where + ' {} {}.AgeAtScan >= {}'.format(linker,table,age)
 
         query = "(SELECT {0} FROM {1} {6} {2} {3} ORDER BY {1}.AgeAtScan DESC {4}) UNION ALL (SELECT {0} FROM {1} {6} {5} {3} ORDER BY {1}.AgeAtScan {4})".format(select, table, where_less, group_by, limit, where_geq, join)
-    print query
+
+        print "limit: ", limit
+        print "where_less: ", where_less
+        print "where_geq: ", where_geq
+        print "where_all: ", where_all
+
+    print "query: ", query
     
     ##parse sd table name (eventually)
     
