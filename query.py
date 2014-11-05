@@ -409,7 +409,6 @@ def parse_query(ID, age, gender, field, location, metabolites, limit, mets_span_
         print "limit: ", limit
         print "where_less: ", where_less
         print "where_geq: ", where_geq
-        print "where_all: ", where_all
 
     print "query: ", query
     
