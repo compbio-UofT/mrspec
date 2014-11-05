@@ -775,7 +775,7 @@ function downloadCSV (csv_out, name) {
 					var label = ''
 					if (d in results){
 						merged_results[d]['rows'] = merged_results[d]['rows'].concat(results[d].rows)
-						label = results[d].cols[results[d].cols.length -1].id
+						label = results[d].cols[results[d].cols.length -1].label
 						console.log(label)
 						}
 					merged_results[d]['cols'] = merged_results[d]['cols'].concat({"id": "", "label": label, "type": "number"})

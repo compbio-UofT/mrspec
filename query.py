@@ -425,7 +425,7 @@ def parse_query(ID, age, gender, field, location, metabolites, limit, uxlimit, l
 
 #adds patient as separate dataseries
 ##
-def format_query_with_pseries_and_names(query, columns, values, overlay):
+def format_query_with_pseries_and_names(query, columns, values, legend, overlay):
     #values = values.split(",")
     ##print rows, columns, values
 
@@ -438,7 +438,9 @@ def format_query_with_pseries_and_names(query, columns, values, overlay):
         cols = []
         rows = []
 
-        cols += [{'id': "Age", 'label': "Age", 'type': 'number'}] + [{'id': "", 'label': "", 'type': 'number'} for aa in range(0, overlay)] + [{'id': column, 'label': column, 'type': 'number'}]
+        cols += [{'id': "Age", 'label': "Age", 'type': 'number'}] + \
+                [{'id': "", 'label': "", 'type': 'number'} for aa in range(0, overlay)] + \
+                [{'id': column, 'label': column + '_' + '_'.join([str(legend_val) for legend_val in legend]), 'type': 'number'}]
 
         for row in query:
             ##print(i,row[i+1])
@@ -462,7 +464,7 @@ def format_query_with_pseries_and_names(query, columns, values, overlay):
 
 #adds patient as separate dataseries
 ##
-def format_query_with_pseries(query, columns, values):
+def format_query_with_pseries(query, columns, values, legend):
     #values = values.split(",")
     ##print rows, columns, values
 
@@ -475,7 +477,7 @@ def format_query_with_pseries(query, columns, values):
     columns.append("Patient Data")
 
     for column in columns:
-        cols.append({'id': column, 'label': column, 'type': 'number'})
+        cols.append({'id': column, 'label': column + '_' + '_'.join([str(legend_val) for legend_val in legend]), 'type': 'number'})
 
     for row in query:
         vals = [{'v': str(value)} for value in row[:len(columns)-1]]
@@ -666,14 +668,32 @@ def add_numbers():
     
     cols,q = execute_query(asdf)
         
-    sd_array = windowed_SD(cols, q, gender, field, location, unique, filter_by_sd, overlay)           
+    sd_array = windowed_SD(cols, q, gender, field, location, unique, filter_by_sd, overlay)
+
+    # Set default values for legend
+    if not gender:
+        gender = 'Both'
+    if not field:
+        field = 'Both'
+    if not location:
+        location = 'Any'
 
     if merge == 'true':
-        d = {metabolites:format_query_with_pseries(q, ("Age," + metabolites).split(','), (str(age) + "," + values).split(","))}
+        d = {metabolites:format_query_with_pseries(q,
+                                                   ("Age," + metabolites).split(','),
+                                                   (str(age) + "," + values).split(","),
+                                                   [gender, field, location])}
     else:
-        d = format_query_with_pseries_and_names(q, ("Age," + metabolites).split(','), (str(age) + "," + values).split(","), overlay)
+        d = format_query_with_pseries_and_names(q,
+                                                ("Age," + metabolites).split(','),
+                                                (str(age) + "," + values).split(","),
+                                                [gender, field, location],
+                                                overlay)
 
-    return jsonify(result=d, names = [metabolites] if merge == "true" else metabolites.split(','), metadata_array=format_metadata(q,overlay), sd_array = sd_array)
+    return jsonify(result=d,
+                   names = [metabolites] if merge == "true" else metabolites.split(','),
+                   metadata_array=format_metadata(q,overlay),
+                   sd_array = sd_array)
 
 if __name__ == '__main__':
 
