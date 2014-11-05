@@ -729,9 +729,9 @@ function downloadCSV (csv_out, name) {
 
                 var options = {
                 title: 'Age vs. ' + c,
-                hAxis: {title: 'Age', minValue: 0, maxValue: 15,            
+                hAxis: {title: 'Age',            
                 logScale: document.getElementById('scale').checked? true:false},
-                vAxis: {title: c, minValue: 0, maxValue: 5},
+                vAxis: {title: c},
                 legend: (columns > 3)? {}: 'none',
                 aggregationTarget: 'series',
                 selectionMode: 'multiple',
