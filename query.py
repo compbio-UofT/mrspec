@@ -327,7 +327,7 @@ def execute_query(query):
     return columns, rows
 
 #bug exists where could access scan information from later date
-def parse_query(ID, age, gender, field, location, metabolites, limit, mets_span_each, unique, filter_by_sd, keywords, key_exclude):
+def parse_query(ID, age, gender, field, location, metabolites, limit, uxlimit, lxlimit, mets_span_each, unique, filter_by_sd, keywords, key_exclude):
         
     graph_data = [table + ".AgeAtScan"]
     #faster than list concatenation
@@ -373,6 +373,11 @@ def parse_query(ID, age, gender, field, location, metabolites, limit, mets_span_
         parsed_keys = " AND ".join(cond)
         parsed_keys = ''.join(['(', parsed_keys, ')'])
         parsed_options.append(parsed_keys)
+
+    if uxlimit:
+        parsed_options.append('{}.AgeAtScan < {}'.format(table, uxlimit))
+    if lxlimit:
+        parsed_options.append('{}.AgeAtScan > {}'.format(table, lxlimit))
         
     if parsed_options:
         parsed_where = 'WHERE '
@@ -650,6 +655,8 @@ def add_numbers():
         field=field,
         metabolites=b.split(','),
         limit=request.args.get('limit', 0, type=str),
+        uxlimit=request.args.get('uxlimit', 0, type=str),
+        lxlimit=request.args.get('lxlimit', 0, type=str),
         location = location,
         mets_span_each=False,
         unique=unique,

@@ -180,6 +180,10 @@ ul.justify { margin-left:-2.75em; }
                         </select></span>
                         <span title="Limit of the query.">Limit:
                         <input type="text" size="2" name="limit"></span>
+                        <span title="Limit of the query.">Lower X Limit:
+                        <input type="text" size="2" name="lxlimit"></span>
+                        <span title="Limit of the query.">Upper X Limit:
+                        <input type="text" size="2" name="uxlimit"></span>
                         <span title="More options.">More options <img id='allOpt' src="../img/new_window.png" style="padding-bottom:3px" /></span>
                         <br>
                         <span title="Merge graphs.">Merge Graphs:
@@ -485,7 +489,9 @@ function clearCanvas() {
             key_exclude: $('input[name="key_exclude"]').val(),
             age: $('input[name="age"]').val(),
             limit: $('input[name="limit"]').val(),
-			location: $('#location option:selected').val(),
+            uxlimit: $('input[name="uxlimit"]').val(),
+            lxlimit: $('input[name="lxlimit"]').val(),
+	    location: $('#location option:selected').val(),
             merge: document.getElementById('merge').checked,
             b: $('input[name="b"]').val(),
             c: $('input[name="c"]').val(),
