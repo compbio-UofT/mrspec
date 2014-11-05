@@ -632,8 +632,8 @@ def add_numbers():
     ID = request.args.get('ID', 0, type=str)
     #ID = '' if not ID else ''.join(ID.split(','))
     
-    b = request.args.get('b', 0, type=str) #metabolites
-    c = request.args.get('c', 0, type=str) #values
+    metabolites = request.args.get('metabolites', 0, type=str) #metabolites
+    values = request.args.get('values', 0, type=str) #values
     merge = request.args.get('merge', 0, type=str)
     age = request.args.get('age', 0, type=int)
     gender = request.args.get('gender', 0, type=str)
@@ -653,7 +653,7 @@ def add_numbers():
         age=age,
         gender=gender,
         field=field,
-        metabolites=b.split(','),
+        metabolites=metabolites.split(','),
         limit=request.args.get('limit', 0, type=str),
         uxlimit=request.args.get('uxlimit', 0, type=str),
         lxlimit=request.args.get('lxlimit', 0, type=str),
@@ -669,11 +669,11 @@ def add_numbers():
     sd_array = windowed_SD(cols, q, gender, field, location, unique, filter_by_sd, overlay)           
 
     if merge == 'true':
-        d = {b:format_query_with_pseries(q, ("Age," + b).split(','), (str(age) + "," + c).split(","))}
+        d = {metabolites:format_query_with_pseries(q, ("Age," + metabolites).split(','), (str(age) + "," + values).split(","))}
     else:
-        d = format_query_with_pseries_and_names(q, ("Age," + b).split(','), (str(age) + "," + c).split(","), overlay)
+        d = format_query_with_pseries_and_names(q, ("Age," + metabolites).split(','), (str(age) + "," + values).split(","), overlay)
 
-    return jsonify(result=d, names = [b] if merge == "true" else b.split(','), metadata_array=format_metadata(q,overlay), sd_array = sd_array)
+    return jsonify(result=d, names = [metabolites] if merge == "true" else metabolites.split(','), metadata_array=format_metadata(q,overlay), sd_array = sd_array)
 
 if __name__ == '__main__':
 

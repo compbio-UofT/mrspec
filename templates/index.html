@@ -164,9 +164,9 @@ ul.justify { margin-left:-2.75em; }
                             <option value="1.5">1.5T</option>
                         </select></span>
                         <span title="Metabolite of the query.">Metabolites:
-                        <div class ='optionBox'><input type="text" size="4" name="b" style="border:0px solid"><img id='metOpt' src="../img/new_window.png" style="padding-bottom:3px" /></div></span>
+                        <div class ='optionBox'><input type="text" size="4" name="metabolites" style="border:0px solid"><img id='metOpt' src="../img/new_window.png" style="padding-bottom:3px" /></div></span>
                         <span title="Values of the query.">Values:
-                        <input type="text" size="5" name="c"></span>
+                        <input type="text" size="5" name="values"></span>
                         <span title="Keywords of the query. e.g. '%glioma'">Keywords:
                         <div class ='optionBox'><input type="text" size="4" name="keyword" style="border:0px solid"><img id='keyOpt' src="../img/new_window.png" style="padding-bottom:3px" /></div></span>
                         
@@ -333,18 +333,18 @@ Close</div>
             var opt_num_list = /^([0-9]+(,[0-9]+)*)*$/i
 
              
-            mets = $('input[name="b"]').val().split(',')
+            mets = $('input[name="metabolites"]').val().split(',')
             for (met in mets){
                 console.log(mets[met])
                 if ($.inArray(mets[met], all_mets) === -1){
-                    alert('You entered\n\n' +$('input[name="b"]').val()+ '\n\nPlease enter valid query metabolites, separated by dashes.')
+                    alert('You entered\n\n' +$('input[name="metabolites"]').val()+ '\n\nPlease enter valid query metabolites, separated by dashes.')
 
                     return false
                 }
             }
 
-            if ($('input[name="c"]').val().search(num_list) < 0){
-                alert('You entered\n\n' +$('input[name="c"]').val()+ '\n\nPlease enter metabolite values separated by dashes.')
+            if ($('input[name="values"]').val().search(num_list) < 0){
+                alert('You entered\n\n' +$('input[name="values"]').val()+ '\n\nPlease enter metabolite values separated by dashes.')
                 return false
             }
 
@@ -391,17 +391,17 @@ Close</div>
          function updateMetabolites() {
              checkboxes = document.getElementsByClassName('met');
 
-             $('input[name="b"]').val("")
-             $('input[name="c"]').val("")
+             $('input[name="metabolites"]').val("")
+             $('input[name="values"]').val("")
 
              for (i = 0; i < checkboxes.length; i++) {
                  if (checkboxes[i].checked == true) {
-                     $('input[name="b"]').val($('input[name="b"]').val() + "," + checkboxes[i].name)
-                     $('input[name="c"]').val($('input[name="c"]').val() + ",0")
+                     $('input[name="metabolites"]').val($('input[name="metabolites"]').val() + "," + checkboxes[i].name)
+                     $('input[name="values"]').val($('input[name="values"]').val() + ",0")
                  }
              }
-             $('input[name="b"]').val($('input[name="b"]').val().substring(1))
-             $('input[name="c"]').val($('input[name="c"]').val().substring(1))
+             $('input[name="metabolites"]').val($('input[name="metabolites"]').val().substring(1))
+             $('input[name="values"]').val($('input[name="values"]').val().substring(1))
          }
 
         function exportToCsv(){
@@ -493,8 +493,8 @@ function clearCanvas() {
             lxlimit: $('input[name="lxlimit"]').val(),
 	    location: $('#location option:selected').val(),
             merge: document.getElementById('merge').checked,
-            b: $('input[name="b"]').val(),
-            c: $('input[name="c"]').val(),
+            metabolites: $('input[name="metabolites"]').val(),
+            values: $('input[name="values"]').val(),
             gender: $("#gender option:selected").val(),
             field: $("#field option:selected").val(),
             ID: $('input[name="ID"]').val(),
