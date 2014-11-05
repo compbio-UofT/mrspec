@@ -738,7 +738,7 @@ function downloadCSV (csv_out, name) {
                 hAxis: {title: 'Age',            
                 logScale: document.getElementById('scale').checked? true:false},
                 vAxis: {title: c},
-                legend: (columns > 3)? {}: 'none',
+                legend: {},
                 aggregationTarget: 'series',
                 selectionMode: 'multiple',
                 pointSize: 4,
