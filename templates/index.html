@@ -738,7 +738,10 @@ function downloadCSV (csv_out, name) {
                 hAxis: {title: 'Age',            
                 logScale: document.getElementById('scale').checked? true:false},
                 vAxis: {title: c},
-                legend: {},
+
+                legend: { position: 'top', maxLines : '5'},
+                // maxLines not working properly? Only shows up to 2 lines?
+
                 aggregationTarget: 'series',
                 selectionMode: 'multiple',
                 pointSize: 4,
