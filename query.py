@@ -138,6 +138,7 @@ def create_SD_table(cols, query, gender, field, location, unique, filter_by_sd, 
         j=0
         for column in cols:
             metabolite = column[:-9] if filter_by_sd else column
+
             if metabolite in met_threshold and subject_metabolites_query[0][j] is not None:
                 subquery = ["SELECT AVG({0}), STDDEV_SAMP({0}),COUNT({0}) FROM ".format(column),""]
 
@@ -148,9 +149,10 @@ def create_SD_table(cols, query, gender, field, location, unique, filter_by_sd, 
                 patient_sd = 0 if result[0][2] <= 1 else (float(subject_metabolites_query[0][j]) - float(result[0][0]))/float(result[0][1]) #N = (X-mu)/sigma
 
                 ##patient_sd = random.randint(-4,4)
-                qq = "UPDATE {} SET {}={} WHERE {} = {} AND AgeAtScan = {}".format(sd_table, metabolite, patient_sd, unique_desc, patient_ID, age)
-                print qq
+                qq = "UPDATE {} SET {}=CAST({} AS DECIMAL(11,6)) WHERE {} = {} AND AgeAtScan = {}".format(sd_table, metabolite + '_SD', patient_sd, unique_desc, patient_ID, age)
+                print qq + ';'
                 cur.execute(qq)
+                con.commit() ##necessary to reflect changes
                 
                 #sd.append({metabolite:int(patient_sd)})
             j+=1
@@ -330,6 +332,7 @@ def execute_query(query):
 def parse_query(ID, age, gender, field, location, metabolites, limit, uxlimit, lxlimit, mets_span_each, unique, filter_by_sd, keywords, key_exclude):
         
     graph_data = [table + ".AgeAtScan"]
+    
     #faster than list concatenation
     graph_data.extend(metabolites if not filter_by_sd else ["COALESCE(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>=0 AND {3}.ScanTEParameters {2} THEN {0} ELSE NULL END) as `{0}_Filtered`".format(metabolite, met_threshold[metabolite], met_echo_high[metabolite],table) for metabolite in metabolites])
 
@@ -754,15 +757,16 @@ if __name__ == '__main__':
         
         #asdf = parse_query(ID='',age=500, gender="", field="", metabolites=['Cr','Tau','GPC'], limit='', location="", mets_span_each=True, unique=True, filter_by_sd=True, keywords=[], key_exclude = [])
         col,q = execute_query(parse_query('', 0, '', '', '', 
-                                         ['Cr'], 
-                                         '', 
+                                         met_threshold.keys(), 
+                                         '', None,None,
                                          False,
                                          True, 
                                          True, 
                                          [], 
                                          []))
         
-        #create_SD_table(col,q, '', '', '', True, True, 0)
+        #print col,q
+        create_SD_table(col,q, '', '', '', True, True, 0)
 
         
 
@@ -785,4 +789,4 @@ if __name__ == '__main__':
         #print(' IS NULL AND '.join(met_echo_high.keys()) + ' IS NULL ')
         #print(','.join(met_echo_high.keys()))
         #close connection to database
-        con.close()
+        ##con.close()

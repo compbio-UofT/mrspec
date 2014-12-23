@@ -112,7 +112,7 @@ if __name__ == "__main__":
         ]
         
         for metabolite in metabolites:
-            sd_table_schema.append([metabolite, d])
+            sd_table_schema.append([metabolite, d, metabolite + '_SD'])
         
         sd_table_schema += [['`Indication`', t, 'Indication'],
                          ['`Diagnosis`', t, 'Diagnosis']
@@ -165,9 +165,9 @@ if __name__ == "__main__":
 
     #create standardized table
     create_standardized_table('standard', 'merged', table_schema, 'Indication,Diagnosis')
+    create_standardized_table("sd_both_both_alllocations", "standard", sd_table_schema, '')    
 
     print('\nAll operations completed successfully.')
 
     #close the connection to the database
-    #con.close()
-    ##create_standardized_table('SD', "sd_both_both_alllocations", sd_table_schema)
+    con.close()
