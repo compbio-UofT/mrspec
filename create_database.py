@@ -1,7 +1,13 @@
 import mysql.connector as m
 import csv, os, sys, shutil
+from connection import *
+import inspect
+import os
+import sys
 
 def create_table(name, query):
+    '''Str, Str -> None
+    Executes the specified query if the table (name) does not exist in the database.'''
     if table_exists(name):
         print("Table '{}' already in database. No changes made.".format(name))
     else:
@@ -72,7 +78,7 @@ if __name__ == "__main__":
             table_schema = [line.split(',') for line in r]
         print("Table schema loaded from file.")
     except IOError as e:
-        print("Error parsing schema file: "+str(e)+". Table schema loaded from defaults.")
+        print("Error parsing schema file: " +str(e)+". Table schema loaded from defaults.")
 
         #datatypes
         u = 'UNSIGNED'
@@ -118,37 +124,9 @@ if __name__ == "__main__":
                          ['`Diagnosis`', t, 'Diagnosis']
                          ]        
 
-    if sys.argv[0][-8:] == 'query.py':
-        #Initialize connection to MySQL database
-        #usage: python query.py <user> <password>
-        con = m.connect(user=sys.argv[1], password=sys.argv[2],
-                        database='mrspec')
-        cur = con.cursor()
-        #initialize the Flask application
-
-    else:
-        ##get credentials from file or user input
-        try:
-            with open("credentials.txt", 'r') as c:
-                user = c.next()
-                password = c.next()
-        except IOError as e:
-            #stdin.readline used here for compatibility with Python 2.7 and 3.x
-            print('User:')
-            user = sys.stdin.readline()
-            print('Password:')
-            password = sys.stdin.readline()
-
-        print('Credentials loaded successfully.')
-
-        con = m.connect(
-                user=user,
-                password=password,
-                database='mrspec')
-
-        cur = con.cursor()
-        print('Connection to database successful.\n')
-
+    #Establish connection with database
+    con,cur=establish_connection(sys.argv)
+    
     #import requisite tables in local folder and mysql folder
     import_csv("outcomes2.csv", "outcomes", "varchar(500)")
     import_csv("mrspec.csv", "mrspec", "text")
@@ -165,7 +143,13 @@ if __name__ == "__main__":
 
     #create standardized table
     create_standardized_table('standard', 'merged', table_schema, 'Indication,Diagnosis')
-    create_standardized_table("sd_both_both_alllocations", "standard", sd_table_schema, '')    
+    
+    create_standardized_table("sd_both_both_alllocations", "standard", sd_table_schema, '')
+    #create_standardized_table("sd_F_both_alllocations", "standard", sd_table_schema, '')
+    #create_standardized_table("sd_M_both_alllocations", "standard", sd_table_schema, '')    
+    #create_standardized_table("sd_both_both_alllocations", "standard", sd_table_schema, '')    
+    
+    
 
     print('\nAll operations completed successfully.')
 

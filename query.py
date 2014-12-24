@@ -3,6 +3,8 @@ import sys, random, time
 import os
 from os import path
 from flask import Flask, render_template, request, jsonify, json as j, send_file
+import __main__ as main
+from connection import *
 
 #metabolites stored as dictionaries for performance reasons
 met_threshold = {'CrCH2':40, 'AcAc':40, 'Acn':40, 'Ala':40, 'Asp':40, 'Cho':20, 'Cr':30,
@@ -27,7 +29,6 @@ sd_M_3_all = ''
 sd_F_3_all = ''
 sd_M_15_all = ''
 sd_table = 'sd_both_both_alllocations'
-
 
 unique_desc = "ID"
 
@@ -322,8 +323,11 @@ INNER JOIN (
     GROUP BY Keyword
 ) G ON G.Keyword = Scores.Keyword;'''
 
-def execute_query(query):
+def execute_query(query, commit=False):
+    '''Str, Bool -> Str, Str
+    Executes the specified MySQL query, returning the result, with the option to commit changes to the database.'''
     cur.execute(query)
+    if commit: con.commit()
     columns = [i[0] for i in cur.description]
     rows = cur.fetchall()
     return columns, rows
@@ -648,7 +652,7 @@ def add_numbers():
     location = request.args.get('location', '', type=str)
     overlay = request.args.get('overlay', 0, type=int)
     calc_sd = True
-    print(ID)
+    #print(ID)
     k_inc = request.args.get('keywords', 0, type=str)
     k_exc = request.args.get('key_exclude', 0, type=str)
     keywords = k_inc if not k_inc else k_inc.split(',')
@@ -710,42 +714,21 @@ if __name__ == '__main__':
                 filename = path.join(dirname, filename)
                 if path.isfile(filename):
                     extra_files.append(filename)
-
-    if sys.argv[0][-8:] == 'query.py':
-        #Initialize connection to MySQL database
-        #usage: python query.py <user> <password>
-        con = m.connect(user=sys.argv[1], password=sys.argv[2],
-                        database='mrspec', port=sys.argv[3])
-        cur = con.cursor()
-        #initialize the Flask application
+    
+    #establish connection to database
+    con,cur = establish_connection(sys.argv)
+    
+    #Launch app if script was called from commandline
+    if is_run_from_commandline():
         app.run(
             host="0.0.0.0",
-            port=int("8081"),
+            port=int(8081),
             debug=True,
             extra_files=extra_files
         )
+    #Otherwise, execute custom code for debugging
     else:
-        #Initialize connection to MySQL database
-        try:
-            with open("credentials.txt", 'r') as c:
-                user = c.next()
-                password = c.next()
-        except IOError as e:
-            #stdin.readline used here for compatibility with Python 2.7 and 3.x
-            print('User:')
-            user = sys.stdin.readline()
-            print('Password:')
-            password = sys.stdin.readline()
-
-        print('Credentials loaded successfully.')
-
-        con = m.connect(
-                user=user,
-                password=password,
-                database='mrspec')
-
-        cur = con.cursor()
-        print('Connection to database successful.\n')
+        ###Sandbox for testing###
 
         #example query
         
@@ -756,17 +739,17 @@ if __name__ == '__main__':
         start = time.clock()
         
         #asdf = parse_query(ID='',age=500, gender="", field="", metabolites=['Cr','Tau','GPC'], limit='', location="", mets_span_each=True, unique=True, filter_by_sd=True, keywords=[], key_exclude = [])
-        col,q = execute_query(parse_query('', 0, '', '', '', 
+        '''col,q = execute_query(parse_query('', 0, '', '', '', 
                                          met_threshold.keys(), 
                                          '', None,None,
                                          False,
                                          True, 
                                          True, 
                                          [], 
-                                         []))
+                                         []))'''
         
         #print col,q
-        create_SD_table(col,q, '', '', '', True, True, 0)
+        ##create_SD_table(col,q, '', '', '', True, True, 0)
 
         
 
