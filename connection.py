@@ -48,5 +48,3 @@ if __name__ == "__main__":
     con,cur = establish_connection('', False)
     print(is_run_from_commandline())
     con.close()
-    
-    #print "MAIN",__file__

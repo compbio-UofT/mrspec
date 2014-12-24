@@ -1,11 +1,8 @@
 import mysql.connector as m
-import csv, os, sys, shutil
+import csv, os, sys, shutil, inspect, os, sys
 from connection import *
-import inspect
-import os
-import sys
 
-def create_table(name, query):
+def check_for_table_before_executing(name, query):
     '''Str, Str -> None
     Executes the specified query if the table (name) does not exist in the database.'''
     if table_exists(name):
@@ -32,6 +29,24 @@ def create_standardized_table(name, source, table_schema, fulltexts):
             cur.execute("ALTER TABLE {} ADD FULLTEXT({})".format(name,fulltexts))
             
         print("Table '{}' created successfully.".format(name))
+        
+def create_sd_table(name, source, imports, nulls):
+    if table_exists(name):
+        print("Table '{}' already in database. No changes made.".format(name))
+    else:
+        
+        #import certain columns with values from another table
+        selection = ",".join(imports)
+        cur.execute("CREATE TABLE {} SELECT {} FROM {}".format(name, selection, source))
+        
+        #add remaining columns with NULL values
+        for col_spec in nulls:
+            cur.execute('ALTER TABLE {} ADD COLUMN {} {}'.format(name, col_spec[0], col_spec[1]))
+            
+        cur.execute("")
+            
+        print("Table '{}' created successfully.".format(name))    
+    
 
 def table_exists(tablename):
     cur.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = '{}'".format(tablename.replace('\'', '\'\'')))
@@ -91,7 +106,7 @@ if __name__ == "__main__":
                        'MM12', 'MM14', 'MM17', 'MM20', 'NAA', 'NAAG', 'PCh', 'PCr', 'Scyllo', 'Tau',
                        'tCr', 'tNAA', 'tCho', 'Glx']
         table_schema = [
-            ['tabPatient_ID', t, 'ID'],
+            ['MRN', t, 'ID'],
             ['AgeAtScan', s],
             ['Gender', t],
             ['ScanBZero', t],
@@ -107,22 +122,12 @@ if __name__ == "__main__":
                          ['`Diagnosis (from chart)`', t, 'Diagnosis']
                          ]
         
-        sd_table_schema = [
-            ['ID', t, 'ID'],
-            ['AgeAtScan', s],
-            ['Gender', t],
-            ['ScanBZero', t],
-            ['LocationName', t],
-            ['Location_ID', s],
-            ['ScanTEParameters', u]
-        ]
-        
+        #Specifies which information to be imported into sd tables
+        sd_table_imports = ['ID', 'AgeAtScan', 'Gender', 'ScanBZero', 'LocationName', 'Location_ID', 'ScanTEParameters']
+        #Specify which columns should be added with null values to be calculated later
+        sd_table_nulls = []
         for metabolite in metabolites:
-            sd_table_schema.append([metabolite, d, metabolite + '_SD'])
-        
-        sd_table_schema += [['`Indication`', t, 'Indication'],
-                         ['`Diagnosis`', t, 'Diagnosis']
-                         ]        
+            sd_table_nulls.append([metabolite + '_SD', d])
 
     #Establish connection with database
     con,cur=establish_connection(sys.argv)
@@ -132,24 +137,31 @@ if __name__ == "__main__":
     import_csv("mrspec.csv", "mrspec", "text")
     import_csv("tabPatients.csv", "tab_MRN", "varchar(50)")
 
-    #re-personalize mrspec
-    create_table('mrspec_MRN', "CREATE TABLE IF NOT EXISTS mrspec_MRN SELECT m.*, t.HSC_Number as MRN FROM mrspec AS m JOIN tab_MRN as t ON m.tabPatient_ID=t.tabPatient_ID")
+    #re-personalize mrspec with MRN
+    check_for_table_before_executing('mrspec_MRN', "CREATE TABLE IF NOT EXISTS mrspec_MRN SELECT m.*, t.HSC_Number as MRN FROM mrspec AS m JOIN tab_MRN as t ON m.tabPatient_ID=t.tabPatient_ID")
 
     #merge tables into table 'merged'
     cur.execute("ALTER TABLE outcomes DROP COLUMN tabPatient_ID") if column_exists("outcomes", "tabPatient_ID") else None
-    cur.execute("CREATE TEMPORARY TABLE OUTCOMES_GROUPED SELECT * FROM outcomes GROUP BY `MRN (column to be removed once study is in analysis phase)`,str_to_date(outcomes.Date, '%Y-%m-%d') ORDER BY str_to_date(outcomes.Date, '%Y-%m-%d')") if not table_exists('merged') else None
+    check_for_table_before_executing("merged","CREATE TABLE OUTCOMES_GROUPED SELECT * FROM outcomes GROUP BY `MRN (column to be removed once study is in analysis phase)`,str_to_date(outcomes.Date, '%Y-%m-%d') ORDER BY str_to_date(outcomes.Date, '%Y-%m-%d')")
+    con.commit()
 
-    create_table('merged', "CREATE TABLE IF NOT EXISTS merged SELECT * FROM OUTCOMES_GROUPED RIGHT JOIN mrspec_MRN ON OUTCOMES_GROUPED.`MRN (column to be removed once study is in analysis phase)` = mrspec_MRN.MRN AND str_to_date(OUTCOMES_GROUPED.Date, '%Y-%m-%d') = str_to_date(mrspec_MRN.procedureDate, '%y-%m-%d')")
-
-    #create standardized table
-    create_standardized_table('standard', 'merged', table_schema, 'Indication,Diagnosis')
+    check_for_table_before_executing('merged', "CREATE TABLE IF NOT EXISTS merged SELECT * FROM OUTCOMES_GROUPED RIGHT JOIN mrspec_MRN ON OUTCOMES_GROUPED.`MRN (column to be removed once study is in analysis phase)` = mrspec_MRN.MRN AND str_to_date(OUTCOMES_GROUPED.Date, '%Y-%m-%d') = str_to_date(mrspec_MRN.procedureDate, '%y-%m-%d')")   
     
-    create_standardized_table("sd_both_both_alllocations", "standard", sd_table_schema, '')
+    #create standardized table
+    create_standardized_table('standard', 'merged', table_schema, None)#'Indication,Diagnosis')
+    
+    ##update code##
+    import_csv("updates.csv", 'updates', "text")
+    check_for_table_before_executing('updates_merged', "CREATE TABLE IF NOT EXISTS updates_merged SELECT * FROM OUTCOMES_GROUPED RIGHT JOIN updates ON OUTCOMES_GROUPED.`MRN (column to be removed once study is in analysis phase)` = updates.MRN AND str_to_date(OUTCOMES_GROUPED.Date, '%Y-%m-%d') = str_to_date(updates.procedureDate, '%y-%m-%d')")
+    create_standardized_table("standard_update", 'updates_merged', table_schema, None)# fulltexts)
+    cur.execute('INSERT INTO standard SELECT * FROM standard_update')
+    con.commit()
+    
+    #create tables for standard deviations
+    create_sd_table("sd_both_both_alllocations", "standard", sd_table_imports, sd_table_nulls)
     #create_standardized_table("sd_F_both_alllocations", "standard", sd_table_schema, '')
     #create_standardized_table("sd_M_both_alllocations", "standard", sd_table_schema, '')    
-    #create_standardized_table("sd_both_both_alllocations", "standard", sd_table_schema, '')    
-    
-    
+    #create_standardized_table("sd_both_both_alllocations", "standard", sd_table_schema, '')     
 
     print('\nAll operations completed successfully.')
 
