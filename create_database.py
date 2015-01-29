@@ -1,6 +1,97 @@
 import mysql.connector as m
 import csv, os, sys, shutil, inspect, os, sys
 from connection import *
+from query import *
+
+met_to_calculate = {'tCr':['PCr','Cr'], 'tNAA':['NAA','NAAG'], 'tCho':['Cho','GPC','PCh'], 'Glx':['Gln','Glu']}
+high_low_mets = {'tCr':['PCr','Cr'], 'tNAA':['NAA','NAAG'], 'tCho':['Cho','GPC','PCh']}
+
+high = '= 144'
+low = '< 50'
+both = 'IS NOT NULL'
+met_echo_high = {'CrCH2':high, 'AcAc':high, 'Acn':high, 'Ala':low, 'Asp':low, 'Cho':high, 'Cr':high,
+                 'GABA':low, 'GPC':low, 'Glc':low, 'Gln':low, 'Glu':low, 'Gua':high, 'Ins':low, 'Lac':high, 'Lip09':low,
+                 'Lip13a':low, 'Lip13b':low, 'Lip20':low, 'MM09':low, 'MM12':low, 'MM14':low, 'MM17':low, 'MM20':low,
+                 'NAA':high, 'NAAG':low, 'PCh':low, 'PCr':low, 'Scyllo':low, 'Tau':low, 'tCr':both, 'tNAA':both, 'tCho':both, 'Glx':low}
+
+def insert_aggregate_metabolites_optimal(name, met_to_calculate):
+    if table_exists(name):
+        for met in met_to_calculate:
+            can_calculate = True            
+            for m in met_to_calculate[met]:
+                if not column_exists(name, m):
+                    print('Unable to calculate {}, metabolite {} value required.'.format(met,m))
+                    can_calculate = False
+
+            if can_calculate:                   
+                if not column_exists(name, met+'_opt'):
+                    cur.execute('ALTER TABLE {} ADD COLUMN {} {}'.format(name, met+'_opt', 'DECIMAL(11,6)'))
+                if not column_exists(name, met+'_opt_%SD'):
+                    cur.execute('ALTER TABLE {} ADD COLUMN {} {}'.format(name, '`' + met+'_opt_%SD`', 'BIGINT(21)'))
+                    
+                    
+                added = ' + '.join(["sel."+ mm +"_opt" for mm in met_to_calculate[met]])
+                greatest = ','.join(["sel.`"+ mm + "_opt_%SD`" for mm in met_to_calculate[met]])
+                
+                not_zero = ''.join(['AND '," > 0 AND ".join([ 'sel.' + mm + '_opt' for mm in met_to_calculate[met]]),' > 0'])
+
+                '''subquery = parse_query('', 0, '', '', '', 
+                                      met_to_calculate[met], 
+                                      '', 
+                                      '', 
+                                      '', 
+                                      False, 
+                                      False, 
+                                      '', 
+                                      '', 
+                                      '')'''
+                subquery1 = "SELECT Scan_ID," + ",".join(["COALESCE(CASE WHEN `{0}`>0 AND {3}.ScanTEParameters {2} THEN {0} ELSE NULL END) as `{0}_opt`".format(mm, '998', met_echo_high[mm],table) for mm in met_to_calculate[met]]) + ' FROM {} GROUP BY ID, AgeAtScan'.format(name)
+                
+                print('--------------FIX AGGMET OPT VALUES-----------------')
+                q = "UPDATE {0} T, ({4}) sel SET T.{1} = ({2}) WHERE T.Scan_ID = sel.Scan_ID".format(name, met +"_opt", added, '', subquery1)
+                print(q)
+                cur.execute(q)
+                con.commit()
+                
+                subquery2 = "SELECT Scan_ID," + ",".join(["COALESCE(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>0 AND {3}.ScanTEParameters {2} THEN `{0}_%SD` ELSE NULL END) as `{0}_opt_%SD`".format(mm, '998', met_echo_high[mm],table) for mm in met_to_calculate[met]]) + 'FROM {} GROUP BY ID, AgeAtScan'.format(name)
+                
+                print('--------------FIX AGGMET OPT SD-----------------')
+                q2 = "UPDATE {0} T, ({4}) sel SET T.{1} = GREATEST({2}) WHERE T.Scan_ID = sel.Scan_ID".format(name, '`' + met +"_opt_%SD`", greatest, '', subquery2)
+                print(q2)
+                cur.execute(q2)
+                con.commit()
+                
+def insert_additional_metabolites(name, met_to_calculate):
+    if table_exists(name):
+        for met in met_to_calculate:
+            can_calculate = True            
+            for m in met_to_calculate[met]:
+                if not column_exists(name, m):
+                    print('Unable to calculate {}, metabolite {} value required.'.format(met,m))
+                    can_calculate = False
+
+            if can_calculate:                   
+                if not column_exists(name, met):
+                    cur.execute('ALTER TABLE {} ADD COLUMN {} {}'.format(name, met, 'DECIMAL(11,6)'))
+                if not column_exists(name, met+'_%SD'):
+                    cur.execute('ALTER TABLE {} ADD COLUMN {} {}'.format(name, '`' + met + '_%SD`', 'BIGINT(21)'))
+
+
+                added = " + ".join(met_to_calculate[met])
+                greatest = ','.join(["`"+ mm + "_%SD`" for mm in met_to_calculate[met]])
+
+                not_zero = ''.join(['AND '," > 0 AND ".join([ mm for mm in met_to_calculate[met]]),' > 0'])
+                
+                print('--------------FIX AGGMET VALUES-----------------')
+                q = "UPDATE {0} as T SET {1} = ({2}) WHERE T.Scan_ID = Scan_ID {3}".format(name, met, added, not_zero)
+                print(q)
+                cur.execute(q)
+                
+                print('--------------FIX AGGMET SD-----------------')
+                q2="UPDATE {0} as T SET {1} = GREATEST({2}) WHERE T.Scan_ID = Scan_ID {3}".format(name, '`'+met+"_%SD`", greatest, not_zero)
+                print q2
+                cur.execute(q2)
+                con.commit()
 
 def check_for_table_before_executing(name, query):
     '''Str, Str -> None
@@ -17,13 +108,17 @@ def check_for_table_before_executing(name, query):
 
         print("Table '{}' created successfully.".format(name))
 
-def create_standardized_table(name, source, table_schema, fulltexts):
+def create_standardized_table(name, source, table_schema, fulltexts, unique):
     if table_exists(name):
         print("Table '{}' already in database. No changes made.".format(name))
     else:
         selection = ",".join(["CAST({0} AS {1}) AS {2}".format(c[0], c[1], c[0] if len(c) < 3 else c[2]) for c in table_schema]) #c[2] is used to rename the column
-
-        cur.execute("CREATE TABLE {} SELECT {} FROM {}".format(name, selection, source)) ##GROUP BY ID,AgeAtScan
+        
+        group_by = ''
+        if unique:
+            group_by = "GROUP BY {}".format(unique)
+            
+        cur.execute("CREATE TABLE {} SELECT {} FROM {} {}".format(name, selection, source, group_by)) ##GROUP BY ID,AgeAtScan
         
         if fulltexts:
             cur.execute("ALTER TABLE {} ADD FULLTEXT({})".format(name,fulltexts))
@@ -43,7 +138,7 @@ def create_sd_table(name, source, imports, nulls):
         for col_spec in nulls:
             cur.execute('ALTER TABLE {} ADD COLUMN {} {}'.format(name, col_spec[0], col_spec[1]))
             
-        cur.execute("")
+        con.commit()
             
         print("Table '{}' created successfully.".format(name))    
     
@@ -103,30 +198,37 @@ if __name__ == "__main__":
 
         metabolites = ['CrCH2', 'AcAc', 'Acn', 'Ala', 'Asp', 'Cho', 'Cr', 'GABA', 'GPC', 'Glc',
                        'Gln', 'Glu', 'Gua', 'Ins', 'Lac', 'Lip09', 'Lip13a', 'Lip13b', 'Lip20', 'MM09',
-                       'MM12', 'MM14', 'MM17', 'MM20', 'NAA', 'NAAG', 'PCh', 'PCr', 'Scyllo', 'Tau',
-                       'tCr', 'tNAA', 'tCho', 'Glx']
+                       'MM12', 'MM14', 'MM17', 'MM20', 'NAA', 'NAAG', 'PCh', 'PCr', 'Scyllo', 'Tau']        
+                
         table_schema = [
             ['MRN', t, 'ID'],
             ['AgeAtScan', s],
             ['Gender', t],
             ['ScanBZero', t],
             ['LocationName', t],
-            ['Location_ID', s],
+            ['Scan_ID', u],
             ['ScanTEParameters', u]
         ]
+        
+        table_schema += [['`Indication (as written on MRI requisition)`', t, 'Indication'],
+                         ['`Diagnosis (from chart)`', t, 'Diagnosis']
+                         ] 
+        update_table_schema= [['HSC_Number', t, 'ID']] + table_schema[1:]
+        
 
         for metabolite in metabolites:
             table_schema += [[metabolite, d],['`' + metabolite + "_%SD`", s]]
 
-        table_schema += [['`Indication (as written on MRI requisition)`', t, 'Indication'],
-                         ['`Diagnosis (from chart)`', t, 'Diagnosis']
-                         ]
+        for metabolite in metabolites:
+            update_table_schema += [[metabolite, d],['`' + metabolite + "_SD`", s]]
+        
+
         
         #Specifies which information to be imported into sd tables
-        sd_table_imports = ['ID', 'AgeAtScan', 'Gender', 'ScanBZero', 'LocationName', 'Location_ID', 'ScanTEParameters']
+        sd_table_imports = ['ID', 'AgeAtScan', 'Gender', 'ScanBZero', 'LocationName', 'ScanTEParameters']
         #Specify which columns should be added with null values to be calculated later
         sd_table_nulls = []
-        for metabolite in metabolites:
+        for metabolite in metabolites + ['tCr', 'tNAA', 'tCho', 'Glx']:
             sd_table_nulls.append([metabolite + '_SD', d])
 
     #Establish connection with database
@@ -147,15 +249,23 @@ if __name__ == "__main__":
 
     check_for_table_before_executing('merged', "CREATE TABLE IF NOT EXISTS merged SELECT * FROM OUTCOMES_GROUPED RIGHT JOIN mrspec_MRN ON OUTCOMES_GROUPED.`MRN (column to be removed once study is in analysis phase)` = mrspec_MRN.MRN AND str_to_date(OUTCOMES_GROUPED.Date, '%Y-%m-%d') = str_to_date(mrspec_MRN.procedureDate, '%y-%m-%d')")   
     
+    ##
     #create standardized table
-    create_standardized_table('standard', 'merged', table_schema, None)#'Indication,Diagnosis')
-    
+    create_standardized_table('standard', 'merged', table_schema, None, 'Scan_ID')#'Indication,Diagnosis')
     ##update code##
     import_csv("updates.csv", 'updates', "text")
-    check_for_table_before_executing('updates_merged', "CREATE TABLE IF NOT EXISTS updates_merged SELECT * FROM OUTCOMES_GROUPED RIGHT JOIN updates ON OUTCOMES_GROUPED.`MRN (column to be removed once study is in analysis phase)` = updates.MRN AND str_to_date(OUTCOMES_GROUPED.Date, '%Y-%m-%d') = str_to_date(updates.procedureDate, '%y-%m-%d')")
-    create_standardized_table("standard_update", 'updates_merged', table_schema, None)# fulltexts)
-    cur.execute('INSERT INTO standard SELECT * FROM standard_update')
+    check_for_table_before_executing('updates_merged', "CREATE TABLE IF NOT EXISTS updates_merged SELECT * FROM updates LEFT JOIN OUTCOMES_GROUPED ON OUTCOMES_GROUPED.`MRN (column to be removed once study is in analysis phase)` = updates.HSC_Number AND str_to_date(OUTCOMES_GROUPED.Date, '%Y-%m-%d') = str_to_date(updates.ProcedureDate, '%d/%m/%Y')")
     con.commit()
+    cur.execute('alter table updates_merged add column AgeAtScan bigint(21)') if not column_exists('updates_merged','AgeAtScan') else None
+    cur.execute("UPDATE updates_merged as T SET T.AgeAtScan = (TO_DAYS(STR_TO_DATE(T.ProcedureDate,'%d/%m/%Y')) - TO_DAYS(STR_TO_DATE(T.PatientBirthDay,'%d/%m/%Y'))) where T.Scan_ID = Scan_ID")
+    con.commit()
+    create_standardized_table("standard_update", 'updates_merged', update_table_schema, None, 'Scan_ID')# fulltexts)
+    ##cur.execute('INSERT INTO standard SELECT * FROM standard_update')
+    con.commit()
+    
+    ##calculate additional metabolites
+    insert_additional_metabolites('standard', met_to_calculate)
+    insert_aggregate_metabolites_optimal('standard', high_low_mets)
     
     #create tables for standard deviations
     create_sd_table("sd_both_both_alllocations", "standard", sd_table_imports, sd_table_nulls)

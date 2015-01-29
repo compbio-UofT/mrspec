@@ -13,11 +13,11 @@ met_threshold = {'CrCH2':40, 'AcAc':40, 'Acn':40, 'Ala':40, 'Asp':40, 'Cho':20, 
 
 high = '= 144'
 low = '< 50'
-#both = 'IS NOT NULL'
+both = 'IS NOT NULL'
 met_echo_high = {'CrCH2':high, 'AcAc':high, 'Acn':high, 'Ala':low, 'Asp':low, 'Cho':high, 'Cr':high,
                  'GABA':low, 'GPC':low, 'Glc':low, 'Gln':low, 'Glu':low, 'Gua':high, 'Ins':low, 'Lac':high, 'Lip09':low,
                  'Lip13a':low, 'Lip13b':low, 'Lip20':low, 'MM09':low, 'MM12':low, 'MM14':low, 'MM17':low, 'MM20':low,
-                 'NAA':high, 'NAAG':low, 'PCh':low, 'PCr':low, 'Scyllo':low, 'Tau':low, 'tCr':high, 'tNAA':high, 'tCho':high, 'Glx':low}
+                 'NAA':high, 'NAAG':low, 'PCh':low, 'PCr':low, 'Scyllo':low, 'Tau':low, 'tCr':both, 'tNAA':both, 'tCho':both, 'Glx':low}
 
 table = "standard"
 
@@ -118,6 +118,7 @@ def default_query(ID, age, gender, field, location, metabolites, limit, mets_spa
     #columns = [i[0] for i in cur.description]
     return rows
 
+
 def create_SD_table(cols, query, gender, field, location, unique, filter_by_sd, overlay):
     #all_sd = []
     limit = 50
@@ -136,14 +137,16 @@ def create_SD_table(cols, query, gender, field, location, unique, filter_by_sd, 
         cols,subject_metabolites_query = execute_query(query)
 
         j=0
+        #iterate through all columns of the query (doesn't matter at what columns metabolites begin)
         for column in cols:
-            metabolite = column[:-9] if filter_by_sd else column
+            #get metabolite name by truncating title if filtered
+            name = column[:-9] if filter_by_sd else column
 
-            if metabolite in met_threshold and subject_metabolites_query[0][j] is not None:
+            if name in met_threshold and subject_metabolites_query[0][j] is not None:
                 subquery = "SELECT AVG({0}), STDDEV_SAMP({0}),COUNT({0}) FROM ".format(column)
                 subquery = ''.join([subquery,'(', parse_query('', age, gender, field, 
                                              location, 
-                                             [metabolite], 
+                                             [name], 
                                              limit, 
                                              '', 
                                              '', 
@@ -160,7 +163,7 @@ def create_SD_table(cols, query, gender, field, location, unique, filter_by_sd, 
                 patient_sd = 0 if result[0][2] <= 1 else (float(subject_metabolites_query[0][j]) - float(result[0][0]))/float(result[0][1]) #N = (X-mu)/sigma
 
                 ##patient_sd = random.randint(-4,4)
-                qq = "UPDATE {} SET {}=CAST({} AS DECIMAL(11,6)) WHERE {} = {} AND AgeAtScan = {}".format(sd_table, metabolite + '_SD', patient_sd, unique_desc, patient_ID, age)
+                qq = "UPDATE {} SET {}=CAST({} AS DECIMAL(11,6)) WHERE {} = {} AND AgeAtScan = {}".format(sd_table, name + '_SD', patient_sd, unique_desc, patient_ID, age)
                 #print qq + ';'
                 cur.execute(qq)
                 con.commit() ##necessary to reflect changes
@@ -338,7 +341,7 @@ INNER JOIN (
 ) G ON G.Keyword = Scores.Keyword;'''
 
 def execute_query(query, commit=False):
-    '''Str, Bool -> Str, Str
+    '''Str, Bool -> [], [][]
     Executes the specified MySQL query, returning the result, with the option to commit changes to the database.'''
     cur.execute(query)
     if commit: con.commit()
@@ -352,7 +355,7 @@ def parse_query(ID, age, gender, field, location, metabolites, limit, uxlimit, l
     graph_data = [table + ".AgeAtScan"]
     
     #faster than list concatenation
-    graph_data.extend(metabolites if not filter_by_sd else ["COALESCE(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>=0 AND {3}.ScanTEParameters {2} THEN {0} ELSE NULL END) as `{0}_Filtered`".format(metabolite, met_threshold[metabolite], met_echo_high[metabolite],table) for metabolite in metabolites])
+    graph_data.extend(metabolites if not filter_by_sd else ["COALESCE(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>0 AND `{0}_%SD` IS NOT NULL AND {3}.ScanTEParameters {2} THEN {0} ELSE NULL END) as `{0}_Filtered`".format(metabolite, met_threshold[metabolite], met_echo_high[metabolite],table) for metabolite in metabolites])
 
     graph_data.extend([met+'_SD' for met in met_threshold.keys()])    
     
@@ -757,7 +760,7 @@ if __name__ == '__main__':
                                          ['Cr'], 
                                          '', None,None,
                                          False,
-                                         True, 
+                                         False, 
                                          True, 
                                          [], 
                                          []))
