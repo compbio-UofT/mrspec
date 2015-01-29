@@ -355,7 +355,7 @@ def parse_query(ID, age, gender, field, location, metabolites, limit, uxlimit, l
     graph_data = [table + ".AgeAtScan"]
     
     #faster than list concatenation
-    graph_data.extend(metabolites if not filter_by_sd else ["COALESCE(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>0 AND `{0}_%SD` IS NOT NULL AND {3}.ScanTEParameters {2} THEN {0} ELSE NULL END) as `{0}_Filtered`".format(metabolite, met_threshold[metabolite], met_echo_high[metabolite],table) for metabolite in metabolites])
+    graph_data.extend(metabolites if not filter_by_sd else ["COALESCE(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>0 AND {3}.ScanTEParameters {2} THEN {0} ELSE NULL END) as `{0}_Filtered`".format(metabolite, met_threshold[metabolite], met_echo_high[metabolite],table) for metabolite in metabolites])
 
     graph_data.extend([met+'_SD' for met in met_threshold.keys()])    
     

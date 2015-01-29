@@ -260,10 +260,13 @@ if __name__ == "__main__":
     cur.execute("UPDATE updates_merged as T SET T.AgeAtScan = (TO_DAYS(STR_TO_DATE(T.ProcedureDate,'%d/%m/%Y')) - TO_DAYS(STR_TO_DATE(T.PatientBirthDay,'%d/%m/%Y'))) where T.Scan_ID = Scan_ID")
     con.commit()
     create_standardized_table("standard_update", 'updates_merged', update_table_schema, None, 'Scan_ID')# fulltexts)
-    ##cur.execute('INSERT INTO standard SELECT * FROM standard_update')
+    
+    ##COMMENT THIS LINE OUT AFTER SCRIPT HAS RUN ONCE, otherwise you will get an error
+    cur.execute('INSERT INTO standard SELECT * FROM standard_update')
+    
     con.commit()
     
-    ##calculate additional metabolites
+    ##calculate additional metabolites (tCr, tCho, Glx, tNAA)
     insert_additional_metabolites('standard', met_to_calculate)
     insert_aggregate_metabolites_optimal('standard', high_low_mets)
     
