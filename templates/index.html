@@ -848,19 +848,25 @@ function downloadCSV (csv_out, name) {
 
 					//render the list
 					for (c in categories){
+                                                var arrow = ""
+                        if (c == 0){
+                                arrow += "<img src='/img/up.png' alt='Raised' style='width:15px;height:15px'></img>"
+                    }       else if (c == 1) {
+                                arrow += "<img src='/img/down.png' alt='Lowered' style='width:15px;height:15px'></img>"
+                    }
 
 						if (categories[c].length > 0) {
 							var elem = "<li>"
 
 							for (met in categories[c][0])
-								elem +="" + met + ": " + Math.round(categories[c][0][met]) + " SD"
+								elem +="" + met + ": " +arrow+ Math.round(categories[c][0][met]) + " SD"
 							
 						
 							if(categories[c].length > 1){
 								elem += "<ul class='justify'>"
 								for (i = 1; i < categories[c].length; i++){
 									for (name in categories[c][i])
-										elem +="<li>" + name +": " + Math.round(categories[c][i][name]) + " SD </li>"
+										elem +="<li>" + name +": " + arrow+ Math.round(categories[c][i][name]) + " SD </li>"
 								}
 								elem += "</ul>"
 							}
