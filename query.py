@@ -120,6 +120,7 @@ def default_query(ID, age, gender, field, location, metabolites, limit, mets_spa
 
 
 def create_SD_table(cols, query, gender, field, location, unique, filter_by_sd, overlay):
+    '''Populates a table in which the '''
     #all_sd = []
     limit = 50
 
@@ -349,15 +350,15 @@ def execute_query(query, commit=False):
     rows = cur.fetchall()
     return columns, rows
 
-#bug exists where could access scan information from later date
-def parse_query(ID, age, gender, field, location, metabolites, limit, uxlimit, lxlimit, mets_span_each, unique, filter_by_sd, keywords, key_exclude):
+#bug exists where could access scan information from later date because of use of coalesce if unique is True
+def parse_query(ID, age, gender, field, location, metabolites, limit, uxlimit, lxlimit, mets_span_each, unique, filter_by_sd, keywords, key_exclude, windowed_SD_threshold):
         
     graph_data = [table + ".AgeAtScan"]
     
     #faster than list concatenation
     graph_data.extend(metabolites if not filter_by_sd else ["COALESCE(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>0 AND {3}.ScanTEParameters {2} THEN {0} ELSE NULL END) as `{0}_Filtered`".format(metabolite, met_threshold[metabolite], met_echo_high[metabolite],table) for metabolite in metabolites])
 
-    graph_data.extend([met+'_SD' for met in met_threshold.keys()])    
+    graph_data.extend([met+'_SD' for met in met_threshold])    
     
     graph_data.extend([table + ".{}".format(m) for m in metadata])
         
@@ -402,6 +403,11 @@ def parse_query(ID, age, gender, field, location, metabolites, limit, uxlimit, l
         parsed_options.append('{}.AgeAtScan < {}'.format(table, uxlimit))
     if lxlimit:
         parsed_options.append('{}.AgeAtScan > {}'.format(table, lxlimit))
+    
+    #select data that lies outside of a SD threshold
+    if windowed_SD_threshold:
+        print windowed_SD_threshold
+        parsed_options.extend(['`{0}_SD` >= {1} OR `{0}_SD` <= -{1}'.format(mm,windowed_SD_threshold) for mm in metabolites])
         
     if parsed_options:
         parsed_where = 'WHERE '
@@ -665,7 +671,7 @@ def add_numbers():
     gender = request.args.get('gender', 0, type=str)
     field = request.args.get('field', 0, type=str)
     filter_by_sd=True
-    unique=True
+    unique=False
     location = request.args.get('location', '', type=str)
     overlay = request.args.get('overlay', 0, type=int)
     calc_sd = True
@@ -674,8 +680,11 @@ def add_numbers():
     k_exc = request.args.get('key_exclude', 0, type=str)
     keywords = k_inc if not k_inc else k_inc.split(',')
     key_exclude = k_exc if not k_exc else k_exc.split(',')
+    windowed_SD_threshold = request.args.get('windowed_SD_threshold',0,type=str)
     
-    asdf = parse_query(ID=ID,
+    print windowed_SD_threshold
+    
+    query = parse_query(ID=ID,
         age=age,
         gender=gender,
         field=field,
@@ -688,9 +697,9 @@ def add_numbers():
         unique=unique,
         filter_by_sd=filter_by_sd,
         keywords=keywords,
-        key_exclude = key_exclude)
+        key_exclude = key_exclude, windowed_SD_threshold=windowed_SD_threshold)
     
-    cols,q = execute_query(asdf)
+    cols,q = execute_query(query)
         
     sd_array = windowed_SD(cols, q, gender, field, location, unique, filter_by_sd, overlay)
 
@@ -766,7 +775,9 @@ if __name__ == '__main__':
                                          []))
         
         #print col,q
-        create_SD_table(col,q, '', '', '', True, True, 0)
+        ##create_SD_table(col,q, '', '', '', False, True, 0)
+        #create_SD_table(cols, query, gender, field, location, unique, 
+                       #filter_by_sd, overlay)
 
         ##print j.dumps(format_query_with_pseries(q, 'Age,Acn'.split(","), "500,0.5".split(",")))
         ##print j.dumps(format_query_with_pseries_and_names(q, 'Age,Acn,Cr'.split(","), "500,0.5,6".split(",")), indent=1)

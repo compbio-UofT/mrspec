@@ -184,6 +184,8 @@ ul.justify { margin-left:-2.75em; }
                         <input type="text" size="2" name="lxlimit"></span>
                         <span title="Upper limit of the X-axis range.">Upper X Limit:
                         <input type="text" size="2" name="uxlimit"></span>
+                        <span title="Select data that lies outside of a certain standard deviation threshold.">SD threshold:
+                        <input type="text" size="2" name="sdThreshold"></span>
                         <span title="More options.">More options <img id='allOpt' src="../img/new_window.png" style="padding-bottom:3px" /></span>
                         <br>
                         <span title="Merge graphs.">Merge Graphs:
@@ -498,6 +500,7 @@ function clearCanvas() {
             gender: $("#gender option:selected").val(),
             field: $("#field option:selected").val(),
             ID: $('input[name="ID"]').val(),
+            windowed_SD_threshold: $('input[name="sdThreshold"]').val(),
             overlay: (document.getElementById('overlay').checked == false || (document.getElementById('overlay').checked == true && window.my_config == null))? 0:(window.my_config.results[window.my_config.names[0]].cols.length -1)
             }, function(data) {
             
