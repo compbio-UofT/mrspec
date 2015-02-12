@@ -406,8 +406,8 @@ def parse_query(ID, age, gender, field, location, metabolites, limit, uxlimit, l
     
     #select data that lies outside of a SD threshold
     if windowed_SD_threshold:
-        print windowed_SD_threshold
-        parsed_options.extend(['`{0}_SD` >= {1} OR `{0}_SD` <= -{1}'.format(mm,windowed_SD_threshold) for mm in metabolites])
+        thresholds = ' OR '.join(['`{0}_SD` >= {1} OR `{0}_SD` <= -{1}'.format(mm,windowed_SD_threshold) for mm in metabolites])
+        parsed_options.append(thresholds)
         
     if parsed_options:
         parsed_where = 'WHERE '
