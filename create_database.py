@@ -3,6 +3,9 @@ import csv, os, sys, shutil, inspect, os, sys
 from connection import *
 from query import *
 
+con,cur=establish_connection(sys.argv)
+
+unique_desc='ID'
 met_to_calculate = {'tCr':['PCr','Cr'], 'tNAA':['NAA','NAAG'], 'tCho':['Cho','GPC','PCh'], 'Glx':['Gln','Glu']}
 high_low_mets = {'tCr':['PCr','Cr'], 'tNAA':['NAA','NAAG'], 'tCho':['Cho','GPC','PCh']}
 
@@ -45,7 +48,7 @@ def insert_aggregate_metabolites_optimal(name, met_to_calculate):
                                       '', 
                                       '', 
                                       '')'''
-                subquery1 = "SELECT Scan_ID," + ",".join(["COALESCE(CASE WHEN `{0}`>0 AND {3}.ScanTEParameters {2} THEN {0} ELSE NULL END) as `{0}_opt`".format(mm, '998', met_echo_high[mm],table) for mm in met_to_calculate[met]]) + ' FROM {} GROUP BY ID, AgeAtScan'.format(name)
+                subquery1 = "SELECT Scan_ID," + ",".join(["COALESCE(CASE WHEN `{0}`>0 AND {3}.ScanTEParameters {2} THEN {0} ELSE NULL END) as `{0}_opt`".format(mm, '998', met_echo_high[mm],table) for mm in met_to_calculate[met]]) + ' FROM {} GROUP BY {}, AgeAtScan'.format(name,unique_desc)
                 
                 print('--------------FIX AGGMET OPT VALUES-----------------')
                 q = "UPDATE {0} T, ({4}) sel SET T.{1} = ({2}) WHERE T.Scan_ID = sel.Scan_ID".format(name, met +"_opt", added, '', subquery1)
@@ -53,7 +56,7 @@ def insert_aggregate_metabolites_optimal(name, met_to_calculate):
                 cur.execute(q)
                 con.commit()
                 
-                subquery2 = "SELECT Scan_ID," + ",".join(["COALESCE(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>0 AND {3}.ScanTEParameters {2} THEN `{0}_%SD` ELSE NULL END) as `{0}_opt_%SD`".format(mm, '998', met_echo_high[mm],table) for mm in met_to_calculate[met]]) + 'FROM {} GROUP BY ID, AgeAtScan'.format(name)
+                subquery2 = "SELECT Scan_ID," + ",".join(["COALESCE(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>0 AND {3}.ScanTEParameters {2} THEN `{0}_%SD` ELSE NULL END) as `{0}_opt_%SD`".format(mm, '998', met_echo_high[mm],table) for mm in met_to_calculate[met]]) + 'FROM {} GROUP BY {}, AgeAtScan'.format(name,unique_desc)
                 
                 print('--------------FIX AGGMET OPT SD-----------------')
                 q2 = "UPDATE {0} T, ({4}) sel SET T.{1} = GREATEST({2}) WHERE T.Scan_ID = sel.Scan_ID".format(name, '`' + met +"_opt_%SD`", greatest, '', subquery2)
@@ -88,7 +91,7 @@ def insert_additional_metabolites(name, met_to_calculate):
                 cur.execute(q)
                 
                 print('--------------FIX AGGMET SD-----------------')
-                q2="UPDATE {0} as T SET {1} = GREATEST({2}) WHERE T.Scan_ID = Scan_ID {3}".format(name, '`'+met+"_%SD`", greatest, not_zero)
+                q2="UPDATE {0} as T SET {1} = LEAST({2}) WHERE T.Scan_ID = Scan_ID {3}".format(name, '`'+met+"_%SD`", greatest, not_zero)
                 print q2
                 cur.execute(q2)
                 con.commit()
@@ -232,7 +235,7 @@ if __name__ == "__main__":
             sd_table_nulls.append([metabolite + '_SD', d])
 
     #Establish connection with database
-    con,cur=establish_connection(sys.argv)
+    #con,cur=establish_connection(sys.argv)
     
     #import requisite tables in local folder and mysql folder
     import_csv("outcomes2.csv", "outcomes", "varchar(500)")
@@ -262,7 +265,7 @@ if __name__ == "__main__":
     create_standardized_table("standard_update", 'updates_merged', update_table_schema, None, 'Scan_ID')# fulltexts)
     
     ##COMMENT THIS LINE OUT AFTER SCRIPT HAS RUN ONCE, otherwise you will get an error
-    cur.execute('INSERT INTO standard SELECT * FROM standard_update')
+    #cur.execute('INSERT INTO standard SELECT * FROM standard_update')
     
     con.commit()
     
