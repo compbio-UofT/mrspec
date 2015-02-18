@@ -19,7 +19,7 @@ met_echo_high = {'CrCH2':high, 'AcAc':high, 'Acn':high, 'Ala':low, 'Asp':low, 'C
                  'Lip13a':low, 'Lip13b':low, 'Lip20':low, 'MM09':low, 'MM12':low, 'MM14':low, 'MM17':low, 'MM20':low,
                  'NAA':high, 'NAAG':low, 'PCh':low, 'PCr':low, 'Scyllo':low, 'Tau':low, 'tCr':both, 'tNAA':both, 'tCho':both, 'Glx':low}
 
-table = "standard"
+table = "standard_SD"
 
 sd_both_both_all = 'sd_both_both_alllocations'
 sd_M_3_all = ''
@@ -49,7 +49,7 @@ def default_query(ID, age, gender, field, location, metabolites, limit, mets_spa
 
     ###compile options for where: gender, field, location, met null and or###
     where = ''
-    constraints = {'Gender':gender, 'ScanBZero':field, 'LocationName':location, 'ID':ID}
+    constraints = {'Gender':gender, 'ScanBZero':field, 'LocationName':location, unique_desc:ID}
     for constraint in constraints:
         if constraints[constraint]:
             where += " {} {} = '{}'".format(
@@ -358,6 +358,7 @@ def parse_query(ID, age, gender, field, location, metabolites, limit, uxlimit, l
     #faster than list concatenation
     graph_data.extend(metabolites if not filter_by_sd else ["COALESCE(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>0 AND {3}.ScanTEParameters {2} THEN {0} ELSE NULL END) as `{0}_Filtered`".format(metabolite, met_threshold[metabolite], met_echo_high[metabolite],table) for metabolite in metabolites])
 
+    ##
     graph_data.extend([met+'_SD' for met in met_threshold])    
     
     graph_data.extend([table + ".{}".format(m) for m in metadata])
@@ -369,7 +370,7 @@ def parse_query(ID, age, gender, field, location, metabolites, limit, uxlimit, l
     parsed_where = ''
     parsed_options = []
         
-    constraints = {'Gender':gender, 'ScanBZero':field, 'LocationName':location, 'ID':ID}
+    constraints = {'Gender':gender, 'ScanBZero':field, 'LocationName':location, unique_desc:ID}
     for constraint in constraints:
         if constraints[constraint]:
             parsed_options.append("{}.{} IN ('{}')".format(table,constraint,
@@ -419,7 +420,7 @@ def parse_query(ID, age, gender, field, location, metabolites, limit, uxlimit, l
     ###finally, compile query###
     query = ''
     
-    join = " LEFT JOIN `{1}` ON `{1}`.{2} = {3}.{2} AND `{1}`.AgeAtScan = {3}.AgeAtScan ".format(','.join(met_threshold.keys()), sd_table, unique_desc, table)
+    join = ""#LEFT JOIN `{1}` ON `{1}`.{2} = {3}.{2} AND `{1}`.AgeAtScan = {3}.AgeAtScan ".format(','.join(met_threshold.keys()), sd_table, unique_desc, table)
 
     #print "select: ", select
     #print "table: ", table
@@ -429,7 +430,7 @@ def parse_query(ID, age, gender, field, location, metabolites, limit, uxlimit, l
     
     ##limit_parser = {True: _parse_limit, False: _parse_no_limit}
     if limit == '':
-        query = "SELECT {} FROM {} {} {} {} ORDER BY ID".format(select, table, join, parsed_where, group_by)
+        query = "SELECT {} FROM {} {} {} {} ORDER BY {}".format(select, table, join, parsed_where, group_by,unique_desc)
     else:
         ###limit: limit###
         limit = 'LIMIT {}'.format(limit)
@@ -772,9 +773,9 @@ if __name__ == '__main__':
                                          False, 
                                          True, 
                                          [], 
-                                         []))
+                                         [],''))
         
-        #print col,q
+        print col,q
         ##create_SD_table(col,q, '', '', '', False, True, 0)
         #create_SD_table(cols, query, gender, field, location, unique, 
                        #filter_by_sd, overlay)
