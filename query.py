@@ -27,7 +27,7 @@ sd_F_3_all = ''
 sd_M_15_all = ''
 sd_table = 'sd_both_both_alllocations'
 
-unique_desc = "ID"
+unique_desc = "DatabaseID"
 
 metadata = [
     unique_desc,
