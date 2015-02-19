@@ -19,7 +19,7 @@ met_echo_high = {'CrCH2':high, 'AcAc':high, 'Acn':high, 'Ala':low, 'Asp':low, 'C
                  'Lip13a':low, 'Lip13b':low, 'Lip20':low, 'MM09':low, 'MM12':low, 'MM14':low, 'MM17':low, 'MM20':low,
                  'NAA':high, 'NAAG':low, 'PCh':low, 'PCr':low, 'Scyllo':low, 'Tau':low, 'tCr':both, 'tNAA':both, 'tCho':both, 'Glx':low}
 
-table = "standard_SD"
+table = "standard_sd"
 
 sd_both_both_all = 'sd_both_both_alllocations'
 sd_M_3_all = ''
@@ -743,7 +743,7 @@ if __name__ == '__main__':
                     extra_files.append(filename)
     
     #establish connection to database
-    con,cur = establish_connection(sys.argv)
+    con,cur = establish_connection(sys.argv, silent=False)
     
     #Launch app if script was called from commandline
     if is_run_from_commandline():
