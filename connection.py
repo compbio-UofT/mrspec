@@ -9,8 +9,8 @@ def is_run_from_commandline():
     return False
 
 def establish_connection(args, silent=False):
-        
-    if is_run_from_commandline():
+         
+    if inspect.getouterframes(inspect.currentframe())[1][1] == main.__file__:
         #Initialize connection to MySQL database
         #usage: python query.py <user> <password> <port>
         try:
