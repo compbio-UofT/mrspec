@@ -27,9 +27,13 @@ def insert_aggregate_metabolites_optimal(name, met_to_calculate):
                     can_calculate = False
 
             if can_calculate:                   
-                if not column_exists(name, met+'_opt'):
+                if column_exists(name, met+'_opt'):
+                    cur.execute('UPDATE {} SET {} = NULL'.format(name, met+"_opt"))
+                else:
                     cur.execute('ALTER TABLE {} ADD COLUMN {} {}'.format(name, met+'_opt', 'DECIMAL(11,6)'))
-                if not column_exists(name, met+'_opt_%SD'):
+                if column_exists(name, met+'_opt_%SD'):
+                    cur.execute('UPDATE {} SET {} = NULL'.format(name, '`' + met+'_opt_%SD`'))
+                else:
                     cur.execute('ALTER TABLE {} ADD COLUMN {} {}'.format(name, '`' + met+'_opt_%SD`', 'BIGINT(21)'))
                     
                     
@@ -48,7 +52,7 @@ def insert_aggregate_metabolites_optimal(name, met_to_calculate):
                                       '', 
                                       '', 
                                       '')'''
-                subquery1 = "SELECT Scan_ID," + ",".join(["COALESCE(CASE WHEN `{0}`>0 AND {3}.ScanTEParameters {2} THEN {0} ELSE NULL END) as `{0}_opt`".format(mm, '998', met_echo_high[mm],table) for mm in met_to_calculate[met]]) + ' FROM {} GROUP BY {}, AgeAtScan'.format(name,unique_desc)
+                subquery1 = "SELECT Scan_ID," + ",".join(["COALESCE(CASE WHEN `{0}`>0 AND {3}.ScanTEParameters {2} THEN {0} ELSE NULL END) as `{0}_opt`".format(mm, '998', met_echo_high[mm],name) for mm in met_to_calculate[met]]) + ' FROM {} GROUP BY {}, AgeAtScan'.format(name,unique_desc)
                 
                 print('--------------FIX AGGMET OPT VALUES-----------------')
                 q = "UPDATE {0} T, ({4}) sel SET T.{1} = ({2}) WHERE T.Scan_ID = sel.Scan_ID".format(name, met +"_opt", added, '', subquery1)
@@ -56,7 +60,7 @@ def insert_aggregate_metabolites_optimal(name, met_to_calculate):
                 cur.execute(q)
                 con.commit()
                 
-                subquery2 = "SELECT Scan_ID," + ",".join(["COALESCE(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>0 AND {3}.ScanTEParameters {2} THEN `{0}_%SD` ELSE NULL END) as `{0}_opt_%SD`".format(mm, '998', met_echo_high[mm],table) for mm in met_to_calculate[met]]) + 'FROM {} GROUP BY {}, AgeAtScan'.format(name,unique_desc)
+                subquery2 = "SELECT Scan_ID," + ",".join(["COALESCE(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>0 AND {3}.ScanTEParameters {2} THEN `{0}_%SD` ELSE NULL END) as `{0}_opt_%SD`".format(mm, '998', met_echo_high[mm],name) for mm in met_to_calculate[met]]) + 'FROM {} GROUP BY {}, AgeAtScan'.format(name,unique_desc)
                 
                 print('--------------FIX AGGMET OPT SD-----------------')
                 q2 = "UPDATE {0} T, ({4}) sel SET T.{1} = GREATEST({2}) WHERE T.Scan_ID = sel.Scan_ID".format(name, '`' + met +"_opt_%SD`", greatest, '', subquery2)
@@ -72,13 +76,17 @@ def insert_additional_metabolites(name, met_to_calculate):
                 if not column_exists(name, m):
                     print('Unable to calculate {}, metabolite {} value required.'.format(met,m))
                     can_calculate = False
-
+                    
             if can_calculate:                   
-                if not column_exists(name, met):
+                if column_exists(name, met):                    
+                    cur.execute('UPDATE {} SET {} = NULL'.format(name, met))
+                else:
                     cur.execute('ALTER TABLE {} ADD COLUMN {} {}'.format(name, met, 'DECIMAL(11,6)'))
-                if not column_exists(name, met+'_%SD'):
-                    cur.execute('ALTER TABLE {} ADD COLUMN {} {}'.format(name, '`' + met + '_%SD`', 'BIGINT(21)'))
-
+                if column_exists(name, met+'_%SD'):
+                    cur.execute('UPDATE {} SET {} = NULL'.format(name, '`'+met+"_%SD`"))
+                else:
+                    cur.execute('ALTER TABLE {} ADD COLUMN {} {}'.format(name, '`' + met+'_%SD`', 'BIGINT(21)'))
+                con.commit()
 
                 added = " + ".join(met_to_calculate[met])
                 greatest = ','.join(["`"+ mm + "_%SD`" for mm in met_to_calculate[met]])
@@ -282,4 +290,4 @@ if __name__ == "__main__":
     print('\nAll operations completed successfully.')
 
     #close the connection to the database
-    con.close()
+    #con.close()
