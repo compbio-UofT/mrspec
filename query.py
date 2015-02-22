@@ -29,7 +29,7 @@ sd_table = 'sd_both_both_alllocations'
 
 unique_desc = "DatabaseID"
 
-metadata = [
+metadata = ['Scan_ID',
     unique_desc,
     "Indication",
     "Diagnosis",
@@ -211,6 +211,46 @@ def windowed_SD(cols, query, gender, field, location, unique, filter_by_sd, over
         all_sd += [[]]
 
     return all_sd
+
+##refactored to work with DataTables join
+def windowed_SD2(cols, query, gender, field, location, unique, filter_by_sd, overlay):
+    '''Formats the standard deviation values for metadata to be passed to the front end.'''
+    all_sd = {}
+
+    i=0
+    for row in query:
+        age = row[0]
+        patient_ID = row[-len(metadata)+1]
+
+        #subject_metabolites_query = default_query(patient_ID, age, "", "", location, met_threshold.keys(), "", False, False, filter_by_sd, [],[], [])
+
+        sd = []
+
+        j=2
+        for column in cols[2:-len(metadata)]:
+            #print column
+            metabolite = column[:-3]
+            if metabolite in met_echo_high and row[j] is not None:
+                #subquery = ["SELECT AVG({0}), STDDEV_SAMP({0}),COUNT({0}) FROM ".format(column),""]
+
+                #result = default_query('',age, gender, field, location, [metabolite], limit, True, unique,filter_by_sd, [],[],subquery)
+
+                #print result
+                #print subject_metabolites_query[0][i], result[0][0],result[0][1],result[0][2]
+                #patient_sd = 0 if result[0][2] <= 1 else (float(subject_metabolites_query[0][j]) - float(result[0][0]))/float(result[0][1]) #N = (X-mu)/sigma
+
+                ##patient_sd = random.randint(-4,4)
+
+                sd.append({metabolite: float(row[j])})
+            j+=1
+        all_sd[str(row[-len(metadata)])] = sd
+        i+=1
+
+    if overlay == 0:
+        all_sd[''] = []
+
+    return all_sd
+
 
 def windowed_SD_dynamic(cols, query, gender, field, location, unique, filter_by_sd, overlay):
     '''Dynamically calculates standard deviation depending on the partition of the database being selected.'''
@@ -459,7 +499,7 @@ def parse_query(ID, age, gender, field, location, metabolites, limit, uxlimit, l
     return query
 
 #adds patient as separate dataseries
-##
+##updated for use with DataTable joining
 def format_query_with_pseries_and_names(query, columns, values, legend, overlay):
     #values = values.split(",")
     ##print rows, columns, values
@@ -472,14 +512,19 @@ def format_query_with_pseries_and_names(query, columns, values, legend, overlay)
         q = {}
         cols = []
         rows = []
+        
+        #removed from cols
+        ##[{'id': "", 'label': "", 'type': 'number'} for aa in range(0, overlay)]
 
         cols += [{'id': "Age", 'label': "Age", 'type': 'number'}] + \
-                [{'id': "", 'label': "", 'type': 'number'} for aa in range(0, overlay)] + \
-                [{'id': column, 'label': column + '_' + '_'.join([str(legend_val) for legend_val in legend]), 'type': 'number'}]
+                [{'id': "DatabaseID", 'label':'DatabaseID', "role": "tooltip", "type": "string", "p" : { "role" : "tooltip" } }] + \
+                [{'id': column, 'label': column + '_' + '_'.join([str(legend_val) for legend_val in legend]), 'type': 'number'}] + \
+                [{'id': "Scan_ID",'label':'Scan_ID', "role": "tooltip", "type": "string", "p" : { "role" : "tooltip" } }]
+                
 
         for row in query:
             ##print(i,row[i+1])
-            vals = [{'v': str(row[0])}]+[{'v':None} for nn in range(0,overlay)]+[{'v': str(row[i+1])}]
+            vals = [{'v': str(row[0])},{'v':str(row[-len(metadata)+1])},{'v': float(row[i+1]) if row[i+1] is not None else None},{'v': str(row[-len(metadata)])}]
             rows.append({'c':vals})
 
         #add patient data as its own data series
@@ -533,6 +578,17 @@ def format_metadata(query, overlay):
 
     if overlay == 0:
         array += [[{'Query Patient':''}]]
+
+    return array
+
+def format_metadata2(query, overlay):
+    array = {}
+    for row in query:
+        #array.append([{metadata[i]:r} for i, r in enumerate(row[-len(metadata):])])
+        array[str(row[-len(metadata)])] = [{metadata[i]:r} for i, r in enumerate(row[-len(metadata):])]
+
+    if overlay == 0:
+        array[''] = [{'Query Patient':'test'}]
 
     return array
 
@@ -687,7 +743,8 @@ def add_numbers():
     key_exclude = k_exc if not k_exc else k_exc.split(',')
     windowed_SD_threshold = request.args.get('windowed_SD_threshold',0,type=str)
     
-    print windowed_SD_threshold
+    #temporary workaround while figuring out what to do with patient data
+    overlay = 1
     
     query = parse_query(ID=ID,
         age=age,
@@ -706,7 +763,7 @@ def add_numbers():
     
     cols,q = execute_query(query)
         
-    sd_array = windowed_SD(cols, q, gender, field, location, unique, filter_by_sd, overlay)
+    sd_array = windowed_SD2(cols, q, gender, field, location, unique, filter_by_sd, overlay)
 
     # Set default values for legend
     if not gender:
@@ -730,7 +787,7 @@ def add_numbers():
 
     return jsonify(result=d,
                    names = [metabolites] if merge == "true" else metabolites.split(','),
-                   metadata_array=format_metadata(q,overlay),
+                   metadata_array=format_metadata2(q,overlay),
                    sd_array = sd_array)
 
 if __name__ == '__main__':
@@ -771,7 +828,13 @@ if __name__ == '__main__':
                                              [],'')
             col,q = execute_query(qq)
             
-            print col,q
+            print j.dumps(format_query_with_pseries_and_names(q,
+                                                ["Age","Lip13a"],
+                                                [0,0],
+                                                ['Both', 'Both', 'Any'],
+                                                0),indent = 1)
+            print j.dumps(format_metadata2(q, 0),indent=1)
+            #print col,q
             ##create_SD_table(col,q, '', '', '', False, True, 0)
             #create_SD_table(cols, query, gender, field, location, unique, 
                            #filter_by_sd, overlay)

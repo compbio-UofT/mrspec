@@ -180,9 +180,9 @@ ul.justify { margin-left:-2.75em; }
                         </select></span>
                         <span title="Only include the X closest patients above and below the 'AGE'.">Limit:
                         <input type="text" size="2" name="limit"></span>
-                        <span title="Lower limit of the X-axis range.">Lower X Limit:
+                        <span title="Lower limit of the X-axis range.">Min Age to Show:
                         <input type="text" size="2" name="lxlimit"></span>
-                        <span title="Upper limit of the X-axis range.">Upper X Limit:
+                        <span title="Upper limit of the X-axis range.">Max Age to Show:
                         <input type="text" size="2" name="uxlimit"></span>
                         <span title="Select data that lies outside of a certain standard deviation threshold.">SD threshold:
                         <input type="text" size="2" name="sdThreshold"></span>
@@ -277,6 +277,9 @@ Close</div>
 <label>tCho:<input type='checkbox' id=tCho name=tCho class='met'></label>
 <label>tCr:<input type='checkbox' id=tCr name=tCr class='met'></label>
 <label>tNAA:<input type='checkbox' id=tNAA name=tNAA class='met'></label>
+<label>tCho_opt:<input type='checkbox' id=tCho_opt name=tCho_opt class='met'></label>
+<label>tCr_opt:<input type='checkbox' id=tCr_opt name=tCr_opt class='met'></label>
+<label>tNAA_opt:<input type='checkbox' id=tNAA_opt name=tNAA_opt class='met'></label>
 
 </form>
 </left>
@@ -328,7 +331,7 @@ Close</div>
         var all_mets = ['CrCH2', 'AcAc', 'Acn', 'Ala', 'Asp', 'Cho', 'Cr', 'GABA', 'GPC', 'Glc',
         'Gln', 'Glu', 'Gua', 'Ins', 'Lac', 'Lip09', 'Lip13a', 'Lip13b', 'Lip20', 'MM09',
         'MM12', 'MM14', 'MM17', 'MM20', 'NAA', 'NAAG', 'PCh', 'PCr', 'Scyllo', 'Tau',
-        'tCr', 'tNAA', 'tCho', 'Glx']
+        'tCr', 'tNAA', 'tCho', 'Glx']//,'tNAA_opt','tCr_opt','tCho_opt']
 
         function inputValid(){
             var num_list = /^[0-9.]+(,[0-9.]+)*$/i;
@@ -519,11 +522,11 @@ function clearCanvas() {
 			} else {
 
 				if (window.my_config.sd_array != null)
-					window.my_config['sd_array'] = window.my_config.sd_array.concat(data.sd_array)
+					window.my_config['sd_array'] = $.extend({},window.my_config['sd_array'],data.sd_array)
 
-				window.my_config['metadata_array'] = window.my_config.metadata_array.concat(data.metadata_array)
+				window.my_config['metadata_array'] = $.extend({}, window.my_config['metadata_array'], data.metadata_array)//window.my_config.metadata_array.concat(data.metadata_array)
 								console.log(data.metadata_array)
-				console.log(window.my_config.metadata_array.concat(data.metadata_array))
+				console.log(window.my_config.metadata_array)
 				
 				
 				redraw_charts(data.result)
@@ -559,41 +562,6 @@ $(document).ready(function () {
  * @param {google.visualization.DataTable} dataTable_arg DataTable to convert
  * @return {String} Converted CSV String
  */
-function dataTableToCSV(dataTable_arg) {
-    var dt_cols = dataTable_arg.getNumberOfColumns();
-    var dt_rows = dataTable_arg.getNumberOfRows();
-    
-    var csv_cols = [];
-    var csv_out;
-    
-    // Iterate columns
-    for (var i=0; i<dt_cols; i++) {
-        // Replace any commas in column labels
-        csv_cols.push(dataTable_arg.getColumnLabel(i).replace(/,/g,""));
-    }
-    
-    // Create column row of CSV
-    csv_out = csv_cols.join(",")+"\r\n";
-    
-    // Iterate rows
-    for (i=0; i<dt_rows; i++) {
-        var raw_col = [];
-        for (var j=0; j<dt_cols; j++) {
-            // Replace any commas in row values
-            raw_col.push(dataTable_arg.getFormattedValue(i, j, 'label').replace(/,/g,""));
-        }
-        // Add row to CSV text
-        csv_out += raw_col.join(",")+"\r\n";
-    }
- 
-    return csv_out;
-}
-
-/**
- * Convert an instance of google.visualization.DataTable to CSV
- * @param {google.visualization.DataTable} dataTable_arg DataTable to convert
- * @return {String} Converted CSV String
- */
 function dataTableAndMetadataToCSV(dataTable_arg) {
     var dt_cols = dataTable_arg.getNumberOfColumns();
     var dt_rows = dataTable_arg.getNumberOfRows();
@@ -601,7 +569,6 @@ function dataTableAndMetadataToCSV(dataTable_arg) {
     var csv_cols = [];
     var csv_out;
     
-    csv_cols.push('Patient ID')
     // Iterate columns
     for (var i=0; i<dt_cols; i++) {
         // Replace any commas in column labels
@@ -614,13 +581,10 @@ function dataTableAndMetadataToCSV(dataTable_arg) {
     // Iterate rows
     for (i=0; i<dt_rows; i++) {
         var raw_col = [];
-        raw_col.push(window.my_config.metadata_array[i][0].ID)
         for (var j=0; j<dt_cols; j++) {
             // Replace any commas in row values
             raw_col.push(dataTable_arg.getFormattedValue(i, j, 'label').replace(/,/g,""));
         }
-        //for (sd in window.sd_array[i])
-        //raw_col.push(window.sd_array[])
         // Add row to CSV text
         csv_out += raw_col.join(",")+"\r\n";
     }
@@ -762,7 +726,7 @@ function downloadCSV (csv_out, name) {
 
                 for (c in charts) {
                 	google.visualization.events.addListener(charts[c], 'select', function() {
-                	    showHideSeries()
+                	    //showHideSeries()
                 		update_sidebar()
                 	 } )
                 	
@@ -775,20 +739,32 @@ function downloadCSV (csv_out, name) {
 				 	
 				 }*/
 
-			function redraw_charts(results){
-				var merged_results = window.my_config.results
-				for (d in merged_results){
-					var label = ''
-					if (d in results){
-						merged_results[d]['rows'] = merged_results[d]['rows'].concat(results[d].rows)
-						label = results[d].cols[results[d].cols.length -1].label
-						console.log(label)
-						}
-					merged_results[d]['cols'] = merged_results[d]['cols'].concat({"id": "", "label": label, "type": "number"})
-				}
-				console.log(merged_results)
-				drawChart(merged_results)
+	    function redraw_charts(results){
+		var merged_results = null
+		var results_new = window.my_config.results
+		for (d in results_new){
+		    var label = ''
+		    if (d in results){
+			var n = new google.visualization.DataTable(results[d])
+			var o = new google.visualization.DataTable(results_new[d])
+			var old_cols = []
+			console.log(results[d])
+			console.log(results_new[d])
+
+	     for (i = 2; i < results_new[d].cols.length; i++) {
+		old_cols.push(i)
+	 }
+			merged_results = google.visualization.data.join(o, n, 'full',[[0,0],[1,1]],old_cols,[2]);
+			results_new[d] = JSON.parse(merged_results.toJSON())
+			//window.my_config['results'][d] = results_new[d]
+
+			label = results[d].cols[results[d].cols.length -1].label
 			}
+		    //merged_results[d]['cols'] = merged_results[d]['cols'].concat({"id": "", "label": label, "type": "number"})
+		}
+		console.log(window.my_config.results)
+		drawChart(results_new)
+	    }
 
             function compare_unique_dict(a,b) {
                  var a_key = 0
@@ -896,9 +872,11 @@ function downloadCSV (csv_out, name) {
 
 		            for (c in window.my_config.charts){
 		            	selection = window.my_config.charts[c].getSelection()
+					data = new google.visualization.DataTable(window.my_config.results[c])
+				
 		            		for (i = 0; i < selection.length; i++){
-		            			patient = selection[i].row
-		            			if (selection[i].row in patients || selection[i].row == null){} else{
+		            			patient = data.getValue(selection[i].row, 3)
+		            			if (patient in patients || patients == null){} else{
 		            				patients[patient] = null
 		            			}
 		            		}
@@ -921,7 +899,7 @@ function downloadCSV (csv_out, name) {
 		            				
 		            		}
 		            	}
-		            	if (window.my_config.sd_array != null){
+		            	if (window.my_config.sd_array[r] != null){
 		           			i+= "<div class='title'>SD for available metabolites:</div><div class='content'>" + add_SD(r) +"</div>"
 							}
 
