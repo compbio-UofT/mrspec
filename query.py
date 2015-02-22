@@ -33,7 +33,7 @@ metadata = [
     unique_desc,
     "Indication",
     "Diagnosis",
-    "ScanBZero"
+    "ScanBZero","LocationName"
 ]
 
 # Initialize the Flask application
@@ -43,7 +43,7 @@ app = Flask(__name__)
 def default_query(ID, age, gender, field, location, metabolites, limit, mets_span_each, unique, filter_by_sd, keywords, key_exclude, perform_as_subquery_with):
 
     graph_data = [
-        table + ".AgeAtScan"] + (metabolites if not filter_by_sd else ["COALESCE(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>0 AND ScanTEParameters {2} THEN {0} ELSE NULL END) as `{0}_Filtered`".format(metabolite, met_threshold[metabolite], '= 144' if metabolite in met_echo_high else '<=50') for metabolite in metabolites])
+        table + ".AgeAtScan"] + (metabolites if not filter_by_sd else ["GROUP_CONCAT(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>0 AND ScanTEParameters {2} THEN {0} ELSE NULL END) as `{0}_Filtered`".format(metabolite, met_threshold[metabolite], '= 144' if metabolite in met_echo_high else '<=50') for metabolite in metabolites])
     
     select = ','.join(graph_data + metadata)
 
@@ -355,8 +355,12 @@ def parse_query(ID, age, gender, field, location, metabolites, limit, uxlimit, l
         
     graph_data = [table + ".AgeAtScan"]
     
+    location_names = ''
+    if location:
+        location_names = 'AND {}.LocationName IN({})'.format(table,location)
+    
     #faster than list concatenation
-    graph_data.extend(metabolites if not filter_by_sd else ["COALESCE(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>0 AND {3}.ScanTEParameters {2} THEN {0} ELSE NULL END) as `{0}_Filtered`".format(metabolite, met_threshold[metabolite], met_echo_high[metabolite],table) for metabolite in metabolites])
+    graph_data.extend(metabolites if not filter_by_sd else ["SUBSTRING_INDEX(GROUP_CONCAT(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>0 AND {3}.ScanTEParameters {2} {4} THEN {0} ELSE NULL END),',',1) as `{0}_Filtered`".format(metabolite, met_threshold[metabolite], met_echo_high[metabolite],table,location_names) for metabolite in metabolites])
 
     ##
     graph_data.extend([met+'_SD' for met in met_threshold])    
@@ -370,7 +374,7 @@ def parse_query(ID, age, gender, field, location, metabolites, limit, uxlimit, l
     parsed_where = ''
     parsed_options = []
         
-    constraints = {'Gender':gender, 'ScanBZero':field, 'LocationName':location, unique_desc:ID}
+    constraints = {'Gender':gender, 'ScanBZero':field, unique_desc:ID}
     for constraint in constraints:
         if constraints[constraint]:
             parsed_options.append("{}.{} IN ('{}')".format(table,constraint,
@@ -730,7 +734,6 @@ def add_numbers():
                    sd_array = sd_array)
 
 if __name__ == '__main__':
-
     # Reload Flask app when template file changes
     # http://stackoverflow.com/questions/9508667/reload-flask-app-when-template-file-changes
     extra_dirs = ['templates',]
@@ -743,59 +746,42 @@ if __name__ == '__main__':
                     extra_files.append(filename)
     
     #establish connection to database
-    con,cur = establish_connection(sys.argv, silent=False)
+    with DatabaseConnection(sys.argv) as (con,cur):
+        #Launch app if script was called from commandline
+        if is_run_from_commandline():
+            app.run(
+                host="0.0.0.0",
+                port=int(8081),
+                debug=True,
+                extra_files=extra_files
+            )
+        #Otherwise, execute custom code for debugging
+        else:
+            ###Sandbox for testing###            
+            
+            start = time.clock()
+            
+            qq = parse_query('2390', 0, '', '', '', 
+                                             ['Lip13a'], 
+                                             '', None,None,
+                                             False,
+                                             False, 
+                                             True, 
+                                             [], 
+                                             [],'')
+            col,q = execute_query(qq)
+            
+            print col,q
+            ##create_SD_table(col,q, '', '', '', False, True, 0)
+            #create_SD_table(cols, query, gender, field, location, unique, 
+                           #filter_by_sd, overlay)
     
-    #Launch app if script was called from commandline
-    if is_run_from_commandline():
-        app.run(
-            host="0.0.0.0",
-            port=int(8081),
-            debug=True,
-            extra_files=extra_files
-        )
-    #Otherwise, execute custom code for debugging
-    else:
-        ###Sandbox for testing###
-
-        #example query
-        
-        #for met in met_threshold.keys():
-            #cur.execute("ALTER TABLE sd_both_both_alllocations CHANGE {0} {0}_SD Decimal(11,6)".format(met))
-        
-        
-        start = time.clock()
-        
-        #asdf = parse_query(ID='',age=500, gender="", field="", metabolites=['Cr','Tau','GPC'], limit='', location="", mets_span_each=True, unique=True, filter_by_sd=True, keywords=[], key_exclude = [])
-        col,q = execute_query(parse_query('', 0, '', '', '', 
-                                         ['Cr'], 
-                                         '', None,None,
-                                         False,
-                                         False, 
-                                         True, 
-                                         [], 
-                                         [],''))
-        
-        print col,q
-        ##create_SD_table(col,q, '', '', '', False, True, 0)
-        #create_SD_table(cols, query, gender, field, location, unique, 
-                       #filter_by_sd, overlay)
-
-        ##print j.dumps(format_query_with_pseries(q, 'Age,Acn'.split(","), "500,0.5".split(",")))
-        ##print j.dumps(format_query_with_pseries_and_names(q, 'Age,Acn,Cr'.split(","), "500,0.5,6".split(",")), indent=1)
-
-        #print q
-
-        #w = windowed_SD(q, gender="M", field="3", location='', unique=True, filter_by_sd=True, overlay=0)
-        end = time.clock()
-        
-        print end-start        
-
-       # #print j.dumps(w, indent=1)
-        ##print bool(len(w) == len(format_metadata(q,0)))
-
-        #for met in met_echo_high:
-           # print("UPDATE sd_both_both_alllocations SET {}=NULL;".format(met))
-        #print(' IS NULL AND '.join(met_echo_high.keys()) + ' IS NULL ')
-        #print(','.join(met_echo_high.keys()))
-        #close connection to database
-        ##con.close()
+            ##print j.dumps(format_query_with_pseries(q, 'Age,Acn'.split(","), "500,0.5".split(",")))
+            ##print j.dumps(format_query_with_pseries_and_names(q, 'Age,Acn,Cr'.split(","), "500,0.5,6".split(",")), indent=1)
+    
+            #print q
+    
+            #w = windowed_SD(q, gender="M", field="3", location='', unique=True, filter_by_sd=True, overlay=0)
+            end = time.clock()
+            
+            print end-start
