@@ -10,7 +10,7 @@ cur = d.cur
 met_to_calculate = {'tCr':['PCr','Cr'], 'tNAA':['NAA','NAAG'], 'tCho':['Cho','GPC','PCh'], 'Glx':['Gln','Glu']}
 high_low_mets = {'tCr':['PCr','Cr'], 'tNAA':['NAA','NAAG'], 'tCho':['Cho','GPC','PCh']}
 
-#class Database
+#class TableModifier(DatabaseConnection):
 
 def insert_aggregate_metabolites_optimal(name, met_to_calculate):
     if table_exists(name):
@@ -38,14 +38,14 @@ def insert_aggregate_metabolites_optimal(name, met_to_calculate):
                 not_zero = ''.join(['AND '," > 0 AND ".join([ 'sel.' + mm + '_opt' for mm in met_to_calculate[met]]),' > 0'])
 
                 #met_echo_high[mm]
-                subquery1 = "SELECT Scan_ID," + ",".join(["COALESCE(CASE WHEN `{0}`>0 AND {3}.ScanTEParameters {2} THEN {0} ELSE NULL END) as `{0}_opt`".format(mm, '998', met_echo_high[mm],name) for mm in met_to_calculate[met]]) + ' FROM {} GROUP BY {}, AgeAtScan'.format(name,unique_desc)
+                subquery1 = "SELECT Scan_ID," + ",".join(["SUBSTRING_INDEX(GROUP_CONCAT(CASE WHEN `{0}`>0 AND {3}.ScanTEParameters {2} THEN {0} ELSE NULL END),',',1) as `{0}_opt`".format(mm, '998', met_echo_high[mm],name) for mm in met_to_calculate[met]]) + ' FROM {} GROUP BY {}, AgeAtScan'.format(name,unique_desc)
                 
                 print('--------------FIX AGGMET OPT VALUES-----------------')
                 q = "UPDATE {0} T, ({4}) sel SET T.{1} = ({2}) WHERE T.Scan_ID = sel.Scan_ID".format(name, met +"_opt", added, '', subquery1)
                 print(q)
                 cur.execute(q)
                 
-                subquery2 = "SELECT Scan_ID," + ",".join(["COALESCE(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>0 AND {3}.ScanTEParameters {2} THEN `{0}_%SD` ELSE NULL END) as `{0}_opt_%SD`".format(mm, '998', met_echo_high[mm], name) for mm in met_to_calculate[met]]) + ' FROM {} GROUP BY {}, AgeAtScan'.format(name,unique_desc)
+                subquery2 = "SELECT Scan_ID," + ",".join(["SUBSTRING_INDEX(GROUP_CONCAT(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>0 AND {3}.ScanTEParameters {2} THEN `{0}_%SD` ELSE NULL END),',',1) as `{0}_opt_%SD`".format(mm, '998', met_echo_high[mm], name) for mm in met_to_calculate[met]]) + ' FROM {} GROUP BY {}, AgeAtScan'.format(name,unique_desc)
                 
                 print('--------------FIX AGGMET OPT SD-----------------')
                 q2 = "UPDATE {0} T, ({4}) sel SET T.{1} = GREATEST({2}) WHERE T.Scan_ID = sel.Scan_ID".format(name, '`' + met +"_opt_%SD`", greatest, '', subquery2)
@@ -95,10 +95,6 @@ def check_for_table_before_executing(name, query):
     if table_exists(name):
         print("Table '{}' already in database. No changes made.".format(name))
     else:
-        #selection = ",".join(["CAST({0} AS {1}) AS {2}".format(c[0], c[1], c[0] if len(c) < 3 else c[2]) for c in table_schema])
-
-        #cur.execute("CREATE TABLE {} SELECT {} FROM {}".format(name, selection, source))
-
         cur.execute(query)
         con.commit()
 

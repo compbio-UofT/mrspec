@@ -43,7 +43,7 @@ app = Flask(__name__)
 def default_query(ID, age, gender, field, location, metabolites, limit, mets_span_each, unique, filter_by_sd, keywords, key_exclude, perform_as_subquery_with):
 
     graph_data = [
-        table + ".AgeAtScan"] + (metabolites if not filter_by_sd else ["GROUP_CONCAT(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>0 AND ScanTEParameters {2} THEN {0} ELSE NULL END) as `{0}_Filtered`".format(metabolite, met_threshold[metabolite], '= 144' if metabolite in met_echo_high else '<=50') for metabolite in metabolites])
+        table + ".AgeAtScan"] + (metabolites if not filter_by_sd else ["SUBSTRING_INDEX(GROUP_CONCAT(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>0 AND ScanTEParameters {2} THEN {0} ELSE NULL END),',',1) as `{0}_Filtered`".format(metabolite, met_threshold[metabolite], '= 144' if metabolite in met_echo_high else '<=50') for metabolite in metabolites])
     
     select = ','.join(graph_data + metadata)
 
