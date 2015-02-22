@@ -3,19 +3,14 @@ import csv, os, sys, shutil, inspect, os, sys
 from connection import *
 from query import *
 
-con,cur=establish_connection(sys.argv)
+d = DatabaseConnection(sys.argv)
+con= d.con
+cur = d.cur
 
-unique_desc='ID'
 met_to_calculate = {'tCr':['PCr','Cr'], 'tNAA':['NAA','NAAG'], 'tCho':['Cho','GPC','PCh'], 'Glx':['Gln','Glu']}
 high_low_mets = {'tCr':['PCr','Cr'], 'tNAA':['NAA','NAAG'], 'tCho':['Cho','GPC','PCh']}
 
-high = '= 144'
-low = '< 50'
-both = 'IS NOT NULL'
-met_echo_high = {'CrCH2':high, 'AcAc':high, 'Acn':high, 'Ala':low, 'Asp':low, 'Cho':high, 'Cr':high,
-                 'GABA':low, 'GPC':low, 'Glc':low, 'Gln':low, 'Glu':low, 'Gua':high, 'Ins':low, 'Lac':high, 'Lip09':low,
-                 'Lip13a':low, 'Lip13b':low, 'Lip20':low, 'MM09':low, 'MM12':low, 'MM14':low, 'MM17':low, 'MM20':low,
-                 'NAA':high, 'NAAG':low, 'PCh':low, 'PCr':low, 'Scyllo':low, 'Tau':low, 'tCr':both, 'tNAA':both, 'tCho':both, 'Glx':low}
+#class Database
 
 def insert_aggregate_metabolites_optimal(name, met_to_calculate):
     if table_exists(name):
@@ -42,25 +37,15 @@ def insert_aggregate_metabolites_optimal(name, met_to_calculate):
                 
                 not_zero = ''.join(['AND '," > 0 AND ".join([ 'sel.' + mm + '_opt' for mm in met_to_calculate[met]]),' > 0'])
 
-                '''subquery = parse_query('', 0, '', '', '', 
-                                      met_to_calculate[met], 
-                                      '', 
-                                      '', 
-                                      '', 
-                                      False, 
-                                      False, 
-                                      '', 
-                                      '', 
-                                      '')'''
+                #met_echo_high[mm]
                 subquery1 = "SELECT Scan_ID," + ",".join(["COALESCE(CASE WHEN `{0}`>0 AND {3}.ScanTEParameters {2} THEN {0} ELSE NULL END) as `{0}_opt`".format(mm, '998', met_echo_high[mm],name) for mm in met_to_calculate[met]]) + ' FROM {} GROUP BY {}, AgeAtScan'.format(name,unique_desc)
                 
                 print('--------------FIX AGGMET OPT VALUES-----------------')
                 q = "UPDATE {0} T, ({4}) sel SET T.{1} = ({2}) WHERE T.Scan_ID = sel.Scan_ID".format(name, met +"_opt", added, '', subquery1)
                 print(q)
                 cur.execute(q)
-                con.commit()
                 
-                subquery2 = "SELECT Scan_ID," + ",".join(["COALESCE(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>0 AND {3}.ScanTEParameters {2} THEN `{0}_%SD` ELSE NULL END) as `{0}_opt_%SD`".format(mm, '998', met_echo_high[mm],name) for mm in met_to_calculate[met]]) + 'FROM {} GROUP BY {}, AgeAtScan'.format(name,unique_desc)
+                subquery2 = "SELECT Scan_ID," + ",".join(["COALESCE(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>0 AND {3}.ScanTEParameters {2} THEN `{0}_%SD` ELSE NULL END) as `{0}_opt_%SD`".format(mm, '998', met_echo_high[mm], name) for mm in met_to_calculate[met]]) + ' FROM {} GROUP BY {}, AgeAtScan'.format(name,unique_desc)
                 
                 print('--------------FIX AGGMET OPT SD-----------------')
                 q2 = "UPDATE {0} T, ({4}) sel SET T.{1} = GREATEST({2}) WHERE T.Scan_ID = sel.Scan_ID".format(name, '`' + met +"_opt_%SD`", greatest, '', subquery2)
@@ -243,51 +228,48 @@ if __name__ == "__main__":
             sd_table_nulls.append([metabolite + '_SD', d])
 
     #Establish connection with database
-    #con,cur=establish_connection(sys.argv)
+    with DatabaseConnection(sys.argv) as (con,cur):
     
-    #import requisite tables in local folder and mysql folder
-    import_csv("outcomes2.csv", "outcomes", "varchar(500)")
-    import_csv("mrspec.csv", "mrspec", "text")
-    import_csv("tabPatients.csv", "tab_MRN", "varchar(50)")
-
-    #re-personalize mrspec with MRN
-    check_for_table_before_executing('mrspec_MRN', "CREATE TABLE IF NOT EXISTS mrspec_MRN SELECT m.*, t.HSC_Number as MRN FROM mrspec AS m JOIN tab_MRN as t ON m.tabPatient_ID=t.tabPatient_ID")
-
-    #merge tables into table 'merged'
-    cur.execute("ALTER TABLE outcomes DROP COLUMN tabPatient_ID") if column_exists("outcomes", "tabPatient_ID") else None
-    check_for_table_before_executing("merged","CREATE TABLE OUTCOMES_GROUPED SELECT * FROM outcomes GROUP BY `MRN (column to be removed once study is in analysis phase)`,str_to_date(outcomes.Date, '%Y-%m-%d') ORDER BY str_to_date(outcomes.Date, '%Y-%m-%d')")
-    con.commit()
-
-    check_for_table_before_executing('merged', "CREATE TABLE IF NOT EXISTS merged SELECT * FROM OUTCOMES_GROUPED RIGHT JOIN mrspec_MRN ON OUTCOMES_GROUPED.`MRN (column to be removed once study is in analysis phase)` = mrspec_MRN.MRN AND str_to_date(OUTCOMES_GROUPED.Date, '%Y-%m-%d') = str_to_date(mrspec_MRN.procedureDate, '%y-%m-%d')")   
+        #import requisite tables in local folder and mysql folder
+        import_csv("outcomes2.csv", "outcomes", "varchar(500)")
+        import_csv("mrspec.csv", "mrspec", "text")
+        import_csv("tabPatients.csv", "tab_MRN", "varchar(50)")
     
-    ##
-    #create standardized table
-    create_standardized_table('standard', 'merged', table_schema, None, 'Scan_ID')#'Indication,Diagnosis')
-    ##update code##
-    import_csv("updates.csv", 'updates', "text")
-    check_for_table_before_executing('updates_merged', "CREATE TABLE IF NOT EXISTS updates_merged SELECT * FROM updates LEFT JOIN OUTCOMES_GROUPED ON OUTCOMES_GROUPED.`MRN (column to be removed once study is in analysis phase)` = updates.HSC_Number AND str_to_date(OUTCOMES_GROUPED.Date, '%Y-%m-%d') = str_to_date(updates.ProcedureDate, '%d/%m/%Y')")
-    con.commit()
-    cur.execute('alter table updates_merged add column AgeAtScan bigint(21)') if not column_exists('updates_merged','AgeAtScan') else None
-    cur.execute("UPDATE updates_merged as T SET T.AgeAtScan = (TO_DAYS(STR_TO_DATE(T.ProcedureDate,'%d/%m/%Y')) - TO_DAYS(STR_TO_DATE(T.PatientBirthDay,'%d/%m/%Y'))) where T.Scan_ID = Scan_ID")
-    con.commit()
-    create_standardized_table("standard_update", 'updates_merged', update_table_schema, None, 'Scan_ID')# fulltexts)
+        #re-personalize mrspec with MRN
+        check_for_table_before_executing('mrspec_MRN', "CREATE TABLE IF NOT EXISTS mrspec_MRN SELECT m.*, t.HSC_Number as MRN FROM mrspec AS m JOIN tab_MRN as t ON m.tabPatient_ID=t.tabPatient_ID")
     
-    ##COMMENT THIS LINE OUT AFTER SCRIPT HAS RUN ONCE, otherwise you will get an error
-    #cur.execute('INSERT INTO standard SELECT * FROM standard_update')
+        #merge tables into table 'merged'
+        cur.execute("ALTER TABLE outcomes DROP COLUMN tabPatient_ID") if column_exists("outcomes", "tabPatient_ID") else None
+        check_for_table_before_executing("merged","CREATE TABLE OUTCOMES_GROUPED SELECT * FROM outcomes GROUP BY `MRN (column to be removed once study is in analysis phase)`,str_to_date(outcomes.Date, '%Y-%m-%d') ORDER BY str_to_date(outcomes.Date, '%Y-%m-%d')")
+        con.commit()
     
-    con.commit()
+        check_for_table_before_executing('merged', "CREATE TABLE IF NOT EXISTS merged SELECT * FROM OUTCOMES_GROUPED RIGHT JOIN mrspec_MRN ON OUTCOMES_GROUPED.`MRN (column to be removed once study is in analysis phase)` = mrspec_MRN.MRN AND str_to_date(OUTCOMES_GROUPED.Date, '%Y-%m-%d') = str_to_date(mrspec_MRN.procedureDate, '%y-%m-%d')")   
+        
+        ##
+        #create standardized table
+        create_standardized_table('standard', 'merged', table_schema, None, 'Scan_ID')#'Indication,Diagnosis')
+        ##update code##
+        import_csv("updates.csv", 'updates', "text")
+        check_for_table_before_executing('updates_merged', "CREATE TABLE IF NOT EXISTS updates_merged SELECT * FROM updates LEFT JOIN OUTCOMES_GROUPED ON OUTCOMES_GROUPED.`MRN (column to be removed once study is in analysis phase)` = updates.HSC_Number AND str_to_date(OUTCOMES_GROUPED.Date, '%Y-%m-%d') = str_to_date(updates.ProcedureDate, '%d/%m/%Y')")
+        con.commit()
+        cur.execute('alter table updates_merged add column AgeAtScan bigint(21)') if not column_exists('updates_merged','AgeAtScan') else None
+        cur.execute("UPDATE updates_merged as T SET T.AgeAtScan = (TO_DAYS(STR_TO_DATE(T.ProcedureDate,'%d/%m/%Y')) - TO_DAYS(STR_TO_DATE(T.PatientBirthDay,'%d/%m/%Y'))) where T.Scan_ID = Scan_ID")
+        con.commit()
+        create_standardized_table("standard_update", 'updates_merged', update_table_schema, None, 'Scan_ID')# fulltexts)
+        
+        ##COMMENT THIS LINE OUT AFTER SCRIPT HAS RUN ONCE, otherwise you will get an error
+        #cur.execute('INSERT INTO standard SELECT * FROM standard_update')
+        
+        con.commit()
+        
+        ##calculate additional metabolites (tCr, tCho, Glx, tNAA)
+        insert_additional_metabolites('standard', met_to_calculate)
+        insert_aggregate_metabolites_optimal('standard', high_low_mets)
+        
+        #create tables for standard deviations
+        create_sd_table("sd_both_both_alllocations", "standard", sd_table_imports, sd_table_nulls)
+        #create_standardized_table("sd_F_both_alllocations", "standard", sd_table_schema, '')
+        #create_standardized_table("sd_M_both_alllocations", "standard", sd_table_schema, '')    
+        #create_standardized_table("sd_both_both_alllocations", "standard", sd_table_schema, '')     
     
-    ##calculate additional metabolites (tCr, tCho, Glx, tNAA)
-    insert_additional_metabolites('standard', met_to_calculate)
-    insert_aggregate_metabolites_optimal('standard', high_low_mets)
-    
-    #create tables for standard deviations
-    create_sd_table("sd_both_both_alllocations", "standard", sd_table_imports, sd_table_nulls)
-    #create_standardized_table("sd_F_both_alllocations", "standard", sd_table_schema, '')
-    #create_standardized_table("sd_M_both_alllocations", "standard", sd_table_schema, '')    
-    #create_standardized_table("sd_both_both_alllocations", "standard", sd_table_schema, '')     
-
-    print('\nAll operations completed successfully.')
-
-    #close the connection to the database
-    #con.close()
+        print('\nAll operations completed successfully.')
