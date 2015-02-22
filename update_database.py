@@ -1,8 +1,6 @@
 from connection import *
 from create_database import *
-
-con,cur=establish_connection(sys.argv)
-met_to_calculate = {'tCr':['PCr','Cr'], 'tNAA':['NAA','NAAG'], 'tCho':['Cho','GPC','PCh'], 'Glx':['Gln','Glu']}
+import sys
 
 def update_database_ID(table):
     if not column_exists(table, 'DatabaseID'):
@@ -12,9 +10,9 @@ def update_database_ID(table):
 
 
 if __name__== "__main__":
-    
-    insert_additional_metabolites('standard_sd', met_to_calculate)
-    
-    #update database with deidentified column IDs
-    update_database_ID('standard')
-    con.close()
+    with DatabaseConnection(sys.argv) as (con,cur):
+        #insert_additional_metabolites('standard_sd', met_to_calculate)
+        insert_aggregate_metabolites_optimal('standard_sd', met_to_calculate)
+        
+        #update database with deidentified column IDs
+        ##update_database_ID('standard')
