@@ -411,7 +411,9 @@ Close</div>
 
         function exportToCsv(){
             for (result in window.my_config.results){
-                data = new google.visualization.DataTable(window.my_config.results[result])
+                //data = new google.visualization.DataTable(window.my_config.results[result])
+                data = window.my_config.results
+
                 csv = dataTableAndMetadataToCSV(data)
                 downloadCSV(csv, result)
             }
@@ -504,7 +506,7 @@ function clearCanvas() {
             field: $("#field option:selected").val(),
             ID: $('input[name="ID"]').val(),
             windowed_SD_threshold: $('input[name="sdThreshold"]').val(),
-            overlay: (document.getElementById('overlay').checked == false || (document.getElementById('overlay').checked == true && window.my_config == null))? 0:(window.my_config.results[window.my_config.names[0]].cols.length -1)
+            overlay: (document.getElementById('overlay').checked == false || (document.getElementById('overlay').checked == true && window.my_config == null))? 0:(window.my_config.results[window.my_config.names[0]].getNumberOfColumns())
             }, function(data) {
             
             
@@ -518,7 +520,10 @@ function clearCanvas() {
 												}
 							
 				            render_html(data.names)
-            				drawChart(data.result);
+                for (result in data.result) {
+                window.my_config.results[result] = new google.visualization.DataTable(data.result[result])
+                }
+            				drawChart(window.my_config.results);
 			} else {
 
 				if (window.my_config.sd_array != null)
@@ -689,12 +694,10 @@ function downloadCSV (csv_out, name) {
                 google.load("visualization", "1", {packages:["corechart"]});
                 // google.setOnLoadCallback(drawChart);
 
-            function drawChart(results) {
+            function drawChart(allChartData) {
                 // render and store DataTables in dictionary
-                allChartData = {}
-                for (result in results) {
-                allChartData[result] = new google.visualization.DataTable(results[result])
-                }
+                //allChartData = {}
+
 
                 charts = {}
                 for (c in allChartData){
@@ -746,19 +749,21 @@ function downloadCSV (csv_out, name) {
 		    var label = ''
 		    if (d in results){
 			var n = new google.visualization.DataTable(results[d])
-			var o = new google.visualization.DataTable(results_new[d])
+			//var o = new google.visualization.DataTable(results_new[d])
+            var o = results_new[d]
+
 			var old_cols = []
 			console.log(results[d])
 			console.log(results_new[d])
 
-	     for (i = 2; i < results_new[d].cols.length; i++) {
+	     for (i = 2; i < results_new[d].getNumberOfColumns(); i++) {
 		old_cols.push(i)
 	 }
 			merged_results = google.visualization.data.join(o, n, 'full',[[0,0],[1,1]],old_cols,[2]);
-			results_new[d] = JSON.parse(merged_results.toJSON())
-			//window.my_config['results'][d] = results_new[d]
+			results_new[d] = merged_results
+			window.my_config.results[d] = merged_results
 
-			label = results[d].cols[results[d].cols.length -1].label
+			//label = results[d].cols[results[d].cols.length -1].label
 			}
 		    //merged_results[d]['cols'] = merged_results[d]['cols'].concat({"id": "", "label": label, "type": "number"})
 		}
@@ -872,7 +877,9 @@ function downloadCSV (csv_out, name) {
 
 		            for (c in window.my_config.charts){
 		            	selection = window.my_config.charts[c].getSelection()
-					data = new google.visualization.DataTable(window.my_config.results[c])
+					//data = new google.visualization.DataTable(window.my_config.results[c])
+                    data = window.my_config.results[c]
+
 				
 		            		for (i = 0; i < selection.length; i++){
 		            			patient = data.getValue(selection[i].row, 3)
