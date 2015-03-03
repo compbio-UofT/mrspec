@@ -173,9 +173,12 @@ ul.justify { margin-left:-2.75em; }
                         <span title="Location of the query.">Location:
                         <select id='location' name='location'>
                             <option value="">Any</option>
-                            <option value="BG">BG</option>
-                            <option value="OCC_WM">OCC WM</option>
-							<option value="FT_WM">FT WM</option>
+                            <option value="'BG'">BG</option>
+                            <option value="'OCC_WM'">OCC WM</option>
+							<option value="'FT_WM'">FT WM</option>
+                            <option value="'FT_WM','OCC WM'">WM</option>
+                            <option value="'FT_WM','OCC WM','BG'">BG + WM</option>
+
 							<option value="Cerebellum">CRBL</option>
                         </select></span>
                         <span title="Only include the X closest patients above and below the 'AGE'.">Limit:
@@ -412,10 +415,21 @@ Close</div>
         function exportToCsv(){
             for (result in window.my_config.results){
                 //data = new google.visualization.DataTable(window.my_config.results[result])
-                data = window.my_config.results
+                data = window.my_config.results[result]
 
-                csv = dataTableAndMetadataToCSV(data)
-                downloadCSV(csv, result)
+                csv = google.visualization.dataTableToCsv(data)
+
+                csv_cols = []
+                    // Iterate columns
+                for (var i=0; i<data.getNumberOfColumns(); i++) {
+                // Replace any commas in column labels
+                csv_cols.push(data.getColumnLabel(i).replace(/,/g,""));
+                }
+    
+                // Create column row of CSV
+                csv = csv_cols.join(",")+"\r\n" + csv;
+
+                downloadCsv(csv, result)
             }
         }
 
@@ -562,42 +576,7 @@ $(document).ready(function () {
 
 });
 
-/**
- * Convert an instance of google.visualization.DataTable to CSV
- * @param {google.visualization.DataTable} dataTable_arg DataTable to convert
- * @return {String} Converted CSV String
- */
-function dataTableAndMetadataToCSV(dataTable_arg) {
-    var dt_cols = dataTable_arg.getNumberOfColumns();
-    var dt_rows = dataTable_arg.getNumberOfRows();
-    
-    var csv_cols = [];
-    var csv_out;
-    
-    // Iterate columns
-    for (var i=0; i<dt_cols; i++) {
-        // Replace any commas in column labels
-        csv_cols.push(dataTable_arg.getColumnLabel(i).replace(/,/g,""));
-    }
-    
-    // Create column row of CSV
-    csv_out = csv_cols.join(",")+"\r\n";
-    
-    // Iterate rows
-    for (i=0; i<dt_rows; i++) {
-        var raw_col = [];
-        for (var j=0; j<dt_cols; j++) {
-            // Replace any commas in row values
-            raw_col.push(dataTable_arg.getFormattedValue(i, j, 'label').replace(/,/g,""));
-        }
-        // Add row to CSV text
-        csv_out += raw_col.join(",")+"\r\n";
-    }
- 
-    return csv_out;
-}
-
-function downloadCSV (csv_out, name) {
+function downloadCsv(csv_out, name) {
             var blob = new Blob([csv_out], {type: 'text/csv;charset=utf-8'});
             var url  = window.URL || window.webkitURL;
             var link = document.createElementNS("http://www.w3.org/1999/xhtml", "a");
@@ -759,7 +738,10 @@ function downloadCSV (csv_out, name) {
 	     for (i = 2; i < results_new[d].getNumberOfColumns(); i++) {
 		old_cols.push(i)
 	 }
-			merged_results = google.visualization.data.join(o, n, 'full',[[0,0],[1,1]],old_cols,[2]);
+			merged_results = google.visualization.data.join(o, n, 'full',[[0,0],[1,1]],old_cols,[2,3]);
+
+
+
 			results_new[d] = merged_results
 			window.my_config.results[d] = merged_results
 
@@ -882,7 +864,10 @@ function downloadCSV (csv_out, name) {
 
 				
 		            		for (i = 0; i < selection.length; i++){
-		            			patient = data.getValue(selection[i].row, 3)
+                                //temporary fix needed to access Scan_IDs of agglutinated data
+                                for (q = 3; q < data.getNumberOfColumns(); q+= 2){ if (data.getValue(selection[i].row, q) != null)
+		            			patient = data.getValue(selection[i].row, q)}
+                                console.log(patient)
 		            			if (patient in patients || patients == null){} else{
 		            				patients[patient] = null
 		            			}
@@ -910,7 +895,7 @@ function downloadCSV (csv_out, name) {
 		           			i+= "<div class='title'>SD for available metabolites:</div><div class='content'>" + add_SD(r) +"</div>"
 							}
 
-						$("#sidebar").append("<div id='"+window.my_config.metadata_array[r].id+"' class='patient'>"+i+"</div>")
+						$("#sidebar").append("<div id='"+r+"' class='patient'>"+i+"</div>")
 								            	
 		            }
 

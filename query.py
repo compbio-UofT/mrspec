@@ -397,7 +397,7 @@ def parse_query(ID, age, gender, field, location, metabolites, limit, uxlimit, l
     
     location_names = ''
     if location:
-        location_names = "AND {}.LocationName IN('{}')".format(table,location)
+        location_names = "AND {}.LocationName IN({})".format(table,location)
     
     #faster than list concatenation
     graph_data.extend(metabolites if not filter_by_sd else ["SUBSTRING_INDEX(GROUP_CONCAT(CASE WHEN `{0}_%SD`<={1} AND `{0}_%SD`>0 AND {3}.ScanTEParameters {2} {4} THEN {0} ELSE NULL END),',',1) as `{0}_Filtered`".format(metabolite, met_threshold[metabolite], met_echo_high[metabolite],table,location_names) for metabolite in metabolites])
