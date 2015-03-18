@@ -686,9 +686,9 @@ function downloadCsv(csv_out, name) {
                 title: 'Age vs. ' + c,
                 hAxis: {title: 'Age',            
                 logScale: document.getElementById('scale').checked? true:false},
-                vAxis: {title: c},
+                vAxis: {title: "mM/Kg wet wgt."},
 
-                legend: { position: 'top', maxLines : '5'},
+                legend: { position: 'top', maxLines : 5},
                 // maxLines not working properly? Only shows up to 2 lines?
 
                 aggregationTarget: 'series',
