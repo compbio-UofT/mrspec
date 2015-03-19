@@ -8,12 +8,26 @@
         rel="stylesheet">
 
         <style type="text/css">
+
+        .arrow {
+    opacity:0;
+  transition:opacity 0.25s linear;*
+}
+    .arrow:hover {
+        opacity:1;
+        }
+
+        .wrapper {
+    display: table;
+    width: 100%;
+}
 			#left {float:left}
 			#right {float:left;      
                     }
         
 			#sidebar {
 			    overflow-y:auto;
+                overflow-x:auto;
 				background-color: white;
 				width: 545px;
 				position: static;
@@ -27,6 +41,13 @@
 				padding-bottom: 5px;
 				margin-top: 10px;
 			}
+
+            #sidebar .group {
+                border: 1px solid #eee;
+                padding: 10px;
+                padding-bottom: 5px;
+                margin-top: 10px;
+            }
 
 			#sidebar .title {
 				font-weight:600;
@@ -106,7 +127,7 @@ ul.justify { margin-left:-2.75em; }
 	border:1px solid #ccc;
 	color:#000;
 	width:30%;
-	height:30%;
+	height:500;
 	position:fixed;
 	top:20%;
 	left:15%;
@@ -148,9 +169,8 @@ ul.justify { margin-left:-2.75em; }
             <div>
                 <p>
                     <form>
-                        <span title="Search for a tabPatientID.">IDs: <input type="text" size="2" name="ID"></span>
-                        <span title="The age of the query. Used to set the center of the limit.">Age:
-                        <div class ='optionBox'><input type="text" size="2" name="age" placeholder="Days"style="border:0px solid;"><img id='ageOpt' src="../img/new_window.png" style="padding-bottom:3px" /></div></span>
+                        <span title="Metabolite of the query.">Metabolites:
+                        <div class ='optionBox'><input type="text" size="4" name="metabolites" style="border:0px solid"><img id='metOpt' src="../img/new_window.png" style="padding-bottom:3px" /></div></span>
                         <span title="Gender of the query.">Gender:
                         <select id='gender' name='gender'>
                             <option value="">Both</option>
@@ -163,33 +183,20 @@ ul.justify { margin-left:-2.75em; }
                             <option value="3">3T</option>
                             <option value="1.5">1.5T</option>
                         </select></span>
-                        <span title="Metabolite of the query.">Metabolites:
-                        <div class ='optionBox'><input type="text" size="4" name="metabolites" style="border:0px solid"><img id='metOpt' src="../img/new_window.png" style="padding-bottom:3px" /></div></span>
-                        <span title="Values of the query.">Values:
-                        <input type="text" size="5" name="values"></span>
-                        <span title="Keywords of the query. e.g. '%glioma'">Keywords:
-                        <div class ='optionBox'><input type="text" size="4" name="keyword" style="border:0px solid"><img id='keyOpt' src="../img/new_window.png" style="padding-bottom:3px" /></div></span>
-                        
+
                         <span title="Location of the query.">Location:
                         <select id='location' name='location'>
                             <option value="">Any</option>
                             <option value="'BG'">BG</option>
                             <option value="'OCC_WM'">OCC WM</option>
-							<option value="'FT_WM'">FT WM</option>
+                            <option value="'FT_WM'">FT WM</option>
                             <option value="'FT_WM','OCC WM'">WM</option>
                             <option value="'FT_WM','OCC WM','BG'">BG + WM</option>
-
-							<option value="Cerebellum">CRBL</option>
+                            <option value="Cerebellum">CRBL</option>
                         </select></span>
-                        <span title="Only include the X closest patients above and below the 'AGE'.">Limit:
-                        <input type="text" size="2" name="limit"></span>
-                        <span title="Lower limit of the X-axis range.">Min Age to Show:
-                        <input type="text" size="2" name="lxlimit"></span>
-                        <span title="Upper limit of the X-axis range.">Max Age to Show:
-                        <input type="text" size="2" name="uxlimit"></span>
-                        <span title="Select data that lies outside of a certain standard deviation threshold.">SD threshold:
-                        <input type="text" size="2" name="sdThreshold"></span>
-                        <span title="More options.">More options <img id='allOpt' src="../img/new_window.png" style="padding-bottom:3px" /></span>
+                        
+                        <span title="Keywords of the query. e.g. '%glioma'">Keywords:
+                        <div class ='optionBox'><input type="text" size="4" name="keyword" style="border:0px solid"><img id='keyOpt' src="../img/new_window.png" style="padding-bottom:3px" /></div></span>
                         <br>
                         <span title="Merge graphs.">Merge Graphs:
                         <input type="checkbox" id="merge" name="Merge Graphs"></span>
@@ -200,6 +207,8 @@ ul.justify { margin-left:-2.75em; }
                         Overlay queries:
                         <input
                         type="checkbox" id="overlay" name="overlay" onclick="document.getElementById('merge').disabled = true;"></span>
+                                                <span title="More options.">More options <img id='allOpt' src="../img/new_window.png" style="padding-bottom:3px" /></span>
+
 
                     </form>
                 <p>
@@ -215,7 +224,17 @@ ul.justify { margin-left:-2.75em; }
         </div>
 
 		<div id='right'>
-        <div id="sidebar" ></div>
+
+        <div id="sidebar" >
+            <div id="sidebar_top" style="height:50px;width:100%">
+            <img src="../img/left.png" style="width:50px;height:50px;float:none" class="arrow" onclick="document.getElementById('sidebar').scrollLeft = 0"></img>
+            <img src="../img/right.png" style="width:50px;height:50px;float:none" class="arrow" onclick="document.getElementById('sidebar').scrollLeft = document.getElementById('sidebar').scrollWidth"></img>
+        </div>
+
+            <div id = "sidebar_left" style="float:left;width:528px;padding-top: 50px;margin-left:5px"></div>
+            <div id = "sidebar_right" style="float:none;margin-left:560px;width:528px;padding-top:50px" ></div>
+
+        </div>
 
 		</div>
 
@@ -310,9 +329,22 @@ Close</div>
 Close</div>
 <left>
 <form action="#" method="post"><br />
+    <label>Query Refinements</label><br>
+                        <span title="Search for a tabPatientID.">IDs: <input type="text" size="2" name="ID"></span><br>
+                        <span title="Only include the X closest patients above and below the 'AGE'.">Limit:
+                        <input type="text" size="2" name="limit"></span><br>
+                        <span title="Lower limit of the X-axis range.">Min Age to Show:
+                        <input type="text" size="2" name="lxlimit"></span>
+                        <span title="Upper limit of the X-axis range.">Max Age to Show:
+                        <input type="text" size="2" name="uxlimit"></span><br>
+                        <span title="Select data that lies outside of a certain standard deviation threshold.">SD threshold:
+                        <input type="text" size="2" name="sdThreshold"></span><br>
+<label>Input a Patient's Data to Compare</label><br>
+                        <span title="The age of the query. Used to set the center of the limit.">Age:
+                        <div class ='optionBox'><input type="text" size="2" name="age" placeholder="Days"style="border:0px solid;"><img id='ageOpt' src="../img/new_window.png" style="padding-bottom:3px" /></div></span>
 
-<label>Not currently implemented.
-</label>
+                                                <span title="Values of the query.">Values:
+                        <input type="text" size="5" name="values"></span>
 
 </form>
 </left>
@@ -351,10 +383,10 @@ Close</div>
                 }
             }
 
-            if ($('input[name="values"]').val().search(num_list) < 0){
+            /*if ($('input[name="values"]').val().search(num_list) < 0){
                 alert('You entered\n\n' +$('input[name="values"]').val()+ '\n\nPlease enter metabolite values separated by dashes.')
                 return false
-            }
+            }*/
 
             if ($('input[name="ID"]').val().search(opt_num_list) < 0){
                 alert('You entered\n\n' +$('input[name="ID"]').val()+ '\n\nPlease enter ID values separated by dashes.')
@@ -611,6 +643,8 @@ function downloadCsv(csv_out, name) {
 
         if (scroll < $('#charts').offset().top) {
 
+        $('#sidebar_top').css({'position':'fixed'})
+
             $('#sidebar').css({
                 'position': 'static',
                 'top': '0',
@@ -618,6 +652,9 @@ function downloadCsv(csv_out, name) {
             });
 
         } else {
+
+                $('#sidebar_top').css({'position':'fixed'})
+
 
             $('#sidebar').css({
                 'position': 'fixed',
@@ -656,7 +693,8 @@ function downloadCsv(csv_out, name) {
 		            	window.my_config.charts[c].setSelection()
 		            		}
 					}
-					$(".patient").remove()  // esc
+					$(".patient").remove()
+                    $(".group").remove()  // esc
             });
 
             function render_html(names) {
@@ -686,7 +724,7 @@ function downloadCsv(csv_out, name) {
                 title: 'Age vs. ' + c,
                 hAxis: {title: 'Age',            
                 logScale: document.getElementById('scale').checked? true:false},
-                vAxis: {title: "mM/Kg wet wgt."},
+                vAxis: {title: "mM per Kg wet wgt."},
 
                 legend: { position: 'top', maxLines : 5},
                 // maxLines not working properly? Only shows up to 2 lines?
@@ -851,9 +889,65 @@ function downloadCsv(csv_out, name) {
     }
 }
 
+                function update_right_sidebar(){
+
+                    /*var group = {}
+                    var met_means = {}
+                    var met_SD = {}
+
+                    for (c in window.my_config.charts){
+                        selection = window.my_config.charts[c].getSelection()
+                    //data = new google.visualization.DataTable(window.my_config.results[c])
+                    data = window.my_config.results[c]
+
+                
+                            for (i = 0; i < selection.length; i++){
+                                //temporary fix needed to access Scan_IDs of agglutinated data
+                                for (q = 3; q < data.getNumberOfColumns(); q+= 2){ if (data.getValue(selection[i].row, q) != null)
+                                //access data value
+                                patient = data.getValue(selection[i].row, q-1)}
+                                console.log(patient)
+                                if (patient in group || group == null){} else{
+                                    group[patient] = null
+                                }
+                            }
+                    }
+
+                        var i = ""
+
+                        for (m in window.my_config.metadata_array[r]) {
+                            for (n in window.my_config.metadata_array[r][m]) {
+                                if (window.my_config.metadata_array[r][m][n]) {
+                                    i+= "<div class='title'>"
+                                        +n+": </div><div class='content'>" 
+                                        + window.my_config.metadata_array[r][m][n] + "</div>"
+                                    }
+                                
+                                    
+                            }
+                        }
+                        if (window.my_config.sd_array[r] != null){
+                            i+= "<div class='title'>SD for available metabolites:</div><div class='content'>" + add_SD(r) +"</div>"
+                            } */
+
+                        //dummy text for now
+                        var i = "<div class='title'>Mean of Selected Patients:</div><div class='content'>tCr: 15.3</div><div class='content'>Cr: 9.8</div><div class='title'>Pooled Standard Deviation:</div><div class='content'>tCr: 0 (n=2)</div><div class='content'>Cr: 0 (n=2)</div>"
+
+                        $("#sidebar_right").append("<div id='"+r+"' class='group'>"+i+"</div>")
+                                                
+                    
+
+                    if (window.my_config.sd_array != null)
+                        prepareList()
+                    //needed in case scroll bar results from overflow of
+                    setSize()
+                }
+
                 function update_sidebar(){
 
+
 		            $(".patient").remove()
+                    $(".group").remove()
 
 		            var patients = {}
 
@@ -895,7 +989,7 @@ function downloadCsv(csv_out, name) {
 		           			i+= "<div class='title'>SD for available metabolites:</div><div class='content'>" + add_SD(r) +"</div>"
 							}
 
-						$("#sidebar").append("<div id='"+r+"' class='patient'>"+i+"</div>")
+						$("#sidebar_left").append("<div id='"+r+"' class='patient'>"+i+"</div>")
 								            	
 		            }
 
@@ -903,7 +997,13 @@ function downloadCsv(csv_out, name) {
 						prepareList()
 					//needed in case scroll bar results from overflow of
 					setSize()
+
+                    if (Object.keys(patients).length > 1){
+                    update_right_sidebar()}
+
                 }
+
+
 
                 /*
 				 * for (c in charts) {
