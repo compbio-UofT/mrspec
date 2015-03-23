@@ -562,7 +562,7 @@ def format_query_with_pseries(query, columns, values, legend):
         rows.append({'c':vals})
 
     for val in values[1:]:
-        rows.append({'c':[{'v': values[0]}] + [{'v': None} for value in row[1:len(columns)-1]]+[{'v':float(val)}]})
+        rows.append({'c':[{'v': values[0]}] + [{'v': None} for value in row[1:len(columns)-1]]+[{'v':str(val)}]})
 
     q['rows'] = rows
     q['cols'] = cols
