@@ -38,7 +38,7 @@ def insert_aggregate_metabolites_optimal(name, met_to_calculate):
                 not_zero = ''.join(['AND '," > 0 AND ".join([ 'sel.' + mm + '_opt' for mm in met_to_calculate[met]]),' > 0'])
 
                 #met_echo_high[mm]
-                subquery1 = "SELECT Scan_ID," + ",".join(["SUBSTRING_INDEX(GROUP_CONCAT(CASE WHEN `{0}`>0 AND {3}.ScanTEParameters {2} THEN {0} ELSE NULL END),',',1) as `{0}_opt`".format(mm, '998', met_echo_high[mm],name) for mm in met_to_calculate[met]]) + ' FROM {} GROUP BY {}, AgeAtScan'.format(name,unique_desc)
+                subquery1 = "SELECT Scan_ID," + ",".join(["SUBSTRING_INDEX(GROUP_CONCAT(CASE WHEN `{0}`>0 AND {3}.ScanTEParameters {2} THEN {0} ELSE NULL END),',',1) as `{0}_opt`".format(mm, '100', met_echo_high[mm],name) for mm in met_to_calculate[met]]) + ' FROM {} GROUP BY {}, AgeAtScan'.format(name,unique_desc)
                 
                 print('--------------FIX AGGMET OPT VALUES-----------------')
                 q = "UPDATE {0} T, ({4}) sel SET T.{1} = ({2}) WHERE T.Scan_ID = sel.Scan_ID".format(name, met +"_opt", added, '', subquery1)
@@ -180,7 +180,7 @@ if __name__ == "__main__":
             table_schema = [line.split(',') for line in r]
         print("Table schema loaded from file.")
     except IOError as e:
-        print("Error parsing schema file: " +str(e)+". Table schema loaded from defaults.")
+        print("Table schema loaded from defaults. Reason: " +str(e)+".")
 
         #datatypes
         u = 'UNSIGNED'
@@ -212,7 +212,7 @@ if __name__ == "__main__":
             table_schema += [[metabolite, d],['`' + metabolite + "_%SD`", s]]
 
         for metabolite in metabolites:
-            update_table_schema += [[metabolite, d],['`' + metabolite + "_SD`", s]]
+            update_table_schema += [[metabolite, d],['`' + metabolite + "_SD`", s, '`' + metabolite + "_%SD`"]]
         
 
         
@@ -254,18 +254,13 @@ if __name__ == "__main__":
         create_standardized_table("standard_update", 'updates_merged', update_table_schema, None, 'Scan_ID')# fulltexts)
         
         ##COMMENT THIS LINE OUT AFTER SCRIPT HAS RUN ONCE, otherwise you will get an error
-        #cur.execute('INSERT INTO standard SELECT * FROM standard_update')
+        cur.execute('INSERT INTO standard SELECT * FROM standard_update')
         
         con.commit()
         
         ##calculate additional metabolites (tCr, tCho, Glx, tNAA)
-        insert_additional_metabolites('standard', met_to_calculate)
-        insert_aggregate_metabolites_optimal('standard', high_low_mets)
+        #insert_additional_metabolites('standard_update', met_to_calculate)
+        #insert_aggregate_metabolites_optimal('standard_update', high_low_mets)
         
-        #create tables for standard deviations
-        create_sd_table("sd_both_both_alllocations", "standard", sd_table_imports, sd_table_nulls)
-        #create_standardized_table("sd_F_both_alllocations", "standard", sd_table_schema, '')
-        #create_standardized_table("sd_M_both_alllocations", "standard", sd_table_schema, '')    
-        #create_standardized_table("sd_both_both_alllocations", "standard", sd_table_schema, '')     
-    
+
         print('\nAll operations completed successfully.')
