@@ -9,7 +9,7 @@ from connection import *
 met_threshold = {'CrCH2':40, 'AcAc':40, 'Acn':40, 'Ala':40, 'Asp':40, 'Cho':20, 'Cr':30,
                  'GABA':40, 'GPC':40, 'Glc':40, 'Gln':40, 'Glu':30, 'Gua':40, 'Ins':30, 'Lac':40, 'Lip09':40,
                  'Lip13a':40, 'Lip13b':40, 'Lip20':40, 'MM09':40, 'MM12':40, 'MM14':40, 'MM17':40, 'MM20':40,
-                 'NAA':20, 'NAAG':40, 'PCh':30, 'PCr':40, 'Scyllo':40, 'Tau':40, 'tCr':30, 'tNAA':20, 'tCho':20, 'Glx':30}
+                 'NAA':20, 'NAAG':40, 'PCh':30, 'PCr':40, 'Scyllo':40, 'Tau':40, 'tCr':30, 'tNAA':20, 'tCho':20, 'Glx':30,'tCr_opt':30, 'tNAA_opt':20, 'tCho_opt':20, 'Glx_opt':30}
 
 high = '= 144'
 low = '< 50'
@@ -17,15 +17,9 @@ both = 'IS NOT NULL'
 met_echo_high = {'CrCH2':high, 'AcAc':high, 'Acn':high, 'Ala':low, 'Asp':low, 'Cho':high, 'Cr':high,
                  'GABA':low, 'GPC':low, 'Glc':low, 'Gln':low, 'Glu':low, 'Gua':high, 'Ins':low, 'Lac':high, 'Lip09':low,
                  'Lip13a':low, 'Lip13b':low, 'Lip20':low, 'MM09':low, 'MM12':low, 'MM14':low, 'MM17':low, 'MM20':low,
-                 'NAA':high, 'NAAG':low, 'PCh':low, 'PCr':low, 'Scyllo':low, 'Tau':low, 'tCr':both, 'tNAA':both, 'tCho':both, 'Glx':low}
+                 'NAA':high, 'NAAG':low, 'PCh':low, 'PCr':low, 'Scyllo':low, 'Tau':low, 'tCr':both, 'tNAA':both, 'tCho':both, 'Glx':low, 'tCr_opt':both, 'tNAA_opt':both, 'tCho_opt':both, 'Glx_opt':low}
 
-table = "standard_sd"
-
-sd_both_both_all = 'sd_both_both_alllocations'
-sd_M_3_all = ''
-sd_F_3_all = ''
-sd_M_15_all = ''
-sd_table = 'sd_both_both_alllocations'
+table = "standard"
 
 unique_desc = "DatabaseID"
 
@@ -119,23 +113,28 @@ def default_query(ID, age, gender, field, location, metabolites, limit, mets_spa
     return rows
 
 
-def create_SD_table(cols, query, gender, field, location, unique, filter_by_sd, overlay):
+def create_SD_table(gender, field, location, unique, filter_by_sd, overlay):
     '''Populates a table in which the '''
     #all_sd = []
     limit = 50
 
+    a,all_patient_IDs = execute_query("SELECT AgeAtScan,{0} from {1} group by {0},AgeAtScan".format(unique_desc, table))
+
     i=0
-    for row in query:
+    for row in all_patient_IDs:
         age = row[0]
-        patient_ID = row[-len(metadata)]
+        patient_ID = row[1]
 
         #subject_metabolites_query = default_query(patient_ID, age, "", "", location, met_threshold, "", False, False, filter_by_sd, [],[], []) 
         #obtain a list of all patients
-        query = parse_query(patient_ID, age, '', '', location, met_threshold, '', 
-                   '', '', False, 
+        q = parse_query(patient_ID, age, '', '', location, met_threshold, '', 
+                   '', '', True, 
                    True, filter_by_sd, '', 
-                   '')
-        cols,subject_metabolites_query = execute_query(query)
+                   '','')
+        
+        
+        cols,subject_metabolites_query = execute_query(q)
+        print cols,subject_metabolites_query
 
         j=0
         #iterate through all columns of the query (doesn't matter at what columns metabolites begin)
@@ -144,30 +143,29 @@ def create_SD_table(cols, query, gender, field, location, unique, filter_by_sd, 
             name = column[:-9] if filter_by_sd else column
 
             if name in met_threshold and subject_metabolites_query[0][j] is not None:
-                subquery = "SELECT AVG({0}), STDDEV_SAMP({0}),COUNT({0}) FROM ".format(column)
-                subquery = ''.join([subquery,'(', parse_query('', age, gender, field, 
-                                             location, 
-                                             [name], 
-                                             limit, 
-                                             '', 
-                                             '', 
-                                             True, 
-                                             unique, 
-                                             filter_by_sd, 
-                                             [], 
-                                             []),') AS T'])
-                c,result=execute_query(subquery)
-                #result = default_query('',age, gender, field, location, [metabolite], limit, True, unique,filter_by_sd, [],[],subquery)
+                subquery = ''.join(['UPDATE {2} as S, (SELECT (CASE WHEN COUNT(T.{0})<2 THEN 0 ELSE ({1}-AVG(T.{0}))/STDDEV_SAMP(T.{0}) END) AS q FROM ('.format(column, subject_metabolites_query[0][j], table), parse_query('', age, gender, field, 
+                                                              location, 
+                                                              [name], 
+                                                              limit, 
+                                                              '', 
+                                                              '', 
+                                                              True, 
+                                                              unique, 
+                                                              filter_by_sd, 
+                                                              [], 
+                                                              [],''),') AS T) AS Q set S.{}_SD=CAST(Q.q AS DECIMAL(11,6))where S.{}={} AND S.AgeAtScan={}'.format(name,unique_desc,patient_ID,age)])
+ 
 
-                #print result
-                #print subject_metabolites_query[0][i], result[0][0],result[0][1],result[0][2]
-                patient_sd = 0 if result[0][2] <= 1 else (float(subject_metabolites_query[0][j]) - float(result[0][0]))/float(result[0][1]) #N = (X-mu)/sigma
+                cur.execute(subquery)
+                con.commit()
+                ##c,result=execute_query(subquery)
 
-                ##patient_sd = random.randint(-4,4)
-                qq = "UPDATE {} SET {}=CAST({} AS DECIMAL(11,6)) WHERE {} = {} AND AgeAtScan = {}".format(sd_table, name + '_SD', patient_sd, unique_desc, patient_ID, age)
+                ##patient_sd = 0 if result[0][2] <= 1 else (float(subject_metabolites_query[0][j]) - float(result[0][0]))/float(result[0][1]) #N = (X-mu)/sigma
+
+                ##qq = "UPDATE {} SET {}=CAST({} AS DECIMAL(11,6)) WHERE {} = {} AND AgeAtScan = {}".format(sd_table, name + '_SD', patient_sd, unique_desc, patient_ID, age)
                 #print qq + ';'
-                cur.execute(qq)
-                con.commit() ##necessary to reflect changes
+                ##cur.execute(qq)
+                ###con.commit() ##necessary to reflect changes
                 
                 #sd.append({metabolite:int(patient_sd)})
             j+=1
@@ -761,6 +759,8 @@ def add_numbers():
         keywords=keywords,
         key_exclude = key_exclude, windowed_SD_threshold=windowed_SD_threshold)
     
+    print query
+    
     cols,q = execute_query(query)
         
     sd_array = windowed_SD2(cols, q, gender, field, location, unique, filter_by_sd, overlay)
@@ -812,40 +812,19 @@ if __name__ == '__main__':
                 debug=True,
                 extra_files=extra_files
             )
+            
         #Otherwise, execute custom code for debugging
         else:
             ###Sandbox for testing###            
             
             start = time.clock()
             
-            qq = parse_query('2390', 0, '', '', 'BG', 
-                                             ['Lip13a'], 
-                                             '', None,None,
-                                             False,
-                                             False, 
-                                             True, 
-                                             [], 
-                                             [],'')
-            print qq
-            col,q = execute_query(qq)
-            
-            print j.dumps(format_query_with_pseries_and_names(q,
-                                                ["Age","Lip13a"],
-                                                [0,0],
-                                                ['Both', 'Both', 'Any'],
-                                                0),indent = 1)
-            print j.dumps(format_metadata2(q, 0),indent=1)
-            #print col,q
-            ##create_SD_table(col,q, '', '', '', False, True, 0)
-            #create_SD_table(cols, query, gender, field, location, unique, 
-                           #filter_by_sd, overlay)
+
+
+            #create_SD_table('', '', '', True, True, None)
+
     
-            ##print j.dumps(format_query_with_pseries(q, 'Age,Acn'.split(","), "500,0.5".split(",")))
-            ##print j.dumps(format_query_with_pseries_and_names(q, 'Age,Acn,Cr'.split(","), "500,0.5,6".split(",")), indent=1)
-    
-            #print q
-    
-            #w = windowed_SD(q, gender="M", field="3", location='', unique=True, filter_by_sd=True, overlay=0)
+
             end = time.clock()
             
             print end-start
