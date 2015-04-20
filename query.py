@@ -411,11 +411,13 @@ def parse_query(ID, age, gender, field, location, metabolites, limit, uxlimit, l
         
     parsed_where = ''
     parsed_options = []
+    
+    ID = None if not ID else "'"+("','").join(ID.split(','))+"'"
         
     constraints = {'Gender':gender, 'ScanBZero':field, unique_desc:ID}
     for constraint in constraints:
         if constraints[constraint]:
-            parsed_options.append("{}.{} IN ('{}')".format(table,constraint,
+            parsed_options.append("{}.{} IN({})".format(table,constraint,
                 constraints[constraint]))
 
     ##if mets_span_each, filter by standard deviation for each metabolite
@@ -428,7 +430,7 @@ def parse_query(ID, age, gender, field, location, metabolites, limit, uxlimit, l
     if keywords:
         cond = []
         for keyword in keywords:
-            cond += ["{3}.{1} LIKE '{0}' OR {3}.{2} LIKE '{0}' ".format(keyword, metadata[1],metadata[2], table)]
+            cond += ["{3}.{1} LIKE '{0}' OR {3}.{2} LIKE '{0}' ".format(keyword, metadata[3],metadata[2], table)]
         parsed_keys = " AND ".join(cond)
         parsed_keys = ''.join(['(', parsed_keys, ')'])
         parsed_options.append(parsed_keys)
@@ -437,7 +439,7 @@ def parse_query(ID, age, gender, field, location, metabolites, limit, uxlimit, l
     if key_exclude:
         cond = []
         for keyword in keywords:
-            cond += ["{3}.{1} NOT LIKE '{0}' AND {3}.{2} NOT LIKE '{0}' ".format(keyword, metadata[1],metadata[2], table)]
+            cond += ["{3}.{1} NOT LIKE '{0}' AND {3}.{2} NOT LIKE '{0}' ".format(keyword, metadata[3],metadata[2], table)]
         parsed_keys = " AND ".join(cond)
         parsed_keys = ''.join(['(', parsed_keys, ')'])
         parsed_options.append(parsed_keys)
@@ -489,10 +491,6 @@ def parse_query(ID, age, gender, field, location, metabolites, limit, uxlimit, l
         #print "where_geq: ", where_geq
 
     #print "query: ", query
-    
-    ##parse sd table name (eventually)
-    
-    
         
     return query
 
