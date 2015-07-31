@@ -1,69 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <script src="https://www.google.com/jsapi"></script>
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-        <link
-        href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css"
-        rel="stylesheet">
+<head>
+    <link rel="shortcut icon"
+    href="../img/favicon.ico" />
+    <script src="https://www.google.com/jsapi"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+    <script src="//code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+    <link
+    href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css"
+    rel="stylesheet">
+    <link rel="stylesheet" href="../css/chosen.css">
+    <script src='../js/chosen.jquery.js'></script>
 
-        <style type="text/css">
+    <style type="text/css">
 
         .arrow {
-    opacity:0;
-  transition:opacity 0.25s linear;*
-}
-    .arrow:hover {
+          width:50px;
+          height:50px;
+          float:none;
+          opacity:0.15;
+          transition:opacity 0.25s linear;*
+
+      }
+      .arrow:hover {
         opacity:1;
-        }
+    }
 
-        .wrapper {
-    display: table;
-    width: 100%;
+    .wrapper {
+        display: table;
+        width: 100%;
+    }
+    #left {float:left}
+    #right {float:left; padding-left:5px     
+    }
+
+    #sidebar {
+     overflow-y:auto;
+     overflow-x:auto;
+     background-color: white;
+     width: 545px;
+     position: static;
+     left: 700px;
+
+ }
+
+ #sidebar .patient {
+    border: 1px solid #eee;
+    padding: 10px;
+    padding-bottom: 5px;
+    margin-top: 10px;
 }
-			#left {float:left}
-			#right {float:left;      
-                    }
-        
-			#sidebar {
-			    overflow-y:auto;
-                overflow-x:auto;
-				background-color: white;
-				width: 545px;
-				position: static;
-				left: 700px;
 
-			}
+#sidebar .group {
+    border: 1px solid #eee;
+    padding: 10px;
+    padding-bottom: 5px;
+    margin-top: 10px;
+}
 
-			#sidebar .patient {
-				border: 1px solid #eee;
-				padding: 10px;
-				padding-bottom: 5px;
-				margin-top: 10px;
-			}
+#sidebar .title {
+    font-weight:600;
+    background-color: white;
+    color: #909090;
+    text-align: left;
+    padding-left: 5px
+}
 
-            #sidebar .group {
-                border: 1px solid #eee;
-                padding: 10px;
-                padding-bottom: 5px;
-                margin-top: 10px;
-            }
+#sidebar .content {
+    text-align: left;
+    padding-left: 15px;
+    padding-bottom: 5px
+}
 
-			#sidebar .title {
-				font-weight:600;
-				background-color: white;
-				color: #909090;
-				text-align: left;
-				padding-left: 5px
-			}
-
-			#sidebar .content {
-				text-align: left;
-				padding-left: 15px;
-				padding-bottom: 5px
-			}
-
-			#sidebar .listContainer{
+#sidebar .listContainer{
 } 
 
 ul.justify { margin-left:-2.75em; } 
@@ -92,11 +103,11 @@ ul.justify { margin-left:-2.75em; }
     padding-left: 20px;
     background-repeat: no-repeat;
 }
- 
+
 /* Collapsed state for list element */
 .collapsed {
     background-image: url(../img/collapsed.png);
-        background-position: 1px 8px;
+    background-position: 1px 8px;
     padding-left: 20px;
     background-repeat: no-repeat;
 }
@@ -121,7 +132,7 @@ ul.justify { margin-left:-2.75em; }
 	z-index:100;
 	display:none;
 	cursor:pointer;
-	}
+}
 .msgbox {
 	background-color:#ccc;
 	border:1px solid #ccc;
@@ -136,7 +147,7 @@ ul.justify { margin-left:-2.75em; }
 	z-index:101;
 	display:none;
 	margin-left: 20%;
-	}
+}
 .closeBox {
 	background-color:#CC0000;
 	color:#FFFFFF;
@@ -146,883 +157,956 @@ ul.justify { margin-left:-2.75em; }
 	cursor:pointer;
 	text-transform:uppercase;
 
-	}
+}
 
 .optionBox {
 	outline: 1px solid #B0B0B0;
 	display:inline;
-	padding-top:2px;
-	padding-bottom: 2px;
+	padding-top:4px;
+	padding-bottom: 5px;
 }
 
 .optionBox:hover {
-   overflow:visible;
-   }
-        </style>
-    </head>
-    <body>
-        <div id ='top_header' class="container">
-            <div class="header">
-                <h3 class="text-muted">MRSpec Database Query and Visualization</h3>
-            </div>
-            <hr />
-            <div>
-                <p>
-                    <form>
-                        <span title="Metabolite of the query.">Metabolites:
-                        <div class ='optionBox'><input type="text" size="4" name="metabolites" style="border:0px solid"><img id='metOpt' src="../img/new_window.png" style="padding-bottom:3px" /></div></span>
-                        <span title="Gender of the query.">Gender:
+ overflow:visible;
+}
+</style>
+</head>
+<body>
+    <div id ='top_header' class="container">
+        <div class="header">
+            <h3 class="text-muted">MRSpec Database Query and Visualization</h3>
+        </div>
+        <hr />
+        <div>
+            <p>
+                <form>
+                    <span title="Metabolite of the query.">Metabolites: 
+                        <select class="chosen" id="metabolites" data-placeholder="Select metabolites..." multiple="true" style="width:300px;">
+                            <option>AcAc</option><option>Acn</option><option>Ala</option><option>Asp</option><option>Cho</option><option>Cr</option><option>CrCH2</option><option>GABA</option><option>GPC</option><option>Glc</option><option>Gln</option><option>Glu</option><option>Glx</option><option>Glx_opt</option><option>Gua</option><option>Ins</option><option>Lac</option><option>Lip09</option><option>Lip13a</option><option>Lip13b</option><option>Lip20</option><option>MM09</option><option>MM12</option><option>MM14</option><option>MM17</option><option>MM20</option><option>NAA</option><option>NAAG</option><option>PCh</option><option>PCr</option><option>Scyllo</option><option>Tau</option><option>tCho</option><option>tCho_opt</option><option>tCr</option><option>tCr_opt</option><option>tNAA</option><option>tNAA_opt</option>
+                        </select>
+                    </span>
+                    <span title="Gender of the query.">Gender:
                         <select id='gender' name='gender'>
                             <option value="">Both</option>
-                            <option value="M">M</option>
-                            <option value="F">F</option>
-                        </select></span>
-                        <span title="Field strength of the query."">Field Strength:
+                            <option value="'M'">M</option>
+                            <option value="'F'">F</option>
+                            <option value="'unset'">Unk</option>
+
+                        </select>
+                    </span>
+                    <span title="Field strength of the query.">Field Strength:
                         <select id='field' name='field'>
                             <option value="">Both</option>
                             <option value="3">3T</option>
                             <option value="1.5">1.5T</option>
-                        </select></span>
+                            <!--<option value="unset">Unk</option>-->
 
-                        <span title="Location of the query.">Location:
-                        <select id='location' name='location'>
-                            <option value="">Any</option>
+                        </select>
+                    </span>
+
+                    <span title="Location of the query.">Location:
+                        <select class='chosen' data-placeholder="Select location (optional)" multiple='true' id='location' name='location' style="width:200px;">
                             <option value="'BG'">BG</option>
                             <option value="'OCC_WM'">OCC WM</option>
                             <option value="'FT_WM'">FT WM</option>
-                            <option value="'FT_WM','OCC WM'">WM</option>
-                            <option value="'FT_WM','OCC WM','BG'">BG + WM</option>
                             <option value="'Cerebellum'">CRBL</option>
-                            <option value="'Else','unset'">Else/Unk</option>
+                            <option value="'Else','unset'">Unk</option>
+                        </select>
+                    </span><br>
 
-                        </select></span>
-                        
+                    <div style="padding-top:5px">
+
+                        <span title="Indication code.">Indication code:
+                            <select class='chosen' data-placeholder="Indication code (optional)" multiple='true' id='code' style="width:200px;">
+                                <option value="AN">AN</option>
+                                <option value="DD">DD</option>
+                                <option value="DY">DY</option>
+                                <option value="MET">MET</option>
+                                <option value="GEN">GEN</option>
+
+                            </select>
+                        </span>
+
+
                         <span title="Keywords of the query. e.g. '%glioma'">Keywords:
-                        <div class ='optionBox'><input type="text" size="4" name="keyword" style="border:0px solid"><img id='keyOpt' src="../img/new_window.png" style="padding-bottom:3px" /></div></span>
-                        <br>
-                        <span title="Merge graphs.">Merge Graphs:
-                        <input type="checkbox" id="merge" name="Merge Graphs"></span>
-                        <span title="Log scale.">Log Scale:
-                        <input type="checkbox" id="scale" name="scale" onclick="drawChart(window.my_config.results)"></span>
-                        <span title="Trendline.">Trendline:
+                            <div class ='optionBox' ><input type="text" size="4" name="keyword" style="border:0px solid"><img id='keyOpt' src="../img/new_window.png" style="padding-bottom:3px" />
+                            </div>
+                        </span>
+
+
+
+                    </div>
+
+                    <span title="Merge graphs.">Merge Graphs:
+                        <input type="checkbox" id="merge" name="Merge Graphs">
+                    </span>
+                    <span title="Log scale.">Log Scale:
+                        <input type="checkbox" id="scale" name="scale" onclick="drawChart(window.my_config.results)">
+                    </span>
+                    <span title="Trendline.">Trendline:
                         <span title="Overlay queries."><input type="checkbox" id="trendline" name="trendline" onclick="drawChart(window.my_config.results)">
-                        Overlay queries:
-                        <input
-                        type="checkbox" id="overlay" name="overlay" onclick="document.getElementById('merge').disabled = true;"></span>
-                                                <span title="More options.">More options <img id='allOpt' src="../img/new_window.png" style="padding-bottom:3px" /></span>
+                            Overlay queries:
+                            <input
+                            type="checkbox" id="overlay" name="overlay" onclick="document.getElementById('merge').disabled = true;">
+                        </span>
+                        <span title="More options.">More options <img id='allOpt' src="../img/new_window.png" style="padding-bottom:3px" />
+                        </span>
 
 
                     </form>
-                <p>
-                    <a href="javascript:void();" id="query" class='query'>submit
-                    query</a> - <a href="javascript:void();" id='clear'>clear canvas</a> - <a href="javascript:void();" id="dump" onclick="exportToCsv()">export canvas to file</a> - <a href="javascript:void();" id="png_dump" onclick="exportChartsAsPng()"> export charts as .png</a>
-                </p>
+                    <p>
+                        <a href="javascript:void();" id="query" class='query'>submit
+                            query</a> - <a href="javascript:clearCanvas()">clear canvas</a> - <a href="javascript:void();" id="dump" onclick="exportToCsv()">export canvas to file</a> - <a href="javascript:void();" id="png_dump" onclick="exportChartsAsPng()"> export charts as .png</a> - <a href="javascript:void();" id="help" >help</a>
+                    </p>
                 </form>
             </div>
         </div>
 
-		<div id = 'left'>
-        <div id="charts"></div>
+        <div id = 'left'>
+            <div id="charts"></div>
         </div>
 
-		<div id='right'>
+        <div id='right'></div>
 
-        <div id="sidebar" >
-            <div id="sidebar_top" style="height:50px;width:100%">
-            <img src="../img/left.png" style="width:50px;height:50px;float:none" class="arrow" onclick="document.getElementById('sidebar').scrollLeft = 0"></img>
-            <img src="../img/right.png" style="width:50px;height:50px;float:none" class="arrow" onclick="document.getElementById('sidebar').scrollLeft = document.getElementById('sidebar').scrollWidth"></img>
+        <div id="allOptWindow" title="More Options"><label>Query Refinements</label><br>
+            <span title="Search for a DatabaseID.">DatabaseIDs: <input type="text" size="2" name="DatabaseID">
+            </span><br>
+            <span title="Search for a ScanID.">ScanIDs: <input type="text" size="2" name="ScanID">
+            </span><br>
+            <span title="Only include the X closest patients above and below the 'AGE'.">Limit:
+                <input type="text" size="2" name="limit">
+            </span><br>
+            <span title="Lower limit of the X-axis range.">Min Age to Show:
+                <input type="text" size="2" name="lxlimit">
+            </span>
+            <span title="Upper limit of the X-axis range.">Max Age to Show:
+                <input type="text" size="2" name="uxlimit">
+            </span><br>
+            <span title="Select data that lies outside of a certain standard deviation threshold.">SD threshold:
+                <input type="text" size="2" name="sdThreshold">
+            </span><br>
+            <label>Input a Patient's Data to Compare</label><br>
+            <span title="The age of the query. Used to set the center of the limit.">Age:
+                <div class ='optionBox'><input type="text" size="2" name="age" placeholder="Days"style="border:0px solid;"><img id='ageOpt' src="../img/new_window.png" style="padding-bottom:3px" />
+                </div>
+            </span>
+
+            <span title="Values of the query.">Values:
+                <input type="text" size="5" name="values">
+            </span><br>
+
         </div>
 
-            <div id = "sidebar_left" style="float:left;width:528px;padding-top: 50px;margin-left:5px"></div>
-            <div id = "sidebar_right" style="float:none;margin-left:560px;width:528px;padding-top:50px" ></div>
+        <div id="keyOptWindow" title="Keyword Options">
+            <span title="Keywords of the query. e.g. '%glioma'">Keywords to exclude:
+                <input type="text" size="4" name="key_exclude">
+            </span>
+        </div>
+
+        <div id="helpWindow" title="QuickStart Guide">
+        <label>General Help and Submitting a Query</label>
+        <p>The minimum information for a query is a metabolite to display, which can be entered in the upper left hand corner. You may further specify refinements such as gender, field strength, location, and much more. To submit a query, click "submit query" in the upper left hand corner, or press ENTER at any time.</p>
+                    <p>
+You can find out more about a particular option by hovering over it for a few moments to display a tip. The symbol "<img src="../img/new_window.png" style="padding-bottom:3px" />" indicates that more settings related to that option are available - just click on the symbol to reveal them.</p>
+            <label>New Features</label>
+            <p>• Change default standard deviation thresholds by clicking "More options"->"Change SD Thresholds"<br>
+            • For metabolites, location and indication code, click on or type inside the box to search/reveal options; you may select multiple options
+            </p>
+            <label>Keyword Search</label>
+            <p>Keyword search is implemented using the MySQL 'LIKE' clause, whose basic usage can be summarized as follows:<br>
+            • Keyword search will search both the indication and diagnosis fields for all patients in the database and return a scan if either of these fields matches the keyword.<br>
+            • For most searches, use the '%'' symbol on both ends of the word, i.e. '%glioma%'. '%' is a wildcard for an unlimited number of characters. For instance, if you want to match the word 'dog' in the phrase 'A dog runs', you would need to search '%dog%' since it appears in the middle of the sentence.<br>
+            • Use the '_' symbol as a wildcard for a single character. For instance, 'T_m' would match 'Tim','Tom','Tum' and any other letter in the middle.<br>
+            • You can enter multiple keywords separated by a comma; scans will be returned if they match any of the keywords.<br>
+            • By clicking on <img src="../img/new_window.png" style="padding-bottom:3px" /> in the keyword box, you can enter keywords to EXCLUDE scans from being returned as matches. Only scans that do not have any of these words will be returned.
+            </p>
 
         </div>
 
-		</div>
+
+        <div id='ageWindow' title="Input Age">
+            <label>Years:<input type="text" size="4" id='years' name='years' onKeyUp="calculateAge()" value='0'></label><br>
+            <label>Months:<input type="text" size="4" id='months' name='months' onKeyUp="calculateAge()" value='0'></label><br>
+            <label>Weeks:<input type="text" size="4" id='weeks' name='weeks' onKeyUp="calculateAge()" value='0'></label><br>
+            <label>Days:<input type="text" size="4" id='days' name='days' onKeyUp="calculateAge()" value='0'></label>
+        </div>
 
 
-<div class="blackout">
-</div>
-<div id='ageWindow' class="msgbox">
-<div class="closeBox">
-Close</div>
-<left>
-<form action="#" method="post"><br />
+        <div id='metWindow' title="Change Thresholds">
+            <form method="post">
+                <div style="float: left; width: 20%;text-align:right">
+                    <label>AcAc:<input type='text' size='1'  id=AcAc name=AcAc class='met'></label>
+                    <label>Acn:<input type='text' size='1'  id=Acn name=Acn class='met'></label>
+                    <label>Ala:<input type='text' size='1'  id=Ala name=Ala class='met'></label>
+                    <label>Asp:<input type='text' size='1'  id=Asp name=Asp class='met'></label>
+                    <label>Cho:<input type='text' size='1'  id=Cho name=Cho class='met'></label>
+                    <label>Cr:<input type='text' size='1'  id=Cr name=Cr class='met'></label>
+                    <label>CrCH2:<input type='text' size='1'  id=CrCH2 name=CrCH2 class='met'></label>
+                    <label>GABA:<input type='text' size='1'  id=GABA name=GABA class='met'></label>
+                </div>
+                <div style="float: left; width: 20%;text-align:right">
+                    <label>GPC:<input type='text' size='1'  id=GPC name=GPC class='met'></label>
+                    <label>Glc:<input type='text' size='1'  id=Glc name=Glc class='met'></label>
+                    <label>Gln:<input type='text' size='1'  id=Gln name=Gln class='met'></label>
+                    <label>Glu:<input type='text' size='1'  id=Glu name=Glu class='met'></label>
+                    <label>Glx:<input type='text' size='1'  id=Glx name=Glx class='met'></label>
+                    <label>Gua:<input type='text' size='1'  id=Gua name=Gua class='met'></label>
+                    <label>Ins:<input type='text' size='1'  id=Ins name=Ins class='met'></label>
+                    <label>Lac:<input type='text' size='1'  id=Lac name=Lac class='met'></label>
+                </div>
+                <div style="float: left; width: 20%;text-align:right">
+                    <label>Lip09:<input type='text' size='1'  id=Lip09 name=Lip09 class='met'></label>
+                    <label>Lip13a:<input type='text' size='1'  id=Lip13a name=Lip13a class='met'></label>
+                    <label>Lip13b:<input type='text' size='1'  id=Lip13b name=Lip13b class='met'></label>
+                    <label>Lip20:<input type='text' size='1'  id=Lip20 name=Lip20 class='met'></label>
+                    <label>MM09:<input type='text' size='1'  id=MM09 name=MM09 class='met'></label>
+                    <label>MM12:<input type='text' size='1'  id=MM12 name=MM12 class='met'></label>
+                    <label>MM14:<input type='text' size='1'  id=MM14 name=MM14 class='met'></label>
+                    <label>MM17:<input type='text' size='1'  id=MM17 name=MM17 class='met'></label>
+                </div>
+                <div style="float: left; width: 20%;text-align:right">
+                    <label>MM20:<input type='text' size='1'  id=MM20 name=MM20 class='met'></label>
+                    <label>NAA:<input type='text' size='1'  id=NAA name=NAA class='met'></label>
+                    <label>NAAG:<input type='text' size='1'  id=NAAG name=NAAG class='met'></label>
+                    <label>PCh:<input type='text' size='1'  id=PCh name=PCh class='met'></label>
+                    <label>PCr:<input type='text' size='1'  id=PCr name=PCr class='met'></label>
+                    <label>Scyllo:<input type='text' size='1'  id=Scyllo name=Scyllo class='met'></label>
+                    <label>Tau:<input type='text' size='1'  id=Tau name=Tau class='met'></label>
+                </div>
+                <div style="float: left; width: 20%;text-align:right">
+                    <label>tCho:<input type='text' size='1'  id=tCho name=tCho class='met'></label>
+                    <label>tCr:<input type='text' size='1'  id=tCr name=tCr class='met'></label>
+                    <label>tNAA:<input type='text' size='1'  id=tNAA name=tNAA class='met'></label>
+                    <label>tCho_opt:<input type='text' size='1'  id=tCho_opt name=tCho_opt class='met'></label>
+                    <label>tCr_opt:<input type='text' size='1'  id=tCr_opt name=tCr_opt class='met'></label>
+                    <label>tNAA_opt:<input type='text' size='1' id=tNAA_opt name=tNAA_opt class='met'></label>
+                    </div>
 
-<label>Years:<input type="text" size="4" id='years' name='years' onKeyUp="calculateAge()" value='0'></label><br>
-<label>Months:<input type="text" size="4" id='months' name='months' onKeyUp="calculateAge()" value='0'></label><br>
-<label>Weeks:<input type="text" size="4" id='weeks' name='weeks' onKeyUp="calculateAge()" value='0'></label><br>
-<label>Days:<input type="text" size="4" id='days' name='days' onKeyUp="calculateAge()" value='0'></label>
+                </form>
+            </div>
+        </div>
+    </div>
 
-</form>
-</left>
-</div>
+<script type="text/javascript">
+//HELP WINDOW
+$( "#helpWindow" ).dialog({ modal: true, minWidth: 900, height:400,
+    buttons: {
 
-<div class="blackout">
-</div>
-<div id='metWindow' class="msgbox">
-<div class="closeBox">
-Close</div>
-<left>
-<form action="#" method="post" onchange='updateMetabolites()'><br />
-
-<label>Select all:<input type='checkbox' id='selAll' onclick='checkAll()'></label><br>
-<label>AcAc:<input type='checkbox' id=AcAc name=AcAc class='met'></label>
-<label>Acn:<input type='checkbox' id=Acn name=Acn class='met'></label>
-<label>Ala:<input type='checkbox' id=Ala name=Ala class='met'></label>
-<label>Asp:<input type='checkbox' id=Asp name=Asp class='met'></label>
-<label>Cho:<input type='checkbox' id=Cho name=Cho class='met'></label>
-<label>Cr:<input type='checkbox' id=Cr name=Cr class='met'></label>
-<label>CrCH2:<input type='checkbox' id=CrCH2 name=CrCH2 class='met'></label>
-<label>GABA:<input type='checkbox' id=GABA name=GABA class='met'></label>
-<label>GPC:<input type='checkbox' id=GPC name=GPC class='met'></label>
-<label>Glc:<input type='checkbox' id=Glc name=Glc class='met'></label>
-<label>Gln:<input type='checkbox' id=Gln name=Gln class='met'></label>
-<label>Glu:<input type='checkbox' id=Glu name=Glu class='met'></label>
-<label>Glx:<input type='checkbox' id=Glx name=Glx class='met'></label>
-<label>Gua:<input type='checkbox' id=Gua name=Gua class='met'></label>
-<label>Ins:<input type='checkbox' id=Ins name=Ins class='met'></label>
-<label>Lac:<input type='checkbox' id=Lac name=Lac class='met'></label>
-<label>Lip09:<input type='checkbox' id=Lip09 name=Lip09 class='met'></label>
-<label>Lip13a:<input type='checkbox' id=Lip13a name=Lip13a class='met'></label>
-<label>Lip13b:<input type='checkbox' id=Lip13b name=Lip13b class='met'></label>
-<label>Lip20:<input type='checkbox' id=Lip20 name=Lip20 class='met'></label>
-<label>MM09:<input type='checkbox' id=MM09 name=MM09 class='met'></label>
-<label>MM12:<input type='checkbox' id=MM12 name=MM12 class='met'></label>
-<label>MM14:<input type='checkbox' id=MM14 name=MM14 class='met'></label>
-<label>MM17:<input type='checkbox' id=MM17 name=MM17 class='met'></label>
-<label>MM20:<input type='checkbox' id=MM20 name=MM20 class='met'></label>
-<label>NAA:<input type='checkbox' id=NAA name=NAA class='met'></label>
-<label>NAAG:<input type='checkbox' id=NAAG name=NAAG class='met'></label>
-<label>PCh:<input type='checkbox' id=PCh name=PCh class='met'></label>
-<label>PCr:<input type='checkbox' id=PCr name=PCr class='met'></label>
-<label>Scyllo:<input type='checkbox' id=Scyllo name=Scyllo class='met'></label>
-<label>Tau:<input type='checkbox' id=Tau name=Tau class='met'></label>
-<label>tCho:<input type='checkbox' id=tCho name=tCho class='met'></label>
-<label>tCr:<input type='checkbox' id=tCr name=tCr class='met'></label>
-<label>tNAA:<input type='checkbox' id=tNAA name=tNAA class='met'></label>
-<label>tCho_opt:<input type='checkbox' id=tCho_opt name=tCho_opt class='met'></label>
-<label>tCr_opt:<input type='checkbox' id=tCr_opt name=tCr_opt class='met'></label>
-<label>tNAA_opt:<input type='checkbox' id=tNAA_opt name=tNAA_opt class='met'></label>
-
-</form>
-</left>
-</div>
-
-<div class="blackout">
-</div>
-<div id='keyWindow' class="msgbox">
-<div class="closeBox">
-Close</div>
-<left>
-<form action="#" method="post"><br />
-
-<label>Not currently implemented.
-</label>
-
-</form>
-</left>
-</div>
-
-<div class="blackout">
-</div>
-<div id='allWindow' class="msgbox">
-<div class="closeBox">
-Close</div>
-<left>
-<form action="#" method="post"><br />
-    <label>Query Refinements</label><br>
-                        <span title="Search for a tabPatientID.">IDs: <input type="text" size="2" name="ID"></span><br>
-                        <span title="Only include the X closest patients above and below the 'AGE'.">Limit:
-                        <input type="text" size="2" name="limit"></span><br>
-                        <span title="Lower limit of the X-axis range.">Min Age to Show:
-                        <input type="text" size="2" name="lxlimit"></span>
-                        <span title="Upper limit of the X-axis range.">Max Age to Show:
-                        <input type="text" size="2" name="uxlimit"></span><br>
-                        <span title="Select data that lies outside of a certain standard deviation threshold.">SD threshold:
-                        <input type="text" size="2" name="sdThreshold"></span><br>
-<label>Input a Patient's Data to Compare</label><br>
-                        <span title="The age of the query. Used to set the center of the limit.">Age:
-                        <div class ='optionBox'><input type="text" size="2" name="age" placeholder="Days"style="border:0px solid;"><img id='ageOpt' src="../img/new_window.png" style="padding-bottom:3px" /></div></span>
-
-                                                <span title="Values of the query.">Values:
-                        <input type="text" size="5" name="values"></span>
-
-</form>
-</left>
-</div>
-        <script type="text/javascript">
-
-        function calculateAge(){
-            var years = $('#years').val()
-            var months = $('#months').val()
-            var weeks = $('#weeks').val()
-            var days = $('#days').val()
-
-            var total = parseInt(days) + parseInt(weeks)*7 + parseInt(months)*30 + parseInt(years)*365
-
-            $("input[name='age']").val(total)
-
+        Close: function() {
+            $( this ).dialog( "close" );
         }
-
-        var all_mets = ['CrCH2', 'AcAc', 'Acn', 'Ala', 'Asp', 'Cho', 'Cr', 'GABA', 'GPC', 'Glc',
-        'Gln', 'Glu', 'Gua', 'Ins', 'Lac', 'Lip09', 'Lip13a', 'Lip13b', 'Lip20', 'MM09',
-        'MM12', 'MM14', 'MM17', 'MM20', 'NAA', 'NAAG', 'PCh', 'PCr', 'Scyllo', 'Tau',
-        'tCr', 'tNAA', 'tCho', 'Glx','tNAA_opt','tCr_opt','tCho_opt']
-
-        function inputValid(){
-            var num_list = /^[0-9.]+(,[0-9.]+)*$/i;
-            var opt_num_list = /^([0-9]+(,[0-9]+)*)*$/i
-
-             
-            mets = $('input[name="metabolites"]').val().split(',')
-            for (met in mets){
-                console.log(mets[met])
-                if ($.inArray(mets[met], all_mets) === -1){
-                    alert('You entered\n\n' +$('input[name="metabolites"]').val()+ '\n\nPlease enter valid query metabolites, separated by dashes.')
-
-                    return false
-                }
-            }
-
-            /*if ($('input[name="values"]').val().search(num_list) < 0){
-                alert('You entered\n\n' +$('input[name="values"]').val()+ '\n\nPlease enter metabolite values separated by dashes.')
-                return false
-            }*/
-
-            if ($('input[name="ID"]').val().search(opt_num_list) < 0){
-                alert('You entered\n\n' +$('input[name="ID"]').val()+ '\n\nPlease enter ID values separated by dashes.')
-                return false
-            }
-
-            if ($('input[name="limit"]').val().search(/^[0-9]*$/) < 0){
-                alert('Limit must be a number.')
-                return false
-            }
-
-            if ($('input[name="age"]').val().search(/^[0-9]*$/) < 0){
-                alert('Age must be a number.')
-                return false
-            }
-
-            /*keywords: $('input[name="keyword"]').val(),
-            key_exclude: $('input[name="key_exclude"]').val(),
-            age: $('input[name="age"]').val(),
-            location: $('#location option:selected').val(),
-            merge: document.getElementById('merge').checked,
-            ID: $('input[name="ID"]').val(),*/
-
-            return true
-        }
-
-         function checkAll() {
-             checkboxes = document.getElementsByClassName('met');
-
-             for (i = 0; i < checkboxes.length; i++) {
-                 if (document.getElementById('selAll').checked == true) {
-                     checkboxes[i].checked = true
-                 } else {
-                    checkboxes[i].checked = false 
-                 }
-             }
-
-             updateMetabolites()
-
-         }
-
-         function updateMetabolites() {
-             checkboxes = document.getElementsByClassName('met');
-
-             $('input[name="metabolites"]').val("")
-             $('input[name="values"]').val("")
-
-             for (i = 0; i < checkboxes.length; i++) {
-                 if (checkboxes[i].checked == true) {
-                     $('input[name="metabolites"]').val($('input[name="metabolites"]').val() + "," + checkboxes[i].name)
-                     $('input[name="values"]').val($('input[name="values"]').val() + ",0")
-                 }
-             }
-             $('input[name="metabolites"]').val($('input[name="metabolites"]').val().substring(1))
-             $('input[name="values"]').val($('input[name="values"]').val().substring(1))
-         }
-
-        function exportToCsv(){
-            for (result in window.my_config.results){
-                //data = new google.visualization.DataTable(window.my_config.results[result])
-                data = window.my_config.results[result]
-
-                csv = google.visualization.dataTableToCsv(data)
-
-                csv_cols = []
-                    // Iterate columns
-                for (var i=0; i<data.getNumberOfColumns(); i++) {
-                // Replace any commas in column labels
-                csv_cols.push(data.getColumnLabel(i).replace(/,/g,""));
-                }
-    
-                // Create column row of CSV
-                csv = csv_cols.join(",")+"\r\n" + csv;
-
-                downloadCsv(csv, result)
-            }
-        }
-
-        function exportChartsAsPng(){
-            for (chart in window.my_config.charts){
-                downloadPNG(window.my_config.charts[chart].getImageURI(), chart)
-            }
-        }
-
-        function downloadPNG (png_out, name) {
-
-        var data = atob( png_out.substring( "data:image/png;base64,".length ) ),
-        asArray = new Uint8Array(data.length);
-
-        for( var i = 0, len = data.length; i < len; ++i ) {
-            asArray[i] = data.charCodeAt(i);    
-        }
-
-            var blob = new Blob( [ asArray.buffer ], {type: "image/png"} );
-
-            var url  = window.URL || window.webkitURL;
-            var link = document.createElementNS("http://www.w3.org/1999/xhtml", "a");
-            link.href = url.createObjectURL(blob);
-            link.download = name + ".png"; 
-
-            var event = document.createEvent("MouseEvents");
-            event.initEvent("click", true, false);
-            link.dispatchEvent(event); 
-}
-
-        //This is the function that closes the pop-up
-function endBlackout(){
-$(".blackout").css("display", "none");
-$(".msgbox").css("display", "none");
-}
-
-//This is the function that starts the pop-up
-function strtBlackout(id){
-$("#"+id).css("display", "block");
-$(".blackout").css("display", "block");
-}
-
-//Sets the buttons to trigger the blackout on clicks
-$(document).ready(function(){
-$("#ageOpt").click(function() {strtBlackout('ageWindow') }); // open if btn is pressed
-$("#metOpt").click(function() {strtBlackout('metWindow') }); // open if btn is pressed
-$("#keyOpt").click(function() {strtBlackout('keyWindow') }); // open if btn is pressed
-$("#allOpt").click(function() {strtBlackout('allWindow') }); // open if btn is pressed
-
-$(".blackout").click(endBlackout); // close if click outside of popup
-$(".closeBox").click(endBlackout); // close if close btn clicked
-
-// Automatically trigger the pop-up after 10 seconds
-//setTimeout( strtBlackout, 10000);
+    } 
 });
 
-			document.getElementById('clear').onclick = clearCanvas;
+$( "#help" ).click(function() {
+    $( "#helpWindow" ).dialog( "open" );
+});
 
+//ALL OPTION WINDOW
+$( "#allOptWindow" ).dialog({ autoOpen: false, modal: true, minWidth: 500,
+    buttons: {
+
+        "Change SD thresholds (advanced)": function() {
+            $( "#metWindow" ).dialog( "open" );
+        },
+
+        Close: function() {
+            $( this ).dialog( "close" );
+        }
+    } 
+});
+
+$( "#allOpt" ).click(function() {
+    $( "#allOptWindow" ).dialog( "open" );
+});
+
+//KEYWORD OPTION WINDOW
+$( "#keyOptWindow" ).dialog({ autoOpen: false, modal: true, minWidth: 500,
+    buttons: {
+
+        Close: function() {
+            $( this ).dialog( "close" );
+        }
+    } 
+});
+
+$( "#keyOpt" ).click(function() {
+    $( "#keyOptWindow" ).dialog( "open" );
+});
+
+
+//AGE OPTION WINDOW
+$( "#ageWindow" ).dialog({ autoOpen: false, modal: true,
+    buttons: {
+        Close: function() {
+            $( this ).dialog( "close" );
+        }
+    } 
+});
+
+$( "#ageOpt" ).click(function() {
+    $( "#ageWindow" ).dialog( "open" );
+});
+
+//MET_THRESH OPTION WINDOW
+$( "#metWindow" ).dialog({ autoOpen: false, modal: true, minWidth: 700,
+    buttons: {
+
+        "Load defaults": function() {loadThresholds()},
+        "Save and Close": function() {
+            $( this ).dialog( "close" );
+            sendThresholds();
+        }
+
+        
+    } 
+});
+
+function sendThresholds(){
+
+    var thresholds={}
+
+    $('.met').each(function(){
+        console.log(this.name)
+        thresholds[this.name]=parseInt( this.value )
+    })
+
+    
+    $.getJSON('/_alter_thresholds', {
+        thresholds:JSON.stringify(thresholds)
+    }, function(data) {
+    });
+}
+
+
+function loadThresholds(){
+
+    $.get("config/metabolite_thresholds.txt", function(response) {
+       var lines = response.split('\n');
+       for(line in lines){
+        var line_split = lines[line].split(' ');
+        $("input[name='"+line_split[0]+"']").val(line_split[1] )
+    }
+});
+
+
+}
+
+loadThresholds()
+google.load("visualization", "1", {packages:["corechart"]});
+// google.setOnLoadCallback(drawChart);
+//needed to let list be transfered
+jQuery.ajaxSettings.traditional=true
+
+function calculateAge(){
+    var years = $('#years').val()
+    var months = $('#months').val()
+    var weeks = $('#weeks').val()
+    var days = $('#days').val()
+
+    var total = parseInt(days) + parseInt(weeks)*7 + parseInt(months)*30 + parseInt(years)*365
+
+    $("input[name='age']").val(total)
+
+}
+
+
+function inputValid(){
+    var num_list = /^[0-9.]+(,[0-9.]+)*$/i;
+    var opt_num_list = /^([0-9]+(,[0-9]+)*)*$/i
+
+
+
+    /*if ($('input[name="values"]').val().search(num_list) < 0){
+        alert('You entered\n\n' +$('input[name="values"]').val()+ '\n\nPlease enter metabolite values separated by dashes.')
+        return false
+    }*/
+
+    if ($('input[name="DatabaseID"]').val().search(opt_num_list) < 0){
+        alert('You entered\n\n' +$('input[name="DatabaseID"]').val()+ '\n\nPlease enter ID values separated by dashes.')
+        return false
+    }
+
+    if ($('input[name="limit"]').val().search(/^[0-9]*$/) < 0){
+        alert('Limit must be a number.')
+        return false
+    }
+
+    if ($('input[name="age"]').val().search(/^[0-9]*$/) < 0){
+        alert('Age must be a number.')
+        return false
+    }
+
+    return true
+}
+
+function exportToCsv(){
+    for (result in window.my_config.results){
+        //data = new google.visualization.DataTable(window.my_config.results[result])
+        data = window.my_config.results[result]
+
+        csv = google.visualization.dataTableToCsv(data)
+
+        csv_cols = []
+        // Iterate columns
+        for (var i=0; i<data.getNumberOfColumns(); i++) {
+            // Replace any commas in column labels
+            csv_cols.push(data.getColumnLabel(i).replace(/,/g,""));
+        }
+
+        // Create column row of CSV
+        csv = csv_cols.join(",")+"\r\n" + csv;
+
+        downloadCsv(csv, result)
+    }
+}
+
+function exportChartsAsPng(){
+    for (chart in window.my_config.charts){
+        downloadPNG(window.my_config.charts[chart].getImageURI(), chart)
+    }
+}
+
+function downloadPNG (png_out, name) {
+
+    var data = atob( png_out.substring( "data:image/png;base64,".length ) ),
+    asArray = new Uint8Array(data.length);
+
+    for( var i = 0, len = data.length; i < len; ++i ) {
+        asArray[i] = data.charCodeAt(i);    
+    }
+
+    var blob = new Blob( [ asArray.buffer ], {type: "image/png"} );
+
+    var url  = window.URL || window.webkitURL;
+    var link = document.createElementNS("http://www.w3.org/1999/xhtml", "a");
+    link.href = url.createObjectURL(blob);
+    link.download = name + ".png"; 
+
+    var event = document.createEvent("MouseEvents");
+    event.initEvent("click", true, false);
+    link.dispatchEvent(event); 
+}
 
 function clearCanvas() {
-  $('.patient').remove()
-  $('.myCharts').remove()
 
-  document.getElementById('merge').disabled = false
+    remove_sidebar()
+    $(".myCharts").remove()
 
-  window.my_config = null
+    document.getElementById('merge').disabled = false
 
-  
-  return false;
+    window.my_config = null
+
+    return false;
 }
-        
-			 			$(function() {
-            $('a#query').bind('click', function() {
 
-                if               (inputValid() == true){
-            $.getJSON('/_add_numbers', {
+$(function() {
+    $('a#query').bind('click', function() {
+
+        $.getJSON('/_get_query', {
+
             keywords: $('input[name="keyword"]').val(),
             key_exclude: $('input[name="key_exclude"]').val(),
             age: $('input[name="age"]').val(),
             limit: $('input[name="limit"]').val(),
             uxlimit: $('input[name="uxlimit"]').val(),
             lxlimit: $('input[name="lxlimit"]').val(),
-	    location: $('#location option:selected').val(),
+            location: $('#location').val(),
             merge: document.getElementById('merge').checked,
-            metabolites: $('input[name="metabolites"]').val(),
+            metabolites: $('#metabolites').val(),
+            classification_code: $('#code').val(),
+
             values: $('input[name="values"]').val(),
             gender: $("#gender option:selected").val(),
             field: $("#field option:selected").val(),
-            ID: $('input[name="ID"]').val(),
+            ID: $('input[name="DatabaseID"]').val(),
+            Scan_ID: $('input[name="ScanID"]').val(),
+
             windowed_SD_threshold: $('input[name="sdThreshold"]').val(),
             overlay: (document.getElementById('overlay').checked == false || (document.getElementById('overlay').checked == true && window.my_config == null))? 0:(window.my_config.results[window.my_config.names[0]].getNumberOfColumns())
-            }, function(data) {
-            
-            
+        }, function(data) {
 
-			if (document.getElementById('overlay').checked == false || (document.getElementById('overlay').checked == true && window.my_config == null)){
+            if (document.getElementById('overlay').checked == false || (document.getElementById('overlay').checked == true && window.my_config == null)){
 
-							window.my_config = {metadata_array: data.metadata_array,
-												sd_array: data.sd_array,
-												results: data.result,
-												names: data.names
-												}
-							
-				            render_html(data.names)
-                for (result in data.result) {
-                window.my_config.results[result] = new google.visualization.DataTable(data.result[result])
+                window.my_config = {metadata_array: data.metadata_array,
+                    sd_array: data.sd_array,
+                    results: data.result,
+                    names: data.names
                 }
-            				drawChart(window.my_config.results);
-			} else {
 
-				if (window.my_config.sd_array != null)
-					window.my_config['sd_array'] = $.extend({},window.my_config['sd_array'],data.sd_array)
+                render_html(data.names)
+                for (result in data.result) {
+                    window.my_config.results[result] = new google.visualization.DataTable(data.result[result])
+                }
+                drawChart(window.my_config.results);
+            } else {
 
-				window.my_config['metadata_array'] = $.extend({}, window.my_config['metadata_array'], data.metadata_array)//window.my_config.metadata_array.concat(data.metadata_array)
-								console.log(data.metadata_array)
-				console.log(window.my_config.metadata_array)
-				
-				
-				redraw_charts(data.result)
-			
-			}
+                if (window.my_config.sd_array != null){
+                    window.my_config['sd_array'] = $.extend({},window.my_config['sd_array'],data.sd_array)
 
-			
-            $(".patient").remove()
-            
-            });
-            return false;
-           } });
-            });
+                    window.my_config['metadata_array'] = $.extend({}, window.my_config['metadata_array'], data.metadata_array)
+                    console.log(data.metadata_array)
+                    console.log(window.my_config.metadata_array)
+                }
+
+                redraw_charts(data.result)
+
+            }
+
+
+            remove_sidebar()
+
+        });
+return false;
+});
+});
+
 
 $(document).ready(function () {
 
-	setSize()
+    $(".chosen").data("placeholder","Select Frameworks...").chosen()
+
+    setSize()
 
     $(window).bind('resize', function() {
-		scrollControl()
+        scrollControl()
         setSize()
     })
 
     $(window).scroll(function () {
-    	scrollControl()
+        scrollControl()
     })
-        
+
 
 });
 
-function downloadCsv(csv_out, name) {
-            var blob = new Blob([csv_out], {type: 'text/csv;charset=utf-8'});
-            var url  = window.URL || window.webkitURL;
-            var link = document.createElementNS("http://www.w3.org/1999/xhtml", "a");
-            link.href = url.createObjectURL(blob);
-            link.download = name + ".csv"; 
+function remove_sidebar(){
+    /*$(".patient").remove()
+    $(".group").remove()
+    $(".arrow").remove()*/
+    $('#sidebar').remove()
+    $('#sidebar_top').remove()
 
-            var event = document.createEvent("MouseEvents");
-            event.initEvent("click", true, false);
-            link.dispatchEvent(event); 
+}
+
+function downloadCsv(csv_out, name) {
+    var blob = new Blob([csv_out], {type: 'text/csv;charset=utf-8'});
+    var url  = window.URL || window.webkitURL;
+    var link = document.createElementNS("http://www.w3.org/1999/xhtml", "a");
+    link.href = url.createObjectURL(blob);
+    link.download = name + ".csv"; 
+
+    var event = document.createEvent("MouseEvents");
+    event.initEvent("click", true, false);
+    link.dispatchEvent(event); 
 }
 
 
-	function setSize(){
-		var width = ($(window).width() / 2 )
-		var height = $(window).height()
-		$('#left').css({
-		'width':width+20,
+function setSize(){
+    var width = ($(window).width() / 2 )
+    var height = $(window).height()
+    $('#left').css({
+        'width':width+20,
 
-		})
-		$('#right').css({
-		'width':width-20,
-		})
-	}
+    })
+    $('#right').css({
+        'width':width-20,
+    })
+}
 
-	function scrollControl(){
+function scrollControl(){
 
-        var scroll = $(this).scrollTop()? $(this).scrollTop():0
-        var height = $('#sidebar').height() + 'px';
-        var max_height = $(window).height()
-        var width = $(window).width()/2
-        var top_height = document.getElementById('top_header').offsetHeight
-
-        if (scroll < $('#charts').offset().top) {
-
-        $('#sidebar_top').css({'position':'fixed'})
-
-            $('#sidebar').css({
-                'position': 'static',
-                'top': '0',
-                'max-height': max_height - (top_height-scroll),
-            });
-
-        } else {
-
-                $('#sidebar_top').css({'position':'fixed'})
+    var scroll = $(this).scrollTop()? $(this).scrollTop():0
+    var height = $('#sidebar').height() + 'px';
+    var max_height = $(window).height()
+    var width = $(window).width()/2
+    var top_height = document.getElementById('top_header').offsetHeight
+    var top_height2 = 50
 
 
-            $('#sidebar').css({
-                'position': 'fixed',
-                'top': '0',
-				'left': width + 20,
-                'max-height': max_height,
+    if (scroll < $('#charts').offset().top) {
 
-            })
-        }
-	}
+        $('#sidebar_top').css({
+            'position': 'static',
+            'top': '0',
+            'max-height': max_height - (top_height-scroll),
+        })
 
-  function prepareList() {
-  	for (patient in window.my_config.current_selection) {
-  		$('#'+patient).find('li:has(ul)').unbind('click').click(function(event) {
-		if(this == event.target) {
-			$(this).toggleClass('expanded');
-			$(this).children('ul').toggle('medium');
-		}
-		return false;
-	}).addClass('collapsed').removeClass('expanded').children('ul').hide();
- 
-	//Hack to add links inside the cv
-	$('#' + patient + 'a').unbind('click').click(function() {
-		window.open($(this).attr('href'));
-		return false;
-	});
+        $('#sidebar').css({
+            'position': 'static',
+            'top': '0',
+            'max-height': max_height - (top_height-top_height2-scroll),
+        });
 
-	}
+    } else {
+
+        $('#sidebar_top').css({'position':'fixed','left': width + 25})
+
+
+        $('#sidebar').css({
+            'position': 'fixed',
+            'top': '50px',
+            'left': width + 25,
+            'max-height': max_height-top_height2,
+
+        })
+    }
+}
+
+function prepareList() {
+    for (patient in window.my_config.current_selection) {
+        $('#'+patient).find('li:has(ul)').unbind('click').click(function(event) {
+            if(this == event.target) {
+                $(this).toggleClass('expanded');
+                $(this).children('ul').toggle('medium');
+            }
+            return false;
+        }).addClass('collapsed').removeClass('expanded').children('ul').hide();
+
+//Hack to add links inside the cv
+$('#' + patient + 'a').unbind('click').click(function() {
+    window.open($(this).attr('href'));
+    return false;
+});
+
+}
 };
 
-            $(document).keyup(function(e) {
-            if (e.keyCode == 13) { $('.query').click(); }     // enter
-            if (e.keyCode == 27) {
-             	            
-            		for (c in window.my_config.charts){
-		            	window.my_config.charts[c].setSelection()
-		            		}
-					}
-					$(".patient").remove()
-                    $(".group").remove()  // esc
-            });
+$(document).keyup(function(e) {
+if (e.keyCode == 13) { $('.query').click(); }     // enter
+if (e.keyCode == 27) {
 
-            function render_html(names) {
-            if (document.getElementById('overlay').checked != true){
-            	$(".myCharts").remove()
-            } else if ('charts' in window.my_config) {console.log("True")}
-            
-            for (name in names) {
-            $("#charts").after("<div id = " + names[name] + " style='max-width: 700px; width: 100%; height: 400px; float: right;' class = 'myCharts'>")
-                }
-                }
-
-
-                google.load("visualization", "1", {packages:["corechart"]});
-                // google.setOnLoadCallback(drawChart);
-
-            function drawChart(allChartData) {
-                // render and store DataTables in dictionary
-                //allChartData = {}
-
-
-                charts = {}
-                for (c in allChartData){
-                var columns = allChartData[c].getNumberOfColumns()
-
-                var options = {
-                title: 'Age vs. ' + c,
-                hAxis: {title: 'Age',            
-                logScale: document.getElementById('scale').checked? true:false},
-                vAxis: {title: "mM per Kg wet wgt."},
-
-                legend: { position: 'top', maxLines : 5},
-                // maxLines not working properly? Only shows up to 2 lines?
-
-                aggregationTarget: 'series',
-                selectionMode: 'multiple',
-                pointSize: 4,
-                explorer: {},
-                trendlines: document.getElementById('trendline').checked? { 0: {pointSize: 0, type: 'linear'} }: null,
-                chartArea: columns > 2? {width: '70%', height: '70%'}:{width: '80%', height: '70%'},
-                tooltip: {isHtml: true, trigger: 'none'},
-                }
-
-                charts[c] = new google.visualization.ScatterChart(document.getElementById(c));
-                charts[c].draw(allChartData[c], options);
-                }
-
-                window.my_config['charts'] = charts;
-
-                for (c in charts) {
-                	google.visualization.events.addListener(charts[c], 'select', function() {
-                	    //showHideSeries()
-                		update_sidebar()
-                	 } )
-                	
-                	/*google.visualization.events.addListener(charts[c], 'onmouseover', sidebar_mouseover);
-    				google.visualization.events.addListener(charts[c], 'onmouseout', sidebar_mouseout) */
-                }
-                };
-
-				 /*function sidebar_mouseover() {
-				 	
-				 }*/
-
-	    function redraw_charts(results){
-		var merged_results = null
-		var results_new = window.my_config.results
-		for (d in results_new){
-		    var label = ''
-		    if (d in results){
-			var n = new google.visualization.DataTable(results[d])
-			//var o = new google.visualization.DataTable(results_new[d])
-            var o = results_new[d]
-
-			var old_cols = []
-			console.log(results[d])
-			console.log(results_new[d])
-
-	     for (i = 2; i < results_new[d].getNumberOfColumns(); i++) {
-		old_cols.push(i)
-	 }
-			merged_results = google.visualization.data.join(o, n, 'full',[[0,0],[1,1]],old_cols,[2,3]);
-
-
-
-			results_new[d] = merged_results
-			window.my_config.results[d] = merged_results
-
-			//label = results[d].cols[results[d].cols.length -1].label
-			}
-		    //merged_results[d]['cols'] = merged_results[d]['cols'].concat({"id": "", "label": label, "type": "number"})
-		}
-		console.log(window.my_config.results)
-		drawChart(results_new)
-	    }
-
-            function compare_unique_dict(a,b) {
-                 var a_key = 0
-                 var b_key = 0
-                 for (c in a)
-                    a_key = Math.round(a[c])
-                 for (d in b)
-                    b_key = Math.round(b[d])
-                if (a_key < b_key)
-                    return -1;
-                if (a_key > b_key)
-                    return 1;
-                return 0;
+    for (c in window.my_config.charts){
+        window.my_config.charts[c].setSelection()
+    }
 }
-				 
+remove_sidebar()  // esc
+});
 
-				function add_SD(r){
-					var complete_list = ""
-					
-					var positive = []
-					var negative = []					
-					var zero = []
-					
-					var categories = [positive,negative,zero]
+function render_html(names) {
+    if (document.getElementById('overlay').checked != true){
+        $(".myCharts").remove()
+    } else if ('charts' in window.my_config) {console.log("True")}
 
-					//sort and order
-					var ordered_sd = window.my_config.sd_array[r].sort(compare_unique_dict)
+    for (name in names) {
+        $("#charts").after("<div id = " + names[name] + " style='max-width: 700px; width: 100%; height: 400px; float: right;' class = 'myCharts'>")
+    }
+}
 
-					for (m in ordered_sd){
-						if (compare_unique_dict(ordered_sd[m],{'a':0}) == 0){
 
-							zero.push(ordered_sd[m])
-						}
-						else if (compare_unique_dict(ordered_sd[m],{'a':0}) == 1){
-							positive.unshift(ordered_sd[m])
-						}
-						else {
-							negative.push(ordered_sd[m])
-						}						
-					}
-					console.log(categories)
-					var ent_list = "<div class='listContainer'><ul id='"+r+"' class='justify'>"
+function drawChart(allChartData) {
+// render and store DataTables in dictionary
+//allChartData = {}
 
-					//render the list
-					for (c in categories){
-                        var arrow = ""
-                        if (c == 0){
-                                arrow += "<img src='/img/up.png' alt='Raised' style='width:15px;height:15px'>"
-                    }       else if (c == 1) {
-                                arrow += "<img src='/img/down.png' alt='Lowered' style='width:15px;height:15px'>"
-                    }
 
-						if (categories[c].length > 0) {
-							var elem = "<li>"
+charts = {}
+for (c in allChartData){
+    var columns = allChartData[c].getNumberOfColumns()
 
-							for (met in categories[c][0])
-								elem +="" + met + ": " +arrow+ Math.round(categories[c][0][met]) + " SD"
-							
-						
-							if(categories[c].length > 1){
-								elem += "<ul class='justify'>"
-								for (i = 1; i < categories[c].length; i++){
-									for (name in categories[c][i])
-										elem +="<li>" + name +": " + arrow+ Math.round(categories[c][i][name]) + " SD </li>"
-								}
-								elem += "</ul>"
-							}
-						ent_list += elem +"</li>"
-						}
-					}
-					ent_list += "</ul></div>"
-					
-					return ent_list
+    var options = {
+        title: 'Age vs. ' + c,
+        hAxis: {title: 'Age',            
+        logScale: document.getElementById('scale').checked? true:false},
+        vAxis: {title: "mM per Kg wet wgt."},
 
-				}
+        legend: { position: 'top', maxLines : 5},
+// maxLines not working properly? Only shows up to 2 lines?
 
-	function showHideSeries () {
+aggregationTarget: 'series',
+selectionMode: 'multiple',
+pointSize: 4,
+explorer: {},
+trendlines: document.getElementById('trendline').checked? { 0: {pointSize: 0, type: 'linear'} }: null,
+chartArea: columns > 2? {width: '70%', height: '70%'}:{width: '80%', height: '70%'},
+tooltip: {isHtml: true, trigger: 'none'},
+}
 
-		for(chart in window.my_config.charts) {
-		
-		var data = new google.visualization.DataTable(window.my_config.results[chart])
+charts[c] = new google.visualization.ScatterChart(document.getElementById(c));
+charts[c].draw(allChartData[c], options);
+}
+
+window.my_config['charts'] = charts;
+
+for (c in charts) {
+    google.visualization.events.addListener(charts[c], 'select', function() {
+//showHideSeries()
+update_sidebar()
+} )
+
+/*google.visualization.events.addListener(charts[c], 'onmouseover', sidebar_mouseover);
+google.visualization.events.addListener(charts[c], 'onmouseout', sidebar_mouseout) */
+}
+};
+
+/*function sidebar_mouseover() {
+
+}*/
+
+function redraw_charts(results){
+    var merged_results = null
+    var results_new = window.my_config.results
+    for (d in results_new){
+        var label = ''
+        if (d in results){
+            var n = new google.visualization.DataTable(results[d])
+//var o = new google.visualization.DataTable(results_new[d])
+var o = results_new[d]
+
+var old_cols = []
+console.log(results[d])
+console.log(results_new[d])
+
+for (i = 2; i < results_new[d].getNumberOfColumns(); i++) {
+    old_cols.push(i)
+}
+merged_results = google.visualization.data.join(o, n, 'full',[[0,0],[1,1]],old_cols,[2,3]);
+
+
+
+results_new[d] = merged_results
+window.my_config.results[d] = merged_results
+
+//label = results[d].cols[results[d].cols.length -1].label
+}
+//merged_results[d]['cols'] = merged_results[d]['cols'].concat({"id": "", "label": label, "type": "number"})
+}
+console.log(window.my_config.results)
+drawChart(results_new)
+}
+
+function compare_unique_dict(a,b) {
+    var a_key = 0
+    var b_key = 0
+    for (c in a)
+        a_key = Math.round(a[c] * 10)/10
+    for (d in b)
+        b_key = Math.round(b[d] * 10)/10
+    if (a_key < b_key)
+        return -1;
+    if (a_key > b_key)
+        return 1;
+    return 0;
+}
+
+
+function add_SD(r){
+    var complete_list = ""
+
+    var positive = []
+    var negative = []					
+    var zero = []
+
+    var categories = [positive,negative,zero]
+
+//sort and order
+var ordered_sd = window.my_config.sd_array[r].sort(compare_unique_dict)
+
+for (m in ordered_sd){
+    if (compare_unique_dict(ordered_sd[m],{'a':0}) == 0){
+
+        zero.push(ordered_sd[m])
+    }
+    else if (compare_unique_dict(ordered_sd[m],{'a':0}) == 1){
+        positive.unshift(ordered_sd[m])
+    }
+    else {
+        negative.push(ordered_sd[m])
+    }						
+}
+console.log(categories)
+var ent_list = "<div class='listContainer'><ul id='"+r+"' class='justify'>"
+
+//render the list
+for (c in categories){
+    var arrow = ""
+    if (c == 0){
+        arrow += "<img src='/img/up.png' alt='Raised' style='width:15px;height:15px'>"
+    }       else if (c == 1) {
+        arrow += "<img src='/img/down.png' alt='Lowered' style='width:15px;height:15px'>"
+    }
+
+    if (categories[c].length > 0) {
+        var elem = "<li>"
+
+        for (met in categories[c][0])
+            elem +="" + met + ": " +arrow+ Math.round(categories[c][0][met] * 10)/10 + " SD"
+
+
+        if(categories[c].length > 1){
+            elem += "<ul class='justify'>"
+            for (i = 1; i < categories[c].length; i++){
+                for (name in categories[c][i])
+                    elem +="<li>" + name +": " + arrow+ Math.round(categories[c][i][name] * 10)/10 + " SD </li>"
+            }
+            elem += "</ul>"
+        }
+        ent_list += elem +"</li>"
+    }
+}
+ent_list += "</ul></div>"
+
+return ent_list
+
+}
+
+function showHideSeries () {
+
+    for(chart in window.my_config.charts) {
+
+        var data = new google.visualization.DataTable(window.my_config.results[chart])
         var sel = window.my_config.charts[chart].getSelection();
         var cols = []
         // if selection length is 0, we deselected an element
         if (sel.length > 0) {
             // if row is undefined, we clicked on the legend
             if (sel[0].row == null) {
-                //cols += sel[0].column
-                //console.log(cols)
+            //cols += sel[0].column
+            //console.log(cols)
+            var view = new google.visualization.DataView(data)
+            view.setColumns(sel[0].column)
+            chart.draw(view)
 
-				var view = new google.visualization.DataView(data)
-				view.setColumns(sel[0].column)
-				chart.draw(view)
-                    
-            }        	
-        }
+        }        	
     }
 }
+}
 
-                function update_right_sidebar(){
+function update_right_sidebar(){
 
-                    /*var group = {}
-                    var met_means = {}
-                    var met_SD = {}
+    $("#sidebar_top").append("<img src='../img/left.png' style='width:50px;height:50px;float:none' class='arrow' onclick='document.getElementById(\"sidebar\").scrollLeft = 0'></img><img src='../img/right.png' style='width:50px;height:50px;float:none' class='arrow' onclick='document.getElementById(\"sidebar\").scrollLeft = document.getElementById(\"sidebar\").scrollWidth'></img>")
 
-                    for (c in window.my_config.charts){
-                        selection = window.my_config.charts[c].getSelection()
-                    //data = new google.visualization.DataTable(window.my_config.results[c])
-                    data = window.my_config.results[c]
-
-                
-                            for (i = 0; i < selection.length; i++){
-                                //temporary fix needed to access Scan_IDs of agglutinated data
-                                for (q = 3; q < data.getNumberOfColumns(); q+= 2){ if (data.getValue(selection[i].row, q) != null)
-                                //access data value
-                                patient = data.getValue(selection[i].row, q-1)}
-                                console.log(patient)
-                                if (patient in group || group == null){} else{
-                                    group[patient] = null
-                                }
-                            }
-                    }
-
-                        var i = ""
-
-                        for (m in window.my_config.metadata_array[r]) {
-                            for (n in window.my_config.metadata_array[r][m]) {
-                                if (window.my_config.metadata_array[r][m][n]) {
-                                    i+= "<div class='title'>"
-                                        +n+": </div><div class='content'>" 
-                                        + window.my_config.metadata_array[r][m][n] + "</div>"
-                                    }
-                                
-                                    
-                            }
-                        }
-                        if (window.my_config.sd_array[r] != null){
-                            i+= "<div class='title'>SD for available metabolites:</div><div class='content'>" + add_SD(r) +"</div>"
-                            } */
-
-                        //dummy text for now
-                        var i = "<div class='title'>Mean of Selected Patients:</div><div class='content'>tCr: 15.3</div><div class='content'>Cr: 9.8</div><div class='title'>Pooled Standard Deviation:</div><div class='content'>tCr: 0 (n=2)</div><div class='content'>Cr: 0 (n=2)</div>"
-
-                        $("#sidebar_right").append("<div id='"+r+"' class='group'>"+i+"</div>")
-                                                
-                    
-
-                    if (window.my_config.sd_array != null)
-                        prepareList()
-                    //needed in case scroll bar results from overflow of
-                    setSize()
-                }
-
-                function update_sidebar(){
-
-
-		            $(".patient").remove()
-                    $(".group").remove()
-
-		            var patients = {}
-
-		            for (c in window.my_config.charts){
-		            	selection = window.my_config.charts[c].getSelection()
-					//data = new google.visualization.DataTable(window.my_config.results[c])
-                    data = window.my_config.results[c]
-
-				
-		            		for (i = 0; i < selection.length; i++){
-                                //temporary fix needed to access Scan_IDs of agglutinated data
-                                for (q = 3; q < data.getNumberOfColumns(); q+= 2){ if (data.getValue(selection[i].row, q) != null)
-		            			patient = data.getValue(selection[i].row, q)}
-                                console.log(patient)
-		            			if (patient in patients || patients == null){} else{
-		            				patients[patient] = null
-		            			}
-		            		}
-					}
-
-					window.my_config['current_selection'] = patients
-
-					for (r in patients){
-
-						var i = ""
-
-						for (m in window.my_config.metadata_array[r]) {
-		            		for (n in window.my_config.metadata_array[r][m]) {
-		            			if (window.my_config.metadata_array[r][m][n]) {
-		            				i+= "<div class='title'>"
-		            					+n+": </div><div class='content'>" 
-		            					+ window.my_config.metadata_array[r][m][n] + "</div>"
-		            				}
-		            			
-		            				
-		            		}
-		            	}
-		            	if (window.my_config.sd_array[r] != null){
-		           			i+= "<div class='title'>SD for available metabolites:</div><div class='content'>" + add_SD(r) +"</div>"
-							}
-
-						$("#sidebar_left").append("<div id='"+r+"' class='patient'>"+i+"</div>")
-								            	
-		            }
-
-		            if (window.my_config.sd_array != null)
-						prepareList()
-					//needed in case scroll bar results from overflow of
-					setSize()
-
-                    if (Object.keys(patients).length > 1){
-                    update_right_sidebar()}
-
-                }
+/*var group = {}
+var met_means = {}
+var met_SD = {}
 
 
 
-                /*
-				 * for (c in charts) {
-				 * google.visualization.events.addListener(charts[c], 'select',
-				 * select_rows(charts[c], charts)); } };
-				 * 
-				 * function select_rows (chart, charts){ alert("Selection!") var
-				 * r = [{row: chart.getSelection()[0].row}]; for (c in charts){
-				 * 
-				 * charts[c].setSelection(r); } }
-				 */
+for (c in window.my_config.charts){
+selection = window.my_config.charts[c].getSelection()
+//data = new google.visualization.DataTable(window.my_config.results[c])
+data = window.my_config.results[c]
 
-                /*
-				 * for(i=0; i < document.FormName.elements.length; i++) {
-				 * document.FormName.elements[i].disabled=true; }
-				 */
-        </script>
-        
-    </body>
+
+for (i = 0; i < selection.length; i++){
+//temporary fix needed to access Scan_IDs of agglutinated data
+for (q = 3; q < data.getNumberOfColumns(); q+= 2){ if (data.getValue(selection[i].row, q) != null)
+//access data value
+patient = data.getValue(selection[i].row, q-1)}
+console.log(patient)
+if (patient in group || group == null){} else{
+group[patient] = null
+}
+}
+}
+
+var i = ""
+
+for (m in window.my_config.metadata_array[r]) {
+for (n in window.my_config.metadata_array[r][m]) {
+if (window.my_config.metadata_array[r][m][n]) {
+i+= "<div class='title'>"
++n+": </div><div class='content'>" 
++ window.my_config.metadata_array[r][m][n] + "</div>"
+}
+
+
+}
+}
+if (window.my_config.sd_array[r] != null){
+i+= "<div class='title'>SD for available metabolites:</div><div class='content'>" + add_SD(r) +"</div>"
+} */
+
+//dummy text for now
+var i = "<div class='title'>Mean of Selected Patients:</div><div class='content'>tCr: 15.3</div><div class='content'>Cr: 9.8</div><div class='title'>Pooled Standard Deviation:</div><div class='content'>tCr: 0 (n=2)</div><div class='content'>Cr: 0 (n=2)</div>"
+
+$("#sidebar_right").append("<div id='"+r+"' class='group'>"+i+"</div>")
+
+
+
+if (window.my_config.sd_array != null)
+    prepareList()
+//needed in case scroll bar results from overflow of
+setSize()
+}
+
+function update_sidebar(){
+
+    remove_sidebar()
+
+    $('#right').append("<div id='sidebar_top' style='height:50px;width:100%''></div><div id='sidebar'><div id ='sidebar_left' style='float:left;width:528px;'></div><div id ='sidebar_right' style='float:none;margin-left:560px;width:528px'></div></div>")
+
+    var patients = {}
+
+    for (c in window.my_config.charts){
+        selection = window.my_config.charts[c].getSelection()
+//data = new google.visualization.DataTable(window.my_config.results[c])
+data = window.my_config.results[c]
+
+
+for (i = 0; i < selection.length; i++){
+//temporary fix needed to access Scan_IDs of agglutinated data
+for (q = 3; q < data.getNumberOfColumns(); q+= 2){ if (data.getValue(selection[i].row, q) != null)
+    patient = data.getValue(selection[i].row, q)}
+    console.log(patient)
+    if (patient in patients || patients == null){} else{
+        patients[patient] = null
+    }
+}
+}
+
+window.my_config['current_selection'] = patients
+
+for (r in patients){
+
+    var i = ""
+
+    for (m in window.my_config.metadata_array[r]) {
+        for (n in window.my_config.metadata_array[r][m]) {
+            if (window.my_config.metadata_array[r][m][n]) {
+                i+= "<div class='title'>"
+                +n+": </div><div class='content'>" 
+                + window.my_config.metadata_array[r][m][n] + "</div>"
+            }
+
+
+        }
+    }
+    if (window.my_config.sd_array[r] != null){
+        i+= "<div class='title'>SD for available metabolites:</div><div class='content'>" + add_SD(r) +"</div>"
+    }
+
+    $("#sidebar_left").append("<div id='"+r+"' class='patient'>"+i+"</div>")
+
+}
+
+if (window.my_config.sd_array != null)
+    prepareList()
+//needed in case scroll bar results from overflow of
+setSize()
+
+if (Object.keys(patients).length > 1){
+    update_right_sidebar()}
+
+}
+
+
+
+/*
+* for (c in charts) {
+* google.visualization.events.addListener(charts[c], 'select',
+* select_rows(charts[c], charts)); } };
+* 
+* function select_rows (chart, charts){ alert("Selection!") var
+* r = [{row: chart.getSelection()[0].row}]; for (c in charts){
+* 
+* charts[c].setSelection(r); } }
+*/
+
+/*
+* for(i=0; i < document.FormName.elements.length; i++) {
+* document.FormName.elements[i].disabled=true; }
+*/
+</script>
+
+</body>
 </html>

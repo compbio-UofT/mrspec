@@ -19,6 +19,7 @@ class DatabaseConnection(object):
         
     def _establish_connection(self, args):
 
+        #inspect whether run from commandline or not
         if inspect.getouterframes(inspect.currentframe())[1][1] == main.__file__:
             #Initialize connection to MySQL database
             #usage: python query.py <user> <password> <port>
