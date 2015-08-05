@@ -8,7 +8,7 @@ from create_database import *
 
 # Initialize the Flask application
 app = Flask(__name__)
-c=None
+c = None
 
 @app.before_first_request
 def establish_database_connection():
@@ -291,6 +291,15 @@ def alter_thresholds():
     print c.met_threshold
     return jsonify(data=None)
 
+#change default metabolite echotimes    
+@app.route('/_alter_echotimes')
+def alter_echotimes():
+    r = j.loads(request.args.get('echotimes', '', type=str))
+    c.met_echo = r
+    print r
+    print c.met_echo
+    return jsonify(data=None)
+
 @app.route('/_get_query')
 def get_query():
     ID = request.args.get('ID', 0, type=str)
@@ -397,6 +406,7 @@ if __name__ == '__main__':
         
             start = time.clock()
             
+            c.populate_SD_table_without_multi(gender='', field='', location='', return_single_scan_per_procedure=False, filter_by_sd=True)
         
             end = time.clock()
             

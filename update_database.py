@@ -11,14 +11,6 @@ class MrpecDatabaseUpdator(MrspecDatabaseEditor):
             cur.execute("alter table {} add column DatabaseID BIGINT(21)".format(table))
         for result in cur.execute("set @i=0;update {0} as t inner join (select ID,Scan_ID,@i:=@i+1 as num from (select ID,Scan_ID from {0} group by ID order by Scan_ID) t2) t1 on t.ID=t1.ID set DatabaseID=num;".format(table),multi=True): pass
         con.commit()
-        
-    def create_null_sd_columns(self, table):
-        for m in met_threshold:
-            if d.column_exists(table, m+'_SD'):
-                cur.execute('UPDATE {} SET {} = NULL'.format(table, m+"_SD"))
-            else:
-                cur.execute('ALTER TABLE {} ADD COLUMN {} {}'.format(table, m+'_SD', 'DECIMAL(11,6)'))
-        con.commit()
 
 if __name__== "__main__":
     with MrpecDatabaseUpdator() as (d,con,cur):
@@ -26,7 +18,7 @@ if __name__== "__main__":
         update = 'standard'
         
         ##update database with deidentified column IDs        
-        d.update_database_ID(update)
+        #d.update_database_ID(update)
                 
         d.insert_additional_metabolites(update, d.met_to_calculate)
         d.insert_aggregate_metabolites_optimal(update, d.met_to_calculate)
@@ -42,5 +34,5 @@ if __name__== "__main__":
             con.commit()           
         
                 
-        '''if d.prompt_yes_no("\nDo you wish to create/overwrite the windowed SD columns with null values? WARNING: This cannot be undone, and will take a long time to restore the values."): d.create_null_sd_columns(update)'''
+        if d.prompt_yes_no("\nDo you wish to create/overwrite the windowed SD columns with null values? WARNING: This cannot be undone, and will take a long time to restore the values."): d.create_null_sd_columns(update)
         

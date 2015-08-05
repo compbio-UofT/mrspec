@@ -120,45 +120,6 @@ ul.justify { margin-left:-2.75em; }
     background-repeat: no-repeat;
 }
 
-.blackout {
-	background-color:#000;
-	opacity:.2;
-	filter:alpha(opacity=70);
-	height:100%;
-	width:100%;
-	position:fixed;
-	top:0;
-	left:0;
-	z-index:100;
-	display:none;
-	cursor:pointer;
-}
-.msgbox {
-	background-color:#ccc;
-	border:1px solid #ccc;
-	color:#000;
-	width:30%;
-	height:500;
-	position:fixed;
-	top:20%;
-	left:15%;
-	border-radius:20px;
-	padding:10px;
-	z-index:101;
-	display:none;
-	margin-left: 20%;
-}
-.closeBox {
-	background-color:#CC0000;
-	color:#FFFFFF;
-	padding:8px;
-	float:right;
-	border-radius:3px;
-	cursor:pointer;
-	text-transform:uppercase;
-
-}
-
 .optionBox {
 	outline: 1px solid #B0B0B0;
 	display:inline;
@@ -232,8 +193,6 @@ ul.justify { margin-left:-2.75em; }
                             <div class ='optionBox' ><input type="text" size="4" name="keyword" style="border:0px solid"><img id='keyOpt' src="../img/new_window.png" style="padding-bottom:3px" />
                             </div>
                         </span>
-
-
 
                     </div>
 
@@ -309,13 +268,13 @@ ul.justify { margin-left:-2.75em; }
                     <p>
 You can find out more about a particular option by hovering over it for a few moments to display a tip. The symbol "<img src="../img/new_window.png" style="padding-bottom:3px" />" indicates that more settings related to that option are available - just click on the symbol to reveal them.</p>
             <label>New Features</label>
-            <p>• Change default standard deviation thresholds by clicking "More options"->"Change SD Thresholds"<br>
+            <p>• Change default standard deviation thresholds and echotimes by clicking "More options".<br>
             • For metabolites, location and indication code, click on or type inside the box to search/reveal options; you may select multiple options
             </p>
             <label>Keyword Search</label>
             <p>Keyword search is implemented using the MySQL 'LIKE' clause, whose basic usage can be summarized as follows:<br>
             • Keyword search will search both the indication and diagnosis fields for all patients in the database and return a scan if either of these fields matches the keyword.<br>
-            • For most searches, use the '%'' symbol on both ends of the word, i.e. '%glioma%'. '%' is a wildcard for an unlimited number of characters. For instance, if you want to match the word 'dog' in the phrase 'A dog runs', you would need to search '%dog%' since it appears in the middle of the sentence.<br>
+            • For most searches, use the '%' symbol on both ends of the word, i.e. '%glioma%'. '%' is a wildcard for an unlimited number of characters. For instance, if you want to match the word 'dog' in the phrase 'A dog runs', you would need to search '%dog%' since it appears in the middle of the sentence.<br>
             • Use the '_' symbol as a wildcard for a single character. For instance, 'T_m' would match 'Tim','Tom','Tum' and any other letter in the middle.<br>
             • You can enter multiple keywords separated by a comma; scans will be returned if they match any of the keywords.<br>
             • By clicking on <img src="../img/new_window.png" style="padding-bottom:3px" /> in the keyword box, you can enter keywords to EXCLUDE scans from being returned as matches. Only scans that do not have any of these words will be returned.
@@ -329,6 +288,58 @@ You can find out more about a particular option by hovering over it for a few mo
             <label>Months:<input type="text" size="4" id='months' name='months' onKeyUp="calculateAge()" value='0'></label><br>
             <label>Weeks:<input type="text" size="4" id='weeks' name='weeks' onKeyUp="calculateAge()" value='0'></label><br>
             <label>Days:<input type="text" size="4" id='days' name='days' onKeyUp="calculateAge()" value='0'></label>
+        </div>
+
+        <div id='echoWindow' title="Change Echotimes">
+            <form method="post">
+                <div style="float: left; width: 20%;text-align:right">
+                    <label>AcAc:<input type='text' size='1' id=e_AcAc name=e_AcAc class='e_met'></label>
+                    <label>Acn:<input type='text' size='1' id=e_Acn name=e_Acn class='e_met'></label>
+                    <label>Ala:<input type='text' size='1' id=e_Ala name=e_Ala class='e_met'></label>
+                    <label>Asp:<input type='text' size='1' id=e_Asp name=e_Asp class='e_met'></label>
+                    <label>Cho:<input type='text' size='1' id=e_Cho name=e_Cho class='e_met'></label>
+                    <label>Cr:<input type='text' size='1' id=e_Cr name=e_Cr class='e_met'></label>
+                    <label>CrCH2:<input type='text' size='1' id=e_CrCH2 name=e_CrCH2 class='e_met'></label>
+                    <label>GABA:<input type='text' size='1' id=e_GABA name=e_GABA class='e_met'></label>
+                </div>
+                <div style="float: left; width: 20%;text-align:right">
+                    <label>GPC:<input type='text' size='1' id=e_GPC name=e_GPC class='e_met'></label>
+                    <label>Glc:<input type='text' size='1' id=e_Glc name=e_Glc class='e_met'></label>
+                    <label>Gln:<input type='text' size='1' id=e_Gln name=e_Gln class='e_met'></label>
+                    <label>Glu:<input type='text' size='1' id=e_Glu name=e_Glu class='e_met'></label>
+                    <label>Glx:<input type='text' size='1' id=e_Glx name=e_Glx class='e_met'></label>
+                    <label>Gua:<input type='text' size='1' id=e_Gua name=e_Gua class='e_met'></label>
+                    <label>Ins:<input type='text' size='1' id=e_Ins name=e_Ins class='e_met'></label>
+                    <label>Lac:<input type='text' size='1' id=e_Lac name=e_Lac class='e_met'></label>
+                </div>
+                <div style="float: left; width: 20%;text-align:right">
+                    <label>Lip09:<input type='text' size='1' id=e_Lip09 name=e_Lip09 class='e_met'></label>
+                    <label>Lip13a:<input type='text' size='1' id=e_Lip13a name=e_Lip13a class='e_met'></label>
+                    <label>Lip13b:<input type='text' size='1' id=e_Lip13b name=e_Lip13b class='e_met'></label>
+                    <label>Lip20:<input type='text' size='1' id=e_Lip20 name=e_Lip20 class='e_met'></label>
+                    <label>MM09:<input type='text' size='1' id=e_MM09 name=e_MM09 class='e_met'></label>
+                    <label>MM12:<input type='text' size='1' id=e_MM12 name=e_MM12 class='e_met'></label>
+                    <label>MM14:<input type='text' size='1' id=e_MM14 name=e_MM14 class='e_met'></label>
+                    <label>MM17:<input type='text' size='1' id=e_MM17 name=e_MM17 class='e_met'></label>
+                </div>
+                <div style="float: left; width: 20%;text-align:right">
+                    <label>MM20:<input type='text' size='1' id=e_MM20 name=e_MM20 class='e_met'></label>
+                    <label>NAA:<input type='text' size='1' id=e_NAA name=e_NAA class='e_met'></label>
+                    <label>NAAG:<input type='text' size='1' id=e_NAAG name=e_NAAG class='e_met'></label>
+                    <label>PCh:<input type='text' size='1' id=e_PCh name=e_PCh class='e_met'></label>
+                    <label>PCr:<input type='text' size='1' id=e_PCr name=e_PCr class='e_met'></label>
+                    <label>Scyllo:<input type='text' size='1' id=e_Scyllo name=e_Scyllo class='e_met'></label>
+                    <label>Tau:<input type='text' size='1' id=e_Tau name=e_Tau class='e_met'></label>
+                </div>
+                <div style="float: left; width: 20%;text-align:right">
+                    <label>tCho:<input type='text' size='1' id=e_tCho name=e_tCho class='e_met'></label>
+                    <label>tCr:<input type='text' size='1' id=e_tCr name=e_tCr class='e_met'></label>
+                    <label>tNAA:<input type='text' size='1' id=e_tNAA name=e_tNAA class='e_met'></label>
+                    <label>tCho_opt:<input type='text' size='1' id=e_tCho_opt name=e_tCho_opt class='e_met'></label>
+                    <label>tCr_opt:<input type='text' size='1' id=e_tCr_opt name=e_tCr_opt class='e_met'></label>
+                    <label>tNAA_opt:<input type='text' size='1'id=e_tNAA_opt name=e_tNAA_opt class='e_met'></label>
+                </div>
+            </form>
         </div>
 
 
@@ -403,11 +414,15 @@ $( "#help" ).click(function() {
 });
 
 //ALL OPTION WINDOW
-$( "#allOptWindow" ).dialog({ autoOpen: false, modal: true, minWidth: 500,
+$( "#allOptWindow" ).dialog({ autoOpen: false, modal: true, minWidth: 900,
     buttons: {
 
         "Change SD thresholds (advanced)": function() {
             $( "#metWindow" ).dialog( "open" );
+        },
+
+        "Change echotimes (advanced)": function() {
+            $( "#echoWindow" ).dialog( "open" );
         },
 
         Close: function() {
@@ -462,6 +477,20 @@ $( "#metWindow" ).dialog({ autoOpen: false, modal: true, minWidth: 700,
     } 
 });
 
+//ECHO OPTION WINDOW
+$( "#echoWindow" ).dialog({ autoOpen: false, modal: true, minWidth: 700,
+    buttons: {
+
+        "Load defaults": function() {loadEchotimes()},
+        "Save and Close": function() {
+            $( this ).dialog( "close" );
+            sendEchotimes();
+        }
+
+        
+    } 
+});
+
 function sendThresholds(){
 
     var thresholds={}
@@ -488,11 +517,37 @@ function loadThresholds(){
         $("input[name='"+line_split[0]+"']").val(line_split[1] )
     }
 });
+}
 
+function sendEchotimes(){
 
+    var echotimes={}
+
+    $('.e_met').each(function(){
+        console.log(this.name)
+        echotimes[this.name]= this.value
+    })
+
+    
+    $.getJSON('/_alter_echotimes', {
+        echotimes:JSON.stringify(echotimes)
+    }, function(data) {
+    });
+}
+
+function loadEchotimes(){
+
+    $.get("config/metabolite_echotimes.txt", function(response) {
+       var lines = response.split('\n');
+       for(line in lines){
+        var line_split = lines[line].split(' ');
+        $("input[name='e_"+line_split[0]+"']").val(line_split[1] )
+    }
+});
 }
 
 loadThresholds()
+loadEchotimes()
 google.load("visualization", "1", {packages:["corechart"]});
 // google.setOnLoadCallback(drawChart);
 //needed to let list be transfered
