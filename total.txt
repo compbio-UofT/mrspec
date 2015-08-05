@@ -1,0 +1,3 @@
+4206 -> 4163 (after missing missing scans removed)
+3136 -> 2872 (after duplicates removed)
+7035 scans total
