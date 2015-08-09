@@ -3,8 +3,8 @@ import sys, random, time, os
 from os import path
 from flask import Flask, render_template, request, jsonify, json as j, send_file
 import __main__ as main
-from connection import is_run_from_commandline
-from create_database import *
+from connection import is_run_from_commandline, prompt_yes_no
+from queryer import *
 
 # Initialize the Flask application
 app = Flask(__name__)
@@ -13,7 +13,17 @@ c = None
 @app.before_first_request
 def establish_database_connection():
     global c
-    c=MrspecDatabaseEditor()
+    c=MrspecDatabaseQueryer()
+    
+def format_legend(column,legend):
+    parsed_labels = []
+    for label in legend:
+        if label != '':
+            parsed_labels.append(label)
+    if parsed_labels:
+        return column + ": " + ", ".join(parsed_labels)
+    else:
+        return column
 
 #adds patient as separate dataseries
 ##updated for use with DataTable joining
@@ -35,8 +45,8 @@ def format_query_with_pseries_and_names(query, columns, values, legend, overlay)
 
         cols += [{'id': "Age", 'label': "Age", 'type': 'number'}] + \
                 [{'id': "DatabaseID", 'label':'DatabaseID', "role": "tooltip", "type": "string", "p" : { "role" : "tooltip" } }] + \
-                [{'id': column, 'label': column + '_' + '_'.join([str(legend_val) for legend_val in legend]), 'type': 'number'}] + \
-                [{'id': "Scan_ID",'label':'Scan_ID', "role": "tooltip", "type": "string", "p" : { "role" : "tooltip" } }]
+                [{'id': column, 'label': format_legend(column,legend), 'type': 'number'}] + \
+                [{'id': "Scan_ID",'label':'Scan_ID', "role": "annotation", "type": "string", "p" : { "role" : "annotation" } }]
                 
         for row in query:
             ##print(i,row[i+1])
@@ -54,7 +64,6 @@ def format_query_with_pseries_and_names(query, columns, values, legend, overlay)
         qq[column] = q
 
     return qq
-#{column: q for column in columns[1:-1]}
 
 #adds patient as separate dataseries
 ##
@@ -71,7 +80,7 @@ def format_query_with_pseries(query, columns, values, legend):
     columns.append("Patient Data")
 
     for column in columns:
-        cols.append({'id': column, 'label': column + '_' + '_'.join([str(legend_val) for legend_val in legend]), 'type': 'number'})
+        cols.append({'id': column, 'label': format_legend(column, legend), 'type': 'number'})
 
     for row in query:
         vals = [{'v': str(value)} for value in row[:len(columns)-1]]
@@ -324,7 +333,7 @@ def get_query():
     windowed_SD_threshold = request.args.get('windowed_SD_threshold',0,type=str)
     
     classification_code=request.args.getlist('classification_code')
-    
+    detailed_legend = request.args.get('legend', 0, type=str)
     
     #temporary workaround while figuring out what to do with patient data
     overlay = 1
@@ -350,24 +359,22 @@ def get_query():
         
     sd_array = windowed_SD(cols, q, gender, field, location, return_single_scan_per_procedure, filter_by_sd, overlay)
 
-    # Set default values for legend
-    if not gender:
-        gender = 'Both'
-    if not field:
-        field = 'Both'
-    if not location:
-        location = 'Any'
+    legend = [field, location]
+    if detailed_legend == 'true':
+        legend.append(gender)
+        if windowed_SD_threshold:
+            legend.append(u"\u00B1" + windowed_SD_threshold + " SD")
 
     if merge == 'true':
         d = {metabolites:format_query_with_pseries(q,
                                                    ['Age']+metabolites,
                                                    (str(age) + "," + values).split(","),
-                                                   [gender, field, location])}
+                                                   legend)}
     else:
         d = format_query_with_pseries_and_names(q,
                                                 ['Age']+metabolites,
                                                 (str(age) + "," + values).split(","),
-                                                [gender, field, location],
+                                                legend,
                                                 overlay)
 
     return jsonify(result=d,
@@ -400,14 +407,7 @@ if __name__ == '__main__':
         )
     #Otherwise, execute custom code for debugging
     else:
-        with MrspecDatabaseEditor() as (c,con,cur):
-        
-        ###Sandbox for testing###            
-        
-            start = time.clock()
-            
-            c.populate_SD_table_without_multi(gender='', field='', location='', return_single_scan_per_procedure=False, filter_by_sd=True)
-        
-            end = time.clock()
-            
-            print end-start
+        with MrspecDatabaseQueryer() as (c,con,cur):
+            pass
+            ###Sandbox for testing###            
+
