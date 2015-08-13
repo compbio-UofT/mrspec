@@ -1,16 +1,13 @@
 from connection import *
 import sys
 
-class InvalidConfigFileError(Exception):
-    pass
-
 class MrspecDatabaseQueryer(object):
 
-    def __init__(self, silent=False):
+    def __init__(self, silent=False,database='mrspec'):
         #whether or not to print status messages
         self.silent = silent
         #establish database connection
-        c = DatabaseConnection(sys.argv, silent)
+        c = DatabaseConnection(sys.argv, silent, database)
         self.con = c.con
         self.cur = c.cur
         
@@ -94,13 +91,13 @@ class MrspecDatabaseQueryer(object):
             print("Metabolite echotimes loaded from defaults. Reason: " +str(e)+".")
             
     def table_exists(self, tablename):
-        self.cur.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = '{}'".format(tablename.replace('\'', '\'\'')))
+        self.cur.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = '{}' AND table_schema='{}'".format(tablename.replace('\'', '\'\''),self.database))
         if self.cur.fetchone()[0] == 1:
             return True
         return False
 
     def column_exists(self, tablename, column):
-        self.cur.execute("SELECT COUNT(*) FROM information_schema.columns WHERE table_name = '{}' AND column_name = '{}'".format(tablename.replace('\'', '\'\''), column.replace('\'', '\'\'')))
+        self.cur.execute("SELECT COUNT(*) FROM information_schema.columns WHERE table_name = '{}' AND column_name = '{}' AND table_schema='{}'".format(tablename.replace('\'', '\'\''), column.replace('\'', '\'\''),self.database))
         if self.cur.fetchone()[0] == 1:
             return True
         return False
@@ -114,7 +111,7 @@ class MrspecDatabaseQueryer(object):
         return columns, rows
     
     #bug exists where could access scan information from later date because of use of coalesce if unique is True                     !!!                                        !!!!!
-    def parse_query(self, ID, Scan_ID, age, gender, field, location, metabolites, limit, uxlimit, lxlimit, mets_span_each, return_single_scan_per_procedure, filter_by_sd, keywords, key_exclude, windowed_SD_threshold,classification_code):
+    def parse_query(self, ID, Scan_ID, age, gender, field, location, metabolites, limit, uxlimit, lxlimit, mets_span_each, return_single_scan_per_procedure, filter_by_sd, keywords, key_exclude, windowed_SD_threshold,classification_code,extended=True):
 
         ###compile columns to select in database###
         graph_data = [ ''.join([self.table,".AgeAtScan"]) ]
@@ -129,8 +126,9 @@ class MrspecDatabaseQueryer(object):
             ##add feature to do windowed_sd_threshold?
             graph_data.extend(metabolites)
 
-        graph_data.extend([met+'_SD' for met in self.met_threshold])    
-        graph_data.extend([self.table + ".{}".format(m) for m in self.metadata])
+        if extended:
+            graph_data.extend([met+'_SD' for met in self.met_threshold])    
+            graph_data.extend([self.table + ".{}".format(m) for m in self.metadata])
 
         select = ','.join(graph_data)
 
@@ -212,6 +210,6 @@ class MrspecDatabaseQueryer(object):
             where_less = parsed_where + ' {} {}.AgeAtScan < {}'.format(linker,self.table,age)
             where_geq = parsed_where + ' {} {}.AgeAtScan >= {}'.format(linker,self.table,age)
 
-            query = "(SELECT {0} FROM {1} {6} {2} {3} ORDER BY {1}.AgeAtScan DESC {4}) UNION ALL (SELECT {0} FROM {1} {6} {5} {3} ORDER BY {1}.AgeAtScan {4})".format(select, self.table, where_less, group_by, limit, where_geq, join)
+            query = "(SELECT {0} FROM {1} {6} {2} {3} ORDER BY {1}.AgeAtScan DESC {4}) UNION ALL (SELECT {0} FROM {1} {6} {5} {3} ORDER BY {1}.AgeAtScan {4}) ".format(select, self.table, where_less, group_by, limit, where_geq, join)
 
         return query

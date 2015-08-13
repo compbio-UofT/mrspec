@@ -296,7 +296,7 @@ def index():
 def alter_thresholds():
     r = j.loads(request.args.get('thresholds', '', type=str))
     c.met_threshold = r
-    print r
+    print  r
     print c.met_threshold
     return jsonify(data=None)
 

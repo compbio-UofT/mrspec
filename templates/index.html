@@ -16,37 +16,37 @@
 
     <style type="text/css">
 
-        .arrow {
-          width:50px;
-          height:50px;
-          float:none;
-          opacity:0.15;
-          transition:opacity 0.25s linear;*
+    .arrow {
+      width:50px;
+      height:50px;
+      float:none;
+      opacity:0.15;
+      transition:opacity 0.25s linear;*
 
-      }
-      .arrow:hover {
-        opacity:1;
-    }
+  }
+  .arrow:hover {
+    opacity:1;
+}
 
-    .wrapper {
-        display: table;
-        width: 100%;
-    }
-    #left {float:left}
-    #right {float:left; padding-left:5px     
-    }
+.wrapper {
+    display: table;
+    width: 100%;
+}
+#left {float:left}
+#right {float:left; padding-left:5px     
+}
 
-    #sidebar {
-     overflow-y:auto;
-     overflow-x:auto;
-     background-color: white;
-     width: 545px;
-     position: static;
-     left: 700px;
+#sidebar {
+ overflow-y:auto;
+ overflow-x:auto;
+ background-color: white;
+ width: 545px;
+ position: static;
+ left: 700px;
 
- }
+}
 
- #sidebar .patient {
+#sidebar .patient {
     border: 1px solid #eee;
     padding: 10px;
     padding-bottom: 5px;
@@ -184,7 +184,6 @@ ul.justify { margin-left:-2.75em; }
                                 <option value="DY">DY</option>
                                 <option value="MET">MET</option>
                                 <option value="GEN">GEN</option>
-
                             </select>
                         </span>
 
@@ -203,202 +202,204 @@ ul.justify { margin-left:-2.75em; }
                         <input type="checkbox" id="scale" name="scale" onclick="drawChart(window.my_config.results)">
                     </span>
                     <span title="Trendline.">Trendline:
-                        <span title="Overlay queries."><input type="checkbox" id="trendline" name="trendline" onclick="drawChart(window.my_config.results)">
-                            Overlay queries:
-                            <input
-                            type="checkbox" id="overlay" name="overlay" onclick="document.getElementById('merge').disabled = true;">
-                        </span>
-                        <span title="Detailed legend.">Detailed legend:
+                        <input type="checkbox" id="trendline" name="trendline" onclick="drawChart(window.my_config.results)">
+                    </span>
+                    <span title="Overlay queries.">Overlay queries:
+                        <input
+                        type="checkbox" id="overlay" name="overlay" onclick="document.getElementById('merge').disabled = true;">
+                    </span>
+                    <span title="Detailed legend.">Detailed legend:
                         <input type="checkbox" id="legend" name="legend">
-                        </span>
-                        <span title="More options.">More options <img id='allOpt' src="../img/new_window.png" style="padding-bottom:3px" />
-                        </span>
+                    </span>
+                    <span title="More options.">More options <img id='allOpt' src="../img/new_window.png" style="padding-bottom:3px" />
+                    </span>
                     <a href="javascript:void();" id="query" class='query'><img src='../img/submit.png' alt="Submit Query" style="float:right" /></a>
 
-                    </form>
-                    <p>
-                         <a href="javascript:clearSelection()">clear selection (esc)</a> - <a href="javascript:clearCanvas()">clear canvas (del)</a> - <a href="javascript:void();" id="dump" onclick="exportToCsv()">export canvas to file</a> - <a href="javascript:void();" id="png_dump" onclick="exportChartsAsPng()"> export charts as .png</a> - <a href="javascript:void();" id="help" >help</a>
-                    </p>
                 </form>
-            </div>
+                <p>
+                 <a href="javascript:clearSelection()">clear selection (esc)</a> - <a href="javascript:clearCanvas()">clear canvas (del)</a> - <a href="javascript:void();" id="dump" onclick="exportToCsv()">export canvas to file</a> - <a href="javascript:void();" id="png_dump" onclick="exportChartsAsPng()"> export charts as .png</a> - <a href="javascript:void();" id="help" >help</a>
+             </p>
+         </form>
+     </div>
+ </div>
+
+ <div id = 'left'>
+    <div id="charts"></div>
+</div>
+
+<div id='right'></div>
+
+<div id="allOptWindow" title="More Options"><label>Query Refinements</label><br>
+    <span title="Search for a tabPatient.">tabPatientID: <input type="text" size="2" name="DatabaseID">
+    </span><br>
+    <span title="Search for a ScanID.">ScanIDs: <input type="text" size="2" name="ScanID">
+    </span><br>
+    <span title="Only include the X closest patients above and below the 'AGE'.">Limit:
+        <input type="text" size="2" name="limit">
+    </span><br>
+    <span title="Lower limit of the X-axis range.">Min Age to Show:
+        <input type="text" size="2" name="lxlimit">
+    </span>
+    <span title="Upper limit of the X-axis range.">Max Age to Show:
+        <input type="text" size="2" name="uxlimit" value="6570">
+    </span><br>
+    <span title="Select data that lies outside of a certain standard deviation score.">SD score:
+        <input type="text" size="2" name="sdThreshold">
+    </span><br>
+    <label>Input Patient Data to Compare</label><br>
+    <span title="The age of the query. Used to set the center of the limit.">Age:
+        <div class ='optionBox'><input type="text" size="2" name="age" placeholder="Days"style="border:0px solid;"><img id='ageOpt' src="../img/new_window.png" style="padding-bottom:3px" />
+        </div>
+    </span>
+
+    <span title="Values of the query.">Values:
+        <input type="text" size="5" name="values">
+    </span><br>
+
+</div>
+
+<div id="keyOptWindow" title="Keyword Options">
+    <span title="Keywords of the query. e.g. '%glioma'">Keywords to exclude:
+        <input type="text" size="4" name="key_exclude">
+    </span>
+</div>
+
+<div id="helpWindow" title="QuickStart Guide">
+    <label>General Help and Submitting a Query</label>
+    <p>The minimum information for a query is a metabolite to display, which can be entered in the upper left hand corner. You may further specify refinements such as gender, field strength, location, and much more. To submit a query, click "submit query" in the upper left hand corner, or press ENTER at any time.</p>
+    <p>
+        You can find out more about a particular option by hovering over it for a few moments to display a tip. The symbol "<img src="../img/new_window.png" style="padding-bottom:3px" />" indicates that more settings related to that option are available - just click on the symbol to reveal them.
+    </p>
+    <label>New Features</label>
+    <p>• Change default standard deviation thresholds and echotimes by clicking "More options".<br>
+        • For metabolites, location and indication code, click on or type inside the box to search/reveal options; you may select multiple options
+    </p>
+    <label>Keyword Search</label>
+    <p>Keyword search is implemented using the MySQL 'LIKE' clause, whose basic usage can be summarized as follows:<br>
+        • Keyword search will search both the indication and diagnosis fields for all patients in the database and return a scan if either of these fields matches the keyword.<br>
+        • For most searches, use the '%' symbol on both ends of the word, i.e. '%glioma%'. '%' is a wildcard for an unlimited number of characters. For instance, if you want to match the word 'dog' in the phrase 'A dog runs', you would need to search '%dog%' since it appears in the middle of the sentence.<br>
+        • Use the '_' symbol as a wildcard for a single character. For instance, 'T_m' would match 'Tim','Tom','Tum' and any other letter in the middle.<br>
+        • You can enter multiple keywords separated by a comma; scans will be returned if they match any of the keywords.<br>
+        • By clicking on <img src="../img/new_window.png" style="padding-bottom:3px" /> in the keyword box, you can enter keywords to EXCLUDE scans from being returned as matches. Only scans that do not have any of these words will be returned.
+    </p>
+
+</div>
+
+
+<div id='ageWindow' title="Input Age">
+    <label>Years:<input type="text" size="4" id='years' name='years' onKeyUp="calculateAge()" value='0'></label><br>
+    <label>Months:<input type="text" size="4" id='months' name='months' onKeyUp="calculateAge()" value='0'></label><br>
+    <label>Weeks:<input type="text" size="4" id='weeks' name='weeks' onKeyUp="calculateAge()" value='0'></label><br>
+    <label>Days:<input type="text" size="4" id='days' name='days' onKeyUp="calculateAge()" value='0'></label>
+</div>
+
+<div id='echoWindow' title="Change Echotimes">
+    <form method="post">
+        <div style="float: left; width: 20%;text-align:right">
+            <label>AcAc:<input type='text' size='1' id=e_AcAc name=e_AcAc class='e_met'></label>
+            <label>Acn:<input type='text' size='1' id=e_Acn name=e_Acn class='e_met'></label>
+            <label>Ala:<input type='text' size='1' id=e_Ala name=e_Ala class='e_met'></label>
+            <label>Asp:<input type='text' size='1' id=e_Asp name=e_Asp class='e_met'></label>
+            <label>Cho:<input type='text' size='1' id=e_Cho name=e_Cho class='e_met'></label>
+            <label>Cr:<input type='text' size='1' id=e_Cr name=e_Cr class='e_met'></label>
+            <label>CrCH2:<input type='text' size='1' id=e_CrCH2 name=e_CrCH2 class='e_met'></label>
+            <label>GABA:<input type='text' size='1' id=e_GABA name=e_GABA class='e_met'></label>
+        </div>
+        <div style="float: left; width: 20%;text-align:right">
+            <label>GPC:<input type='text' size='1' id=e_GPC name=e_GPC class='e_met'></label>
+            <label>Glc:<input type='text' size='1' id=e_Glc name=e_Glc class='e_met'></label>
+            <label>Gln:<input type='text' size='1' id=e_Gln name=e_Gln class='e_met'></label>
+            <label>Glu:<input type='text' size='1' id=e_Glu name=e_Glu class='e_met'></label>
+            <label>Glx:<input type='text' size='1' id=e_Glx name=e_Glx class='e_met'></label>
+            <label>Gua:<input type='text' size='1' id=e_Gua name=e_Gua class='e_met'></label>
+            <label>Ins:<input type='text' size='1' id=e_Ins name=e_Ins class='e_met'></label>
+            <label>Lac:<input type='text' size='1' id=e_Lac name=e_Lac class='e_met'></label>
+        </div>
+        <div style="float: left; width: 20%;text-align:right">
+            <label>Lip09:<input type='text' size='1' id=e_Lip09 name=e_Lip09 class='e_met'></label>
+            <label>Lip13a:<input type='text' size='1' id=e_Lip13a name=e_Lip13a class='e_met'></label>
+            <label>Lip13b:<input type='text' size='1' id=e_Lip13b name=e_Lip13b class='e_met'></label>
+            <label>Lip20:<input type='text' size='1' id=e_Lip20 name=e_Lip20 class='e_met'></label>
+            <label>MM09:<input type='text' size='1' id=e_MM09 name=e_MM09 class='e_met'></label>
+            <label>MM12:<input type='text' size='1' id=e_MM12 name=e_MM12 class='e_met'></label>
+            <label>MM14:<input type='text' size='1' id=e_MM14 name=e_MM14 class='e_met'></label>
+            <label>MM17:<input type='text' size='1' id=e_MM17 name=e_MM17 class='e_met'></label>
+        </div>
+        <div style="float: left; width: 20%;text-align:right">
+            <label>MM20:<input type='text' size='1' id=e_MM20 name=e_MM20 class='e_met'></label>
+            <label>NAA:<input type='text' size='1' id=e_NAA name=e_NAA class='e_met'></label>
+            <label>NAAG:<input type='text' size='1' id=e_NAAG name=e_NAAG class='e_met'></label>
+            <label>PCh:<input type='text' size='1' id=e_PCh name=e_PCh class='e_met'></label>
+            <label>PCr:<input type='text' size='1' id=e_PCr name=e_PCr class='e_met'></label>
+            <label>Scyllo:<input type='text' size='1' id=e_Scyllo name=e_Scyllo class='e_met'></label>
+            <label>Tau:<input type='text' size='1' id=e_Tau name=e_Tau class='e_met'></label>
+        </div>
+        <div style="float: left; width: 20%;text-align:right">
+            <label>tCho:<input type='text' size='1' id=e_tCho name=e_tCho class='e_met'></label>
+            <label>tCr:<input type='text' size='1' id=e_tCr name=e_tCr class='e_met'></label>
+            <label>tNAA:<input type='text' size='1' id=e_tNAA name=e_tNAA class='e_met'></label>
+            <label>tCho_opt:<input type='text' size='1' id=e_tCho_opt name=e_tCho_opt class='e_met'></label>
+            <label>tCr_opt:<input type='text' size='1' id=e_tCr_opt name=e_tCr_opt class='e_met'></label>
+            <label>tNAA_opt:<input type='text' size='1'id=e_tNAA_opt name=e_tNAA_opt class='e_met'></label>
+        </div>
+    </form>
+</div>
+
+
+<div id='metWindow' title="Change Thresholds">
+    <form method="post">
+        <div style="float: left; width: 20%;text-align:right">
+            <label>AcAc:<input type='text' size='1'  id=AcAc name=AcAc class='met'></label>
+            <label>Acn:<input type='text' size='1'  id=Acn name=Acn class='met'></label>
+            <label>Ala:<input type='text' size='1'  id=Ala name=Ala class='met'></label>
+            <label>Asp:<input type='text' size='1'  id=Asp name=Asp class='met'></label>
+            <label>Cho:<input type='text' size='1'  id=Cho name=Cho class='met'></label>
+            <label>Cr:<input type='text' size='1'  id=Cr name=Cr class='met'></label>
+            <label>CrCH2:<input type='text' size='1'  id=CrCH2 name=CrCH2 class='met'></label>
+            <label>GABA:<input type='text' size='1'  id=GABA name=GABA class='met'></label>
+        </div>
+        <div style="float: left; width: 20%;text-align:right">
+            <label>GPC:<input type='text' size='1'  id=GPC name=GPC class='met'></label>
+            <label>Glc:<input type='text' size='1'  id=Glc name=Glc class='met'></label>
+            <label>Gln:<input type='text' size='1'  id=Gln name=Gln class='met'></label>
+            <label>Glu:<input type='text' size='1'  id=Glu name=Glu class='met'></label>
+            <label>Glx:<input type='text' size='1'  id=Glx name=Glx class='met'></label>
+            <label>Gua:<input type='text' size='1'  id=Gua name=Gua class='met'></label>
+            <label>Ins:<input type='text' size='1'  id=Ins name=Ins class='met'></label>
+            <label>Lac:<input type='text' size='1'  id=Lac name=Lac class='met'></label>
+        </div>
+        <div style="float: left; width: 20%;text-align:right">
+            <label>Lip09:<input type='text' size='1'  id=Lip09 name=Lip09 class='met'></label>
+            <label>Lip13a:<input type='text' size='1'  id=Lip13a name=Lip13a class='met'></label>
+            <label>Lip13b:<input type='text' size='1'  id=Lip13b name=Lip13b class='met'></label>
+            <label>Lip20:<input type='text' size='1'  id=Lip20 name=Lip20 class='met'></label>
+            <label>MM09:<input type='text' size='1'  id=MM09 name=MM09 class='met'></label>
+            <label>MM12:<input type='text' size='1'  id=MM12 name=MM12 class='met'></label>
+            <label>MM14:<input type='text' size='1'  id=MM14 name=MM14 class='met'></label>
+            <label>MM17:<input type='text' size='1'  id=MM17 name=MM17 class='met'></label>
+        </div>
+        <div style="float: left; width: 20%;text-align:right">
+            <label>MM20:<input type='text' size='1'  id=MM20 name=MM20 class='met'></label>
+            <label>NAA:<input type='text' size='1'  id=NAA name=NAA class='met'></label>
+            <label>NAAG:<input type='text' size='1'  id=NAAG name=NAAG class='met'></label>
+            <label>PCh:<input type='text' size='1'  id=PCh name=PCh class='met'></label>
+            <label>PCr:<input type='text' size='1'  id=PCr name=PCr class='met'></label>
+            <label>Scyllo:<input type='text' size='1'  id=Scyllo name=Scyllo class='met'></label>
+            <label>Tau:<input type='text' size='1'  id=Tau name=Tau class='met'></label>
+        </div>
+        <div style="float: left; width: 20%;text-align:right">
+            <label>tCho:<input type='text' size='1'  id=tCho name=tCho class='met'></label>
+            <label>tCr:<input type='text' size='1'  id=tCr name=tCr class='met'></label>
+            <label>tNAA:<input type='text' size='1'  id=tNAA name=tNAA class='met'></label>
+            <label>tCho_opt:<input type='text' size='1'  id=tCho_opt name=tCho_opt class='met'></label>
+            <label>tCr_opt:<input type='text' size='1'  id=tCr_opt name=tCr_opt class='met'></label>
+            <label>tNAA_opt:<input type='text' size='1' id=tNAA_opt name=tNAA_opt class='met'></label>
         </div>
 
-        <div id = 'left'>
-            <div id="charts"></div>
-        </div>
-
-        <div id='right'></div>
-
-        <div id="allOptWindow" title="More Options"><label>Query Refinements</label><br>
-            <span title="Search for a DatabaseID.">DatabaseIDs: <input type="text" size="2" name="DatabaseID">
-            </span><br>
-            <span title="Search for a ScanID.">ScanIDs: <input type="text" size="2" name="ScanID">
-            </span><br>
-            <span title="Only include the X closest patients above and below the 'AGE'.">Limit:
-                <input type="text" size="2" name="limit">
-            </span><br>
-            <span title="Lower limit of the X-axis range.">Min Age to Show:
-                <input type="text" size="2" name="lxlimit">
-            </span>
-            <span title="Upper limit of the X-axis range.">Max Age to Show:
-                <input type="text" size="2" name="uxlimit">
-            </span><br>
-            <span title="Select data that lies outside of a certain standard deviation threshold.">SD threshold:
-                <input type="text" size="2" name="sdThreshold">
-            </span><br>
-            <label>Input Patient Data to Compare</label><br>
-            <span title="The age of the query. Used to set the center of the limit.">Age:
-                <div class ='optionBox'><input type="text" size="2" name="age" placeholder="Days"style="border:0px solid;"><img id='ageOpt' src="../img/new_window.png" style="padding-bottom:3px" />
-                </div>
-            </span>
-
-            <span title="Values of the query.">Values:
-                <input type="text" size="5" name="values">
-            </span><br>
-
-        </div>
-
-        <div id="keyOptWindow" title="Keyword Options">
-            <span title="Keywords of the query. e.g. '%glioma'">Keywords to exclude:
-                <input type="text" size="4" name="key_exclude">
-            </span>
-        </div>
-
-        <div id="helpWindow" title="QuickStart Guide">
-        <label>General Help and Submitting a Query</label>
-        <p>The minimum information for a query is a metabolite to display, which can be entered in the upper left hand corner. You may further specify refinements such as gender, field strength, location, and much more. To submit a query, click "submit query" in the upper left hand corner, or press ENTER at any time.</p>
-                    <p>
-You can find out more about a particular option by hovering over it for a few moments to display a tip. The symbol "<img src="../img/new_window.png" style="padding-bottom:3px" />" indicates that more settings related to that option are available - just click on the symbol to reveal them.</p>
-            <label>New Features</label>
-            <p>• Change default standard deviation thresholds and echotimes by clicking "More options".<br>
-            • For metabolites, location and indication code, click on or type inside the box to search/reveal options; you may select multiple options
-            </p>
-            <label>Keyword Search</label>
-            <p>Keyword search is implemented using the MySQL 'LIKE' clause, whose basic usage can be summarized as follows:<br>
-            • Keyword search will search both the indication and diagnosis fields for all patients in the database and return a scan if either of these fields matches the keyword.<br>
-            • For most searches, use the '%' symbol on both ends of the word, i.e. '%glioma%'. '%' is a wildcard for an unlimited number of characters. For instance, if you want to match the word 'dog' in the phrase 'A dog runs', you would need to search '%dog%' since it appears in the middle of the sentence.<br>
-            • Use the '_' symbol as a wildcard for a single character. For instance, 'T_m' would match 'Tim','Tom','Tum' and any other letter in the middle.<br>
-            • You can enter multiple keywords separated by a comma; scans will be returned if they match any of the keywords.<br>
-            • By clicking on <img src="../img/new_window.png" style="padding-bottom:3px" /> in the keyword box, you can enter keywords to EXCLUDE scans from being returned as matches. Only scans that do not have any of these words will be returned.
-            </p>
-
-        </div>
-
-
-        <div id='ageWindow' title="Input Age">
-            <label>Years:<input type="text" size="4" id='years' name='years' onKeyUp="calculateAge()" value='0'></label><br>
-            <label>Months:<input type="text" size="4" id='months' name='months' onKeyUp="calculateAge()" value='0'></label><br>
-            <label>Weeks:<input type="text" size="4" id='weeks' name='weeks' onKeyUp="calculateAge()" value='0'></label><br>
-            <label>Days:<input type="text" size="4" id='days' name='days' onKeyUp="calculateAge()" value='0'></label>
-        </div>
-
-        <div id='echoWindow' title="Change Echotimes">
-            <form method="post">
-                <div style="float: left; width: 20%;text-align:right">
-                    <label>AcAc:<input type='text' size='1' id=e_AcAc name=e_AcAc class='e_met'></label>
-                    <label>Acn:<input type='text' size='1' id=e_Acn name=e_Acn class='e_met'></label>
-                    <label>Ala:<input type='text' size='1' id=e_Ala name=e_Ala class='e_met'></label>
-                    <label>Asp:<input type='text' size='1' id=e_Asp name=e_Asp class='e_met'></label>
-                    <label>Cho:<input type='text' size='1' id=e_Cho name=e_Cho class='e_met'></label>
-                    <label>Cr:<input type='text' size='1' id=e_Cr name=e_Cr class='e_met'></label>
-                    <label>CrCH2:<input type='text' size='1' id=e_CrCH2 name=e_CrCH2 class='e_met'></label>
-                    <label>GABA:<input type='text' size='1' id=e_GABA name=e_GABA class='e_met'></label>
-                </div>
-                <div style="float: left; width: 20%;text-align:right">
-                    <label>GPC:<input type='text' size='1' id=e_GPC name=e_GPC class='e_met'></label>
-                    <label>Glc:<input type='text' size='1' id=e_Glc name=e_Glc class='e_met'></label>
-                    <label>Gln:<input type='text' size='1' id=e_Gln name=e_Gln class='e_met'></label>
-                    <label>Glu:<input type='text' size='1' id=e_Glu name=e_Glu class='e_met'></label>
-                    <label>Glx:<input type='text' size='1' id=e_Glx name=e_Glx class='e_met'></label>
-                    <label>Gua:<input type='text' size='1' id=e_Gua name=e_Gua class='e_met'></label>
-                    <label>Ins:<input type='text' size='1' id=e_Ins name=e_Ins class='e_met'></label>
-                    <label>Lac:<input type='text' size='1' id=e_Lac name=e_Lac class='e_met'></label>
-                </div>
-                <div style="float: left; width: 20%;text-align:right">
-                    <label>Lip09:<input type='text' size='1' id=e_Lip09 name=e_Lip09 class='e_met'></label>
-                    <label>Lip13a:<input type='text' size='1' id=e_Lip13a name=e_Lip13a class='e_met'></label>
-                    <label>Lip13b:<input type='text' size='1' id=e_Lip13b name=e_Lip13b class='e_met'></label>
-                    <label>Lip20:<input type='text' size='1' id=e_Lip20 name=e_Lip20 class='e_met'></label>
-                    <label>MM09:<input type='text' size='1' id=e_MM09 name=e_MM09 class='e_met'></label>
-                    <label>MM12:<input type='text' size='1' id=e_MM12 name=e_MM12 class='e_met'></label>
-                    <label>MM14:<input type='text' size='1' id=e_MM14 name=e_MM14 class='e_met'></label>
-                    <label>MM17:<input type='text' size='1' id=e_MM17 name=e_MM17 class='e_met'></label>
-                </div>
-                <div style="float: left; width: 20%;text-align:right">
-                    <label>MM20:<input type='text' size='1' id=e_MM20 name=e_MM20 class='e_met'></label>
-                    <label>NAA:<input type='text' size='1' id=e_NAA name=e_NAA class='e_met'></label>
-                    <label>NAAG:<input type='text' size='1' id=e_NAAG name=e_NAAG class='e_met'></label>
-                    <label>PCh:<input type='text' size='1' id=e_PCh name=e_PCh class='e_met'></label>
-                    <label>PCr:<input type='text' size='1' id=e_PCr name=e_PCr class='e_met'></label>
-                    <label>Scyllo:<input type='text' size='1' id=e_Scyllo name=e_Scyllo class='e_met'></label>
-                    <label>Tau:<input type='text' size='1' id=e_Tau name=e_Tau class='e_met'></label>
-                </div>
-                <div style="float: left; width: 20%;text-align:right">
-                    <label>tCho:<input type='text' size='1' id=e_tCho name=e_tCho class='e_met'></label>
-                    <label>tCr:<input type='text' size='1' id=e_tCr name=e_tCr class='e_met'></label>
-                    <label>tNAA:<input type='text' size='1' id=e_tNAA name=e_tNAA class='e_met'></label>
-                    <label>tCho_opt:<input type='text' size='1' id=e_tCho_opt name=e_tCho_opt class='e_met'></label>
-                    <label>tCr_opt:<input type='text' size='1' id=e_tCr_opt name=e_tCr_opt class='e_met'></label>
-                    <label>tNAA_opt:<input type='text' size='1'id=e_tNAA_opt name=e_tNAA_opt class='e_met'></label>
-                </div>
-            </form>
-        </div>
-
-
-        <div id='metWindow' title="Change Thresholds">
-            <form method="post">
-                <div style="float: left; width: 20%;text-align:right">
-                    <label>AcAc:<input type='text' size='1'  id=AcAc name=AcAc class='met'></label>
-                    <label>Acn:<input type='text' size='1'  id=Acn name=Acn class='met'></label>
-                    <label>Ala:<input type='text' size='1'  id=Ala name=Ala class='met'></label>
-                    <label>Asp:<input type='text' size='1'  id=Asp name=Asp class='met'></label>
-                    <label>Cho:<input type='text' size='1'  id=Cho name=Cho class='met'></label>
-                    <label>Cr:<input type='text' size='1'  id=Cr name=Cr class='met'></label>
-                    <label>CrCH2:<input type='text' size='1'  id=CrCH2 name=CrCH2 class='met'></label>
-                    <label>GABA:<input type='text' size='1'  id=GABA name=GABA class='met'></label>
-                </div>
-                <div style="float: left; width: 20%;text-align:right">
-                    <label>GPC:<input type='text' size='1'  id=GPC name=GPC class='met'></label>
-                    <label>Glc:<input type='text' size='1'  id=Glc name=Glc class='met'></label>
-                    <label>Gln:<input type='text' size='1'  id=Gln name=Gln class='met'></label>
-                    <label>Glu:<input type='text' size='1'  id=Glu name=Glu class='met'></label>
-                    <label>Glx:<input type='text' size='1'  id=Glx name=Glx class='met'></label>
-                    <label>Gua:<input type='text' size='1'  id=Gua name=Gua class='met'></label>
-                    <label>Ins:<input type='text' size='1'  id=Ins name=Ins class='met'></label>
-                    <label>Lac:<input type='text' size='1'  id=Lac name=Lac class='met'></label>
-                </div>
-                <div style="float: left; width: 20%;text-align:right">
-                    <label>Lip09:<input type='text' size='1'  id=Lip09 name=Lip09 class='met'></label>
-                    <label>Lip13a:<input type='text' size='1'  id=Lip13a name=Lip13a class='met'></label>
-                    <label>Lip13b:<input type='text' size='1'  id=Lip13b name=Lip13b class='met'></label>
-                    <label>Lip20:<input type='text' size='1'  id=Lip20 name=Lip20 class='met'></label>
-                    <label>MM09:<input type='text' size='1'  id=MM09 name=MM09 class='met'></label>
-                    <label>MM12:<input type='text' size='1'  id=MM12 name=MM12 class='met'></label>
-                    <label>MM14:<input type='text' size='1'  id=MM14 name=MM14 class='met'></label>
-                    <label>MM17:<input type='text' size='1'  id=MM17 name=MM17 class='met'></label>
-                </div>
-                <div style="float: left; width: 20%;text-align:right">
-                    <label>MM20:<input type='text' size='1'  id=MM20 name=MM20 class='met'></label>
-                    <label>NAA:<input type='text' size='1'  id=NAA name=NAA class='met'></label>
-                    <label>NAAG:<input type='text' size='1'  id=NAAG name=NAAG class='met'></label>
-                    <label>PCh:<input type='text' size='1'  id=PCh name=PCh class='met'></label>
-                    <label>PCr:<input type='text' size='1'  id=PCr name=PCr class='met'></label>
-                    <label>Scyllo:<input type='text' size='1'  id=Scyllo name=Scyllo class='met'></label>
-                    <label>Tau:<input type='text' size='1'  id=Tau name=Tau class='met'></label>
-                </div>
-                <div style="float: left; width: 20%;text-align:right">
-                    <label>tCho:<input type='text' size='1'  id=tCho name=tCho class='met'></label>
-                    <label>tCr:<input type='text' size='1'  id=tCr name=tCr class='met'></label>
-                    <label>tNAA:<input type='text' size='1'  id=tNAA name=tNAA class='met'></label>
-                    <label>tCho_opt:<input type='text' size='1'  id=tCho_opt name=tCho_opt class='met'></label>
-                    <label>tCr_opt:<input type='text' size='1'  id=tCr_opt name=tCr_opt class='met'></label>
-                    <label>tNAA_opt:<input type='text' size='1' id=tNAA_opt name=tNAA_opt class='met'></label>
-                    </div>
-
-                </form>
-            </div>
-        </div>
-    </div>
+    </form>
+</div>
+</div>
+</div>
 
 <script type="text/javascript">
 //HELP WINDOW
@@ -894,14 +895,48 @@ function drawChart(allChartData) {
             update_sidebar()
         } )
 
-/*google.visualization.events.addListener(charts[c], 'onmouseover', sidebar_mouseover);
-google.visualization.events.addListener(charts[c], 'onmouseout', sidebar_mouseout) */
+//google.visualization.events.addListener(charts[c], 'onmouseover', sidebar_mouseover);
+//google.visualization.events.addListener(charts[c], 'onmouseout', sidebar_mouseout)
 }
 };
 
-/*function sidebar_mouseover() {
+function sidebar_mouseover(e) {
+    console.log(e)
+for(chart in window.my_config.charts) {
+        var columns = window.my_config.columns[chart]
 
-}*/
+        var sel = window.my_config.charts[chart].getSelection();
+        // if selection length is 0, we deselected an element
+        if (sel.length > 0) {
+            // if row is undefined, we clicked on the legend
+            if (sel[0].row != null) {
+                var col = sel[0].column;
+                if (columns[col] == col) {
+                    // hide the data series
+                    columns[col] = {
+                        label: window.my_config.results[chart].getColumnLabel(col),
+                        type: window.my_config.results[chart].getColumnType(col),
+                        calc: function () {
+                            return null;
+                        }
+                    };
+                    
+                    // grey out the legend entry
+                    window.my_config.series[chart][(col - 2)/2].color = '#CCCCCC';
+                }
+                else {
+                    // show the data series
+                    columns[col] = col;
+                    window.my_config.series[chart][(col - 2)/2].color = null;
+                }
+                var view = new google.visualization.DataView(window.my_config.results[chart]);
+                view.setColumns(columns);
+                window.my_config.options.title = "Age vs. " + chart
+                window.my_config.charts[chart].draw(view, window.my_config.options);
+            }
+        }
+    }
+}
 
 function redraw_charts(results){
     var merged_results = null
@@ -910,19 +945,14 @@ function redraw_charts(results){
         var label = ''
         if (d in results){
             var n = new google.visualization.DataTable(results[d])
-            //var o = new google.visualization.DataTable(results_new[d])
             var o = results_new[d]
 
             var old_cols = []
-            console.log(results[d])
-            console.log(results_new[d])
 
             for (i = 2; i < results_new[d].getNumberOfColumns(); i++) {
                 old_cols.push(i)
             }
             merged_results = google.visualization.data.join(o, n, 'full',[[0,0],[1,1]],old_cols,[2,3]);
-
-
 
             results_new[d] = merged_results
             window.my_config.results[d] = merged_results
@@ -994,7 +1024,7 @@ function add_SD(r){
                 div = "<div id='normal' style='float:left;width:30%'>"
             }
 
-            for (i = 1; i < categories[c].length; i++){
+            for (i = 0; i < categories[c].length; i++){
                 for (name in categories[c][i])
                     elem += name +": " + arrow + Math.round(categories[c][i][name] * 10)/10 + " SD <br>"
             }
@@ -1106,7 +1136,7 @@ function update_sidebar(){
             }
         }
         if (window.my_config.sd_array[r] != null){
-            i+= "<div class='title'>SD for available metabolites:</div><div class='content'>" + add_SD(r) +"</div>"
+            i+= "<div class='title'>SD score for available metabolites:</div><div class='content'>" + add_SD(r) +"</div>"
         }
 
         $("#sidebar_left").append("<div id='"+r+"' class='patient'>"+i+"</div>")
