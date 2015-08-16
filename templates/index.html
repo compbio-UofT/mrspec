@@ -504,10 +504,10 @@ function sendThresholds(){
     })
 
 
-$.getJSON('/_alter_thresholds', {
-    thresholds:JSON.stringify(thresholds)
-}, function(data) {
-});
+    $.getJSON('/_alter_thresholds', {
+        thresholds:JSON.stringify(thresholds)
+    }, function(data) {
+    });
 }
 
 
@@ -532,10 +532,10 @@ function sendEchotimes(){
     })
 
 
-$.getJSON('/_alter_echotimes', {
-    echotimes:JSON.stringify(echotimes)
-}, function(data) {
-});
+    $.getJSON('/_alter_echotimes', {
+        echotimes:JSON.stringify(echotimes)
+    }, function(data) {
+    });
 }
 
 function loadEchotimes(){
@@ -732,9 +732,9 @@ $(document).ready(function () {
         setSize()
     })
 
-$(window).scroll(function () {
-    scrollControl()
-})
+    $(window).scroll(function () {
+        scrollControl()
+    })
 
 
 });
@@ -764,9 +764,9 @@ function setSize(){
         'width':width+20,
 
     })
-$('#right').css({
-    'width':width-20,
-})
+    $('#right').css({
+        'width':width-20,
+    })
 }
 
 function scrollControl(){
@@ -787,24 +787,24 @@ function scrollControl(){
             'max-height': max_height - (top_height-scroll),
         })
 
-$('#sidebar').css({
-    'position': 'static',
-    'top': '0',
-    'max-height': max_height - (top_height+top_height2-scroll),
-});
+        $('#sidebar').css({
+            'position': 'static',
+            'top': '0',
+            'max-height': max_height - (top_height+top_height2-scroll),
+        });
 
-} else {
+    } else {
 
-    $('#sidebar_top').css({'position':'fixed','left': width + 25})
+        $('#sidebar_top').css({'position':'fixed','left': width + 25})
 
 
-    $('#sidebar').css({
-        'position': 'fixed',
-        'top': '50px',
-        'left': width + 25,
+        $('#sidebar').css({
+            'position': 'fixed',
+            'top': '50px',
+            'left': width + 25,
 
-    })
-}
+        })
+    }
 }
 
 function prepareList() {
@@ -897,12 +897,12 @@ function drawChart(allChartData) {
 
 //google.visualization.events.addListener(charts[c], 'onmouseover', sidebar_mouseover);
 //google.visualization.events.addListener(charts[c], 'onmouseout', sidebar_mouseout)
-}
+    }
 };
 
 function sidebar_mouseover(e) {
     console.log(e)
-for(chart in window.my_config.charts) {
+    for(chart in window.my_config.charts) {
         var columns = window.my_config.columns[chart]
 
         var sel = window.my_config.charts[chart].getSelection();
@@ -984,7 +984,7 @@ function add_SD(r){
     var complete_list = ""
 
     var positive = []
-    var negative = []					
+    var negative = []
     var zero = []
 
     var categories = [positive,negative,zero]
@@ -1077,8 +1077,73 @@ function update_right_sidebar(){
 
     $("#sidebar_top").append("<img src='../img/left.png' style='width:50px;height:50px;float:none' class='arrow' onclick='document.getElementById(\"sidebar\").scrollLeft = 0'></img><img src='../img/right.png' style='width:50px;height:50px;float:none' class='arrow' onclick='document.getElementById(\"sidebar\").scrollLeft = document.getElementById(\"sidebar\").scrollWidth'></img>")
 
-    var i = "<div class='title'>Mean of Selected Patients:</div><div class='content'>tCr: 15.3</div><div class='content'>Cr: 9.8</div><div class='title'>Pooled Standard Deviation:</div><div class='content'>tCr: 0 (n=2)</div><div class='content'>Cr: 0 (n=2)</div>"
-    i ="To be implemented"
+    patients = window.my_config.current_selection
+    sd_array = window.my_config.sd_array
+
+    shared_mets = {}
+
+    for (r in patients){
+        for (i in sd_array[r]){
+            for (met in sd_array[r][i]){
+
+                shared = true
+
+                for (s in patients){
+
+                    this_one = false
+
+                    for (j in sd_array[s]){
+                        for (mm in sd_array[s][j]){
+                            if (met == mm) 
+                                this_one = true
+                        }
+                    }
+
+                    if(this_one==false){
+                        shared = false
+                    }
+                }
+                if (shared == true && !(met in shared_mets)){
+                    shared_mets[met]=0
+                }
+            }
+        }
+    }
+    //get standard deviation values
+    for (r in patients){
+        for (i in sd_array[r]){
+            for (met in sd_array[r][i]){
+                if (met in shared_mets){
+                    shared_mets[met] += sd_array[r][i][met] / Object.keys(patients).length
+                }
+            }
+        }
+    }
+
+
+    var sd_array = []
+    for (met in shared_mets){
+            var qq = {}
+
+        console.log(met)
+        qq[met]=shared_mets[met]
+        sd_array.push(qq)
+    }
+
+    console.log(shared_mets)
+    window.my_config.sd_array['group']=sd_array
+
+    /*
+    for (met in shared_mets){
+        console.log(met)
+        sel = window.my_config.charts[met].getSelection()
+        tot = 0
+        for (val in sel){
+            tot += window.my_config.charts[met].getValue(sel[val].row,sel[val].column)
+        }
+    }*/
+
+    var i = /*"<div class='title'>Mean of Selected Patients:</div><div class='content'>tCr: 15.3</div><div class='content'>Cr: 9.8</div>*/"<div class='title'>Pooled Standard Deviation:</div><div class='content'>"+add_SD('group')+"</div>"
 
     $("#sidebar_right").append("<div id='"+r+"' class='group'>"+i+"</div>")
 
@@ -1153,6 +1218,5 @@ function update_sidebar(){
     }
 
 </script>
-
 </body>
 </html>

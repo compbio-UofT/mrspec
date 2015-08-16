@@ -91,13 +91,13 @@ class MrspecDatabaseQueryer(object):
             print("Metabolite echotimes loaded from defaults. Reason: " +str(e)+".")
             
     def table_exists(self, tablename):
-        self.cur.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = '{}' AND table_schema='{}'".format(tablename.replace('\'', '\'\''),self.database))
+        self.cur.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = '{}' AND table_schema='{}'".format(tablename.replace('\'', '\'\''),self._database))
         if self.cur.fetchone()[0] == 1:
             return True
         return False
 
     def column_exists(self, tablename, column):
-        self.cur.execute("SELECT COUNT(*) FROM information_schema.columns WHERE table_name = '{}' AND column_name = '{}' AND table_schema='{}'".format(tablename.replace('\'', '\'\''), column.replace('\'', '\'\''),self.database))
+        self.cur.execute("SELECT COUNT(*) FROM information_schema.columns WHERE table_name = '{}' AND column_name = '{}' AND table_schema='{}'".format(tablename.replace('\'', '\'\''), column.replace('\'', '\'\''),self._database))
         if self.cur.fetchone()[0] == 1:
             return True
         return False

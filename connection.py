@@ -47,7 +47,7 @@ class DatabaseConnection(object):
     
     def __init__(self, sysargs, silent=False,database='mrspec'):
         self.silent = silent
-        self.database=database
+        self._database=database
         self.con, self.cur = self._establish_connection(sysargs)
     
     def __enter__(self):
@@ -60,7 +60,7 @@ class DatabaseConnection(object):
             #usage: python query.py <user> <password> <port>
             try:
                 con = m.connect(user=args[1], password=args[2],
-                                        database=self.database, port=args[3])
+                                        database=self._database, port=args[3])
                 cur = con.cursor()
                 return con, cur
             except IndexError as e:

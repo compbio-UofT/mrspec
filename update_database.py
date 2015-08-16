@@ -13,8 +13,7 @@ class MrpecDatabaseUpdator(MrspecDatabaseEditor):
             self.con.commit()
         if not overwrite:
             if not self.silent: print("Column '{}' in table '{}' already exists, no changes made.".format(name,dest_table))
-        else:    
-            print "UPDATE {} as S, {} as T SET S.{}=CAST(T.{} as {}) WHERE S.{}=T.{}".format(dest_table,source_table,name,column[0],column[1],join,join_on[0])
+        else:
             self.cur.execute("UPDATE {} as S, {} as T SET S.{}=CAST(T.{} as {}) WHERE S.{}=T.{}".format(dest_table,source_table,name,column[0],column[1],join,join_on[0]))
             self.con.commit()
             if not self.silent: print("Column '{}' in table '{}' successfully added.".format(name,dest_table))
@@ -63,7 +62,7 @@ if __name__== "__main__":
         ##rename Cr and Cho for 1.5T scans to tCr and tCho
         d.rename_lower_field_metabolites()        
         
-        d.update_outcomes('outcomes2.csv')
+        d.update_outcomes('outcomes3.csv')
         
         #if prompt_yes_no("\nDo you wish to create/overwrite the windowed SD columns with null values? WARNING: This cannot be undone, and will take a long time to restore the values."): d.create_null_sd_columns(update)
         if prompt_yes_no("\nDo you wish to (re)calculate the windowed SD columns? WARNING: This will overwrite previous data, and will take a long time to restore the values."): d.populate_SD_table_without_multi('', '', '', False, True)

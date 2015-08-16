@@ -6,9 +6,9 @@ class MrspecDatabaseEditor(MrspecDatabaseQueryer):
     
     def __init__(self, silent=False):
         
-        self.database = 'mrspec'
+        self._database = 'mrspec'
         
-        super(MrspecDatabaseEditor, self).__init__(silent,self.database)
+        super(MrspecDatabaseEditor, self).__init__(silent,self._database)
                 
         #datatypes
         self._u = 'UNSIGNED'
@@ -256,7 +256,14 @@ class MrspecDatabaseEditor(MrspecDatabaseQueryer):
             self.cur.execute("load data infile '{}' into table {} fields terminated by ',' optionally enclosed by '\"' lines terminated by '\r\n' ignore 1 lines".format(f,name))
             self.con.commit()
     
-            if not self.silent: print("Table '{}' in '{}' successfully imported from '{}'.".format(name,self.database,f))
+            if not self.silent: print("Table '{}' in '{}' successfully imported from '{}'.".format(name,self._database,f))
+    
+    def duplicate_table(old_table,new_table):
+        if not self.table_exists(old_table):
+            x = self.cur.execute("CREATE TABLE {1} LIKE {0}; INSERT {1} SELECT * FROM {0}".format(old_table,new_table),multi=True)
+            for e in x:
+                pass
+            if not self.silent: print("Table '{}' successfully copied from '{}'.".format(new_table,old_table))
 
 if __name__ == "__main__":
 
