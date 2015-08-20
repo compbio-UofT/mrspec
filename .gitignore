@@ -7,6 +7,10 @@
 *.xlsx
 *.cmd
 *.zip
+*.txt
+*.lnk
+test.py
+js/*.html
 
 #################
 ## Eclipse

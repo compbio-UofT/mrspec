@@ -3,7 +3,7 @@
 <head>
     <link rel="shortcut icon"
     href="../img/favicon.ico" />
-    <script src="https://www.google.com/jsapi"></script>
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
     <script src="//code.jquery.com/jquery-1.10.2.js"></script>
@@ -13,36 +13,27 @@
     rel="stylesheet">
     <link rel="stylesheet" href="../css/chosen.css">
     <script src='../js/chosen.jquery.js'></script>
+    <script src="../js/mrspec.js"></script>
+
 
     <style type="text/css">
 
-    .arrow {
-      width:50px;
-      height:50px;
-      float:none;
-      opacity:0.15;
-      transition:opacity 0.25s linear;*
-
-  }
-  .arrow:hover {
-    opacity:1;
+#left {
+    float:left
 }
 
-.wrapper {
-    display: table;
-    width: 100%;
-}
-#left {float:left}
-#right {float:left; padding-left:5px     
+#right {
+    float:left;
+    padding-left:5px     
 }
 
 #sidebar {
- overflow-y:auto;
- overflow-x:auto;
- background-color: white;
- width: 545px;
- position: static;
- left: 700px;
+   overflow-y:auto;
+   overflow-x:auto;
+   background-color: white;
+   width: 545px;
+   position: static;
+   left: 700px;
 
 }
 
@@ -74,52 +65,6 @@
     padding-bottom: 5px
 }
 
-#sidebar .listContainer{
-} 
-
-ul.justify { margin-left:-2.75em; } 
-
-
-.expList ul, li {
-
-    list-style: none;
-    margin:0;
-    padding:0;
-    cursor: pointer;
-    
-
-}
-.expList p {
-    margin:0;
-    display:block;
-}
-.expList p:hover {
-    background-color:#121212;
-}
-.expList li {
-    line-height:140%;
-    text-indent:0px;
-    background-position: 1px 8px;
-    padding-left: 20px;
-    background-repeat: no-repeat;
-}
-
-/* Collapsed state for list element */
-.collapsed {
-    background-image: url(../img/collapsed.png);
-    background-position: 1px 8px;
-    padding-left: 20px;
-    background-repeat: no-repeat;
-}
-/* Expanded state for list element
-/* NOTE: This class must be located UNDER the collapsed one */
-.expanded {
-    background-image: url(../img/expanded.png);
-    background-position: 1px 8px;
-    padding-left: 20px;
-    background-repeat: no-repeat;
-}
-
 .optionBox {
 	outline: 1px solid #B0B0B0;
 	display:inline;
@@ -128,8 +73,21 @@ ul.justify { margin-left:-2.75em; }
 }
 
 .optionBox:hover {
- overflow:visible;
+   overflow:visible;
 }
+
+.arrow {
+    width:50px;
+    height:50px;
+    float:none;
+    opacity:0.15;
+    transition:opacity 0.25s linear;*
+}
+
+.arrow:hover {
+    opacity:1;
+}
+
 </style>
 </head>
 <body>
@@ -161,7 +119,6 @@ ul.justify { margin-left:-2.75em; }
                             <option value="3">3T</option>
                             <option value="1.5">1.5T</option>
                             <!--<option value="unset">Unk</option>-->
-
                         </select>
                     </span>
 
@@ -186,7 +143,6 @@ ul.justify { margin-left:-2.75em; }
                                 <option value="GEN">GEN</option>
                             </select>
                         </span>
-
 
                         <span title="Keywords of the query. e.g. '%glioma'">Keywords:
                             <div class ='optionBox' ><input type="text" size="4" name="keyword" style="border:0px solid"><img id='keyOpt' src="../img/new_window.png" style="padding-bottom:3px" />
@@ -217,191 +173,216 @@ ul.justify { margin-left:-2.75em; }
 
                 </form>
                 <p>
-                 <a href="javascript:clearSelection()">clear selection (esc)</a> - <a href="javascript:clearCanvas()">clear canvas (del)</a> - <a href="javascript:void();" id="dump" onclick="exportToCsv()">export canvas to file</a> - <a href="javascript:void();" id="png_dump" onclick="exportChartsAsPng()"> export charts as .png</a> - <a href="javascript:void();" id="help" >help</a>
-             </p>
-         </form>
-     </div>
- </div>
+                    <a href="javascript:clearSelection()">clear selection (esc)</a> - <a href="javascript:clearCanvas()">clear canvas (del)</a> - <a href="javascript:void();" id="dump" onclick="exportToCsv()">export canvas to file</a> - <a href="javascript:void();" id="png_dump" onclick="exportChartsAsPng()"> export charts as .png</a> - <a href="javascript:void();" id="help" >help</a>
+                </p>
+            </form>
+        </div>
+    </div>
 
- <div id = 'left'>
-    <div id="charts"></div>
+    <div id = 'left'>
+        <div id="charts"></div>
+    </div>
+
+    <div id='right'></div>
+
+    <div id="allOptWindow" title="More Options"><label>Query Refinements</label><br>
+        <span title="Search for a tabPatient.">tabPatientID: <input type="text" size="2" name="DatabaseID">
+        </span><br>
+        <span title="Search for a ScanID.">ScanIDs: <input type="text" size="2" name="ScanID">
+        </span><br>
+        <span title="Only include the X closest patients above and below the 'AGE'.">Limit:
+            <input type="text" size="2" name="limit">
+        </span><br>
+        <span title="Lower limit of the X-axis range.">Min Age to Show:
+            <input type="text" size="2" name="lxlimit">
+        </span>
+        <span title="Upper limit of the X-axis range.">Max Age to Show:
+            <input type="text" size="2" name="uxlimit" value="6570">
+        </span><br>
+        <span title="Select data that lies outside of a certain standard deviation score.">SD score:
+            <input type="text" size="2" name="sdThreshold">
+        </span><br>
+        <label>Input Patient Data to Compare</label><br>
+        <span title="The age of the query. Used to set the center of the limit.">Age:
+            <div class ='optionBox'><input type="text" size="2" name="age" placeholder="Days"style="border:0px solid;"><img id='ageOpt' src="../img/new_window.png" style="padding-bottom:3px" />
+            </div>
+        </span>
+
+        <span title="Values of the query.">Values:
+            <input type="text" size="5" name="values">
+        </span><br>
+    </div>
+
+    <div id="keyOptWindow" title="Keyword Options">
+        <span title="Keywords of the query. e.g. '%glioma'">Keywords to exclude:
+            <input type="text" size="4" name="key_exclude">
+        </span>
+    </div>
+
+    <div id="helpWindow" title="QuickStart Guide">
+        <label>General Help and Submitting a Query</label>
+        <p>The minimum information for a query is a metabolite to display, which can be entered in the upper left hand corner. You may further specify refinements such as gender, field strength, location, and much more. To submit a query, click "submit query" in the upper left hand corner, or press ENTER at any time.</p>
+        <p>
+            You can find out more about a particular option by hovering over it for a few moments to display a tip. The symbol "<img src="../img/new_window.png" style="padding-bottom:3px" />" indicates that more settings related to that option are available - just click on the symbol to reveal them.
+        </p>
+        <label>New Features</label>
+        <p>• Change default standard deviation thresholds and echotimes by clicking "More options".<br>
+            • For metabolites, location and indication code, click on or type inside the box to search/reveal options; you may select multiple options
+        </p>
+        <label>Keyword Search</label>
+        <p>Keyword search is implemented using the MySQL 'LIKE' clause, whose basic usage can be summarized as follows:<br>
+            • Keyword search will search both the indication and diagnosis fields for all patients in the database and return a scan if either of these fields matches the keyword.<br>
+            • For most searches, use the '%' symbol on both ends of the word, i.e. '%glioma%'. '%' is a wildcard for an unlimited number of characters. For instance, if you want to match the word 'dog' in the phrase 'A dog runs', you would need to search '%dog%' since it appears in the middle of the sentence.<br>
+            • Use the '_' symbol as a wildcard for a single character. For instance, 'T_m' would match 'Tim','Tom','Tum' and any other letter in the middle.<br>
+            • You can enter multiple keywords separated by a comma; scans will be returned if they match any of the keywords.<br>
+            • By clicking on <img src="../img/new_window.png" style="padding-bottom:3px" /> in the keyword box, you can enter keywords to EXCLUDE scans from being returned as matches. Only scans that do not have any of these words will be returned.
+        </p>
+
+    </div>
+
+    <div id='ageWindow' title="Input Age">
+        <label>Years:<input type="text" size="4" id='years' name='years' onKeyUp="calculateAge()" value='0'></label><br>
+        <label>Months:<input type="text" size="4" id='months' name='months' onKeyUp="calculateAge()" value='0'></label><br>
+        <label>Weeks:<input type="text" size="4" id='weeks' name='weeks' onKeyUp="calculateAge()" value='0'></label><br>
+        <label>Days:<input type="text" size="4" id='days' name='days' onKeyUp="calculateAge()" value='0'></label>
+    </div>
+
+    <div id='echoWindow' title="Change Echotimes">
+        <form method="post">
+            <div style="float: left; width: 20%;text-align:right">
+                <label>AcAc:<input type='text' size='1' id=e_AcAc name=e_AcAc class='e_met'></label>
+                <label>Acn:<input type='text' size='1' id=e_Acn name=e_Acn class='e_met'></label>
+                <label>Ala:<input type='text' size='1' id=e_Ala name=e_Ala class='e_met'></label>
+                <label>Asp:<input type='text' size='1' id=e_Asp name=e_Asp class='e_met'></label>
+                <label>Cho:<input type='text' size='1' id=e_Cho name=e_Cho class='e_met'></label>
+                <label>Cr:<input type='text' size='1' id=e_Cr name=e_Cr class='e_met'></label>
+                <label>CrCH2:<input type='text' size='1' id=e_CrCH2 name=e_CrCH2 class='e_met'></label>
+                <label>GABA:<input type='text' size='1' id=e_GABA name=e_GABA class='e_met'></label>
+            </div>
+            <div style="float: left; width: 20%;text-align:right">
+                <label>GPC:<input type='text' size='1' id=e_GPC name=e_GPC class='e_met'></label>
+                <label>Glc:<input type='text' size='1' id=e_Glc name=e_Glc class='e_met'></label>
+                <label>Gln:<input type='text' size='1' id=e_Gln name=e_Gln class='e_met'></label>
+                <label>Glu:<input type='text' size='1' id=e_Glu name=e_Glu class='e_met'></label>
+                <label>Glx:<input type='text' size='1' id=e_Glx name=e_Glx class='e_met'></label>
+                <label>Gua:<input type='text' size='1' id=e_Gua name=e_Gua class='e_met'></label>
+                <label>Ins:<input type='text' size='1' id=e_Ins name=e_Ins class='e_met'></label>
+                <label>Lac:<input type='text' size='1' id=e_Lac name=e_Lac class='e_met'></label>
+            </div>
+            <div style="float: left; width: 20%;text-align:right">
+                <label>Lip09:<input type='text' size='1' id=e_Lip09 name=e_Lip09 class='e_met'></label>
+                <label>Lip13a:<input type='text' size='1' id=e_Lip13a name=e_Lip13a class='e_met'></label>
+                <label>Lip13b:<input type='text' size='1' id=e_Lip13b name=e_Lip13b class='e_met'></label>
+                <label>Lip20:<input type='text' size='1' id=e_Lip20 name=e_Lip20 class='e_met'></label>
+                <label>MM09:<input type='text' size='1' id=e_MM09 name=e_MM09 class='e_met'></label>
+                <label>MM12:<input type='text' size='1' id=e_MM12 name=e_MM12 class='e_met'></label>
+                <label>MM14:<input type='text' size='1' id=e_MM14 name=e_MM14 class='e_met'></label>
+                <label>MM17:<input type='text' size='1' id=e_MM17 name=e_MM17 class='e_met'></label>
+            </div>
+            <div style="float: left; width: 20%;text-align:right">
+                <label>MM20:<input type='text' size='1' id=e_MM20 name=e_MM20 class='e_met'></label>
+                <label>NAA:<input type='text' size='1' id=e_NAA name=e_NAA class='e_met'></label>
+                <label>NAAG:<input type='text' size='1' id=e_NAAG name=e_NAAG class='e_met'></label>
+                <label>PCh:<input type='text' size='1' id=e_PCh name=e_PCh class='e_met'></label>
+                <label>PCr:<input type='text' size='1' id=e_PCr name=e_PCr class='e_met'></label>
+                <label>Scyllo:<input type='text' size='1' id=e_Scyllo name=e_Scyllo class='e_met'></label>
+                <label>Tau:<input type='text' size='1' id=e_Tau name=e_Tau class='e_met'></label>
+            </div>
+            <div style="float: left; width: 20%;text-align:right">
+                <label>tCho:<input type='text' size='1' id=e_tCho name=e_tCho class='e_met'></label>
+                <label>tCr:<input type='text' size='1' id=e_tCr name=e_tCr class='e_met'></label>
+                <label>tNAA:<input type='text' size='1' id=e_tNAA name=e_tNAA class='e_met'></label>
+                <label>tCho_opt:<input type='text' size='1' id=e_tCho_opt name=e_tCho_opt class='e_met'></label>
+                <label>tCr_opt:<input type='text' size='1' id=e_tCr_opt name=e_tCr_opt class='e_met'></label>
+                <label>tNAA_opt:<input type='text' size='1'id=e_tNAA_opt name=e_tNAA_opt class='e_met'></label>
+            </div>
+        </form>
+    </div>
+
+    <div id='metWindow' title="Change Thresholds">
+        <form method="post">
+            <div style="float: left; width: 20%;text-align:right">
+                <label>AcAc:<input type='text' size='1'  id=AcAc name=AcAc class='met'></label>
+                <label>Acn:<input type='text' size='1'  id=Acn name=Acn class='met'></label>
+                <label>Ala:<input type='text' size='1'  id=Ala name=Ala class='met'></label>
+                <label>Asp:<input type='text' size='1'  id=Asp name=Asp class='met'></label>
+                <label>Cho:<input type='text' size='1'  id=Cho name=Cho class='met'></label>
+                <label>Cr:<input type='text' size='1'  id=Cr name=Cr class='met'></label>
+                <label>CrCH2:<input type='text' size='1'  id=CrCH2 name=CrCH2 class='met'></label>
+                <label>GABA:<input type='text' size='1'  id=GABA name=GABA class='met'></label>
+            </div>
+            <div style="float: left; width: 20%;text-align:right">
+                <label>GPC:<input type='text' size='1'  id=GPC name=GPC class='met'></label>
+                <label>Glc:<input type='text' size='1'  id=Glc name=Glc class='met'></label>
+                <label>Gln:<input type='text' size='1'  id=Gln name=Gln class='met'></label>
+                <label>Glu:<input type='text' size='1'  id=Glu name=Glu class='met'></label>
+                <label>Glx:<input type='text' size='1'  id=Glx name=Glx class='met'></label>
+                <label>Gua:<input type='text' size='1'  id=Gua name=Gua class='met'></label>
+                <label>Ins:<input type='text' size='1'  id=Ins name=Ins class='met'></label>
+                <label>Lac:<input type='text' size='1'  id=Lac name=Lac class='met'></label>
+            </div>
+            <div style="float: left; width: 20%;text-align:right">
+                <label>Lip09:<input type='text' size='1'  id=Lip09 name=Lip09 class='met'></label>
+                <label>Lip13a:<input type='text' size='1'  id=Lip13a name=Lip13a class='met'></label>
+                <label>Lip13b:<input type='text' size='1'  id=Lip13b name=Lip13b class='met'></label>
+                <label>Lip20:<input type='text' size='1'  id=Lip20 name=Lip20 class='met'></label>
+                <label>MM09:<input type='text' size='1'  id=MM09 name=MM09 class='met'></label>
+                <label>MM12:<input type='text' size='1'  id=MM12 name=MM12 class='met'></label>
+                <label>MM14:<input type='text' size='1'  id=MM14 name=MM14 class='met'></label>
+                <label>MM17:<input type='text' size='1'  id=MM17 name=MM17 class='met'></label>
+            </div>
+            <div style="float: left; width: 20%;text-align:right">
+                <label>MM20:<input type='text' size='1'  id=MM20 name=MM20 class='met'></label>
+                <label>NAA:<input type='text' size='1'  id=NAA name=NAA class='met'></label>
+                <label>NAAG:<input type='text' size='1'  id=NAAG name=NAAG class='met'></label>
+                <label>PCh:<input type='text' size='1'  id=PCh name=PCh class='met'></label>
+                <label>PCr:<input type='text' size='1'  id=PCr name=PCr class='met'></label>
+                <label>Scyllo:<input type='text' size='1'  id=Scyllo name=Scyllo class='met'></label>
+                <label>Tau:<input type='text' size='1'  id=Tau name=Tau class='met'></label>
+            </div>
+            <div style="float: left; width: 20%;text-align:right">
+                <label>tCho:<input type='text' size='1'  id=tCho name=tCho class='met'></label>
+                <label>tCr:<input type='text' size='1'  id=tCr name=tCr class='met'></label>
+                <label>tNAA:<input type='text' size='1'  id=tNAA name=tNAA class='met'></label>
+                <label>tCho_opt:<input type='text' size='1'  id=tCho_opt name=tCho_opt class='met'></label>
+                <label>tCr_opt:<input type='text' size='1'  id=tCr_opt name=tCr_opt class='met'></label>
+                <label>tNAA_opt:<input type='text' size='1' id=tNAA_opt name=tNAA_opt class='met'></label>
+            </div>
+
+        </form>
+    </div>
 </div>
-
-<div id='right'></div>
-
-<div id="allOptWindow" title="More Options"><label>Query Refinements</label><br>
-    <span title="Search for a tabPatient.">tabPatientID: <input type="text" size="2" name="DatabaseID">
-    </span><br>
-    <span title="Search for a ScanID.">ScanIDs: <input type="text" size="2" name="ScanID">
-    </span><br>
-    <span title="Only include the X closest patients above and below the 'AGE'.">Limit:
-        <input type="text" size="2" name="limit">
-    </span><br>
-    <span title="Lower limit of the X-axis range.">Min Age to Show:
-        <input type="text" size="2" name="lxlimit">
-    </span>
-    <span title="Upper limit of the X-axis range.">Max Age to Show:
-        <input type="text" size="2" name="uxlimit" value="6570">
-    </span><br>
-    <span title="Select data that lies outside of a certain standard deviation score.">SD score:
-        <input type="text" size="2" name="sdThreshold">
-    </span><br>
-    <label>Input Patient Data to Compare</label><br>
-    <span title="The age of the query. Used to set the center of the limit.">Age:
-        <div class ='optionBox'><input type="text" size="2" name="age" placeholder="Days"style="border:0px solid;"><img id='ageOpt' src="../img/new_window.png" style="padding-bottom:3px" />
-        </div>
-    </span>
-
-    <span title="Values of the query.">Values:
-        <input type="text" size="5" name="values">
-    </span><br>
-
-</div>
-
-<div id="keyOptWindow" title="Keyword Options">
-    <span title="Keywords of the query. e.g. '%glioma'">Keywords to exclude:
-        <input type="text" size="4" name="key_exclude">
-    </span>
-</div>
-
-<div id="helpWindow" title="QuickStart Guide">
-    <label>General Help and Submitting a Query</label>
-    <p>The minimum information for a query is a metabolite to display, which can be entered in the upper left hand corner. You may further specify refinements such as gender, field strength, location, and much more. To submit a query, click "submit query" in the upper left hand corner, or press ENTER at any time.</p>
-    <p>
-        You can find out more about a particular option by hovering over it for a few moments to display a tip. The symbol "<img src="../img/new_window.png" style="padding-bottom:3px" />" indicates that more settings related to that option are available - just click on the symbol to reveal them.
-    </p>
-    <label>New Features</label>
-    <p>• Change default standard deviation thresholds and echotimes by clicking "More options".<br>
-        • For metabolites, location and indication code, click on or type inside the box to search/reveal options; you may select multiple options
-    </p>
-    <label>Keyword Search</label>
-    <p>Keyword search is implemented using the MySQL 'LIKE' clause, whose basic usage can be summarized as follows:<br>
-        • Keyword search will search both the indication and diagnosis fields for all patients in the database and return a scan if either of these fields matches the keyword.<br>
-        • For most searches, use the '%' symbol on both ends of the word, i.e. '%glioma%'. '%' is a wildcard for an unlimited number of characters. For instance, if you want to match the word 'dog' in the phrase 'A dog runs', you would need to search '%dog%' since it appears in the middle of the sentence.<br>
-        • Use the '_' symbol as a wildcard for a single character. For instance, 'T_m' would match 'Tim','Tom','Tum' and any other letter in the middle.<br>
-        • You can enter multiple keywords separated by a comma; scans will be returned if they match any of the keywords.<br>
-        • By clicking on <img src="../img/new_window.png" style="padding-bottom:3px" /> in the keyword box, you can enter keywords to EXCLUDE scans from being returned as matches. Only scans that do not have any of these words will be returned.
-    </p>
-
-</div>
-
-
-<div id='ageWindow' title="Input Age">
-    <label>Years:<input type="text" size="4" id='years' name='years' onKeyUp="calculateAge()" value='0'></label><br>
-    <label>Months:<input type="text" size="4" id='months' name='months' onKeyUp="calculateAge()" value='0'></label><br>
-    <label>Weeks:<input type="text" size="4" id='weeks' name='weeks' onKeyUp="calculateAge()" value='0'></label><br>
-    <label>Days:<input type="text" size="4" id='days' name='days' onKeyUp="calculateAge()" value='0'></label>
-</div>
-
-<div id='echoWindow' title="Change Echotimes">
-    <form method="post">
-        <div style="float: left; width: 20%;text-align:right">
-            <label>AcAc:<input type='text' size='1' id=e_AcAc name=e_AcAc class='e_met'></label>
-            <label>Acn:<input type='text' size='1' id=e_Acn name=e_Acn class='e_met'></label>
-            <label>Ala:<input type='text' size='1' id=e_Ala name=e_Ala class='e_met'></label>
-            <label>Asp:<input type='text' size='1' id=e_Asp name=e_Asp class='e_met'></label>
-            <label>Cho:<input type='text' size='1' id=e_Cho name=e_Cho class='e_met'></label>
-            <label>Cr:<input type='text' size='1' id=e_Cr name=e_Cr class='e_met'></label>
-            <label>CrCH2:<input type='text' size='1' id=e_CrCH2 name=e_CrCH2 class='e_met'></label>
-            <label>GABA:<input type='text' size='1' id=e_GABA name=e_GABA class='e_met'></label>
-        </div>
-        <div style="float: left; width: 20%;text-align:right">
-            <label>GPC:<input type='text' size='1' id=e_GPC name=e_GPC class='e_met'></label>
-            <label>Glc:<input type='text' size='1' id=e_Glc name=e_Glc class='e_met'></label>
-            <label>Gln:<input type='text' size='1' id=e_Gln name=e_Gln class='e_met'></label>
-            <label>Glu:<input type='text' size='1' id=e_Glu name=e_Glu class='e_met'></label>
-            <label>Glx:<input type='text' size='1' id=e_Glx name=e_Glx class='e_met'></label>
-            <label>Gua:<input type='text' size='1' id=e_Gua name=e_Gua class='e_met'></label>
-            <label>Ins:<input type='text' size='1' id=e_Ins name=e_Ins class='e_met'></label>
-            <label>Lac:<input type='text' size='1' id=e_Lac name=e_Lac class='e_met'></label>
-        </div>
-        <div style="float: left; width: 20%;text-align:right">
-            <label>Lip09:<input type='text' size='1' id=e_Lip09 name=e_Lip09 class='e_met'></label>
-            <label>Lip13a:<input type='text' size='1' id=e_Lip13a name=e_Lip13a class='e_met'></label>
-            <label>Lip13b:<input type='text' size='1' id=e_Lip13b name=e_Lip13b class='e_met'></label>
-            <label>Lip20:<input type='text' size='1' id=e_Lip20 name=e_Lip20 class='e_met'></label>
-            <label>MM09:<input type='text' size='1' id=e_MM09 name=e_MM09 class='e_met'></label>
-            <label>MM12:<input type='text' size='1' id=e_MM12 name=e_MM12 class='e_met'></label>
-            <label>MM14:<input type='text' size='1' id=e_MM14 name=e_MM14 class='e_met'></label>
-            <label>MM17:<input type='text' size='1' id=e_MM17 name=e_MM17 class='e_met'></label>
-        </div>
-        <div style="float: left; width: 20%;text-align:right">
-            <label>MM20:<input type='text' size='1' id=e_MM20 name=e_MM20 class='e_met'></label>
-            <label>NAA:<input type='text' size='1' id=e_NAA name=e_NAA class='e_met'></label>
-            <label>NAAG:<input type='text' size='1' id=e_NAAG name=e_NAAG class='e_met'></label>
-            <label>PCh:<input type='text' size='1' id=e_PCh name=e_PCh class='e_met'></label>
-            <label>PCr:<input type='text' size='1' id=e_PCr name=e_PCr class='e_met'></label>
-            <label>Scyllo:<input type='text' size='1' id=e_Scyllo name=e_Scyllo class='e_met'></label>
-            <label>Tau:<input type='text' size='1' id=e_Tau name=e_Tau class='e_met'></label>
-        </div>
-        <div style="float: left; width: 20%;text-align:right">
-            <label>tCho:<input type='text' size='1' id=e_tCho name=e_tCho class='e_met'></label>
-            <label>tCr:<input type='text' size='1' id=e_tCr name=e_tCr class='e_met'></label>
-            <label>tNAA:<input type='text' size='1' id=e_tNAA name=e_tNAA class='e_met'></label>
-            <label>tCho_opt:<input type='text' size='1' id=e_tCho_opt name=e_tCho_opt class='e_met'></label>
-            <label>tCr_opt:<input type='text' size='1' id=e_tCr_opt name=e_tCr_opt class='e_met'></label>
-            <label>tNAA_opt:<input type='text' size='1'id=e_tNAA_opt name=e_tNAA_opt class='e_met'></label>
-        </div>
-    </form>
-</div>
-
-
-<div id='metWindow' title="Change Thresholds">
-    <form method="post">
-        <div style="float: left; width: 20%;text-align:right">
-            <label>AcAc:<input type='text' size='1'  id=AcAc name=AcAc class='met'></label>
-            <label>Acn:<input type='text' size='1'  id=Acn name=Acn class='met'></label>
-            <label>Ala:<input type='text' size='1'  id=Ala name=Ala class='met'></label>
-            <label>Asp:<input type='text' size='1'  id=Asp name=Asp class='met'></label>
-            <label>Cho:<input type='text' size='1'  id=Cho name=Cho class='met'></label>
-            <label>Cr:<input type='text' size='1'  id=Cr name=Cr class='met'></label>
-            <label>CrCH2:<input type='text' size='1'  id=CrCH2 name=CrCH2 class='met'></label>
-            <label>GABA:<input type='text' size='1'  id=GABA name=GABA class='met'></label>
-        </div>
-        <div style="float: left; width: 20%;text-align:right">
-            <label>GPC:<input type='text' size='1'  id=GPC name=GPC class='met'></label>
-            <label>Glc:<input type='text' size='1'  id=Glc name=Glc class='met'></label>
-            <label>Gln:<input type='text' size='1'  id=Gln name=Gln class='met'></label>
-            <label>Glu:<input type='text' size='1'  id=Glu name=Glu class='met'></label>
-            <label>Glx:<input type='text' size='1'  id=Glx name=Glx class='met'></label>
-            <label>Gua:<input type='text' size='1'  id=Gua name=Gua class='met'></label>
-            <label>Ins:<input type='text' size='1'  id=Ins name=Ins class='met'></label>
-            <label>Lac:<input type='text' size='1'  id=Lac name=Lac class='met'></label>
-        </div>
-        <div style="float: left; width: 20%;text-align:right">
-            <label>Lip09:<input type='text' size='1'  id=Lip09 name=Lip09 class='met'></label>
-            <label>Lip13a:<input type='text' size='1'  id=Lip13a name=Lip13a class='met'></label>
-            <label>Lip13b:<input type='text' size='1'  id=Lip13b name=Lip13b class='met'></label>
-            <label>Lip20:<input type='text' size='1'  id=Lip20 name=Lip20 class='met'></label>
-            <label>MM09:<input type='text' size='1'  id=MM09 name=MM09 class='met'></label>
-            <label>MM12:<input type='text' size='1'  id=MM12 name=MM12 class='met'></label>
-            <label>MM14:<input type='text' size='1'  id=MM14 name=MM14 class='met'></label>
-            <label>MM17:<input type='text' size='1'  id=MM17 name=MM17 class='met'></label>
-        </div>
-        <div style="float: left; width: 20%;text-align:right">
-            <label>MM20:<input type='text' size='1'  id=MM20 name=MM20 class='met'></label>
-            <label>NAA:<input type='text' size='1'  id=NAA name=NAA class='met'></label>
-            <label>NAAG:<input type='text' size='1'  id=NAAG name=NAAG class='met'></label>
-            <label>PCh:<input type='text' size='1'  id=PCh name=PCh class='met'></label>
-            <label>PCr:<input type='text' size='1'  id=PCr name=PCr class='met'></label>
-            <label>Scyllo:<input type='text' size='1'  id=Scyllo name=Scyllo class='met'></label>
-            <label>Tau:<input type='text' size='1'  id=Tau name=Tau class='met'></label>
-        </div>
-        <div style="float: left; width: 20%;text-align:right">
-            <label>tCho:<input type='text' size='1'  id=tCho name=tCho class='met'></label>
-            <label>tCr:<input type='text' size='1'  id=tCr name=tCr class='met'></label>
-            <label>tNAA:<input type='text' size='1'  id=tNAA name=tNAA class='met'></label>
-            <label>tCho_opt:<input type='text' size='1'  id=tCho_opt name=tCho_opt class='met'></label>
-            <label>tCr_opt:<input type='text' size='1'  id=tCr_opt name=tCr_opt class='met'></label>
-            <label>tNAA_opt:<input type='text' size='1' id=tNAA_opt name=tNAA_opt class='met'></label>
-        </div>
-
-    </form>
-</div>
-</div>
-</div>
-
 <script type="text/javascript">
+
+loadThresholds()
+loadEchotimes()
+google.charts.load('41', {packages: ['corechart']});
+//needed to let list be transfered
+jQuery.ajaxSettings.traditional=true
+
+$(document).ready(function () {
+
+    $(".chosen").data("placeholder","Select options...").chosen()
+
+    setSize()
+
+    $(window).bind('resize', function() {
+        scrollControl()
+        setSize()
+    })
+
+    $(window).scroll(function () {
+        scrollControl()
+    })
+
+});
+
+$(document).keyup(function(e) {
+    if (e.keyCode == 13) { $('.query').click(); }     // enter
+    if (e.keyCode == 27) { clearSelection() } //esc
+        if (e.keyCode == 46) { clearCanvas() } //del
+    });
+
 //HELP WINDOW
 $( "#helpWindow" ).dialog({ modal: true, minWidth: 900, height:400,
     buttons: {
@@ -470,13 +451,13 @@ $( "#ageOpt" ).click(function() {
 $( "#metWindow" ).dialog({ autoOpen: false, modal: true, minWidth: 700,
     buttons: {
 
-        "Load defaults": function() {loadThresholds()},
+        "Load defaults": function() {
+            loadThresholds()
+        },
         "Save and Close": function() {
             $( this ).dialog( "close" );
             sendThresholds();
         }
-
-        
     } 
 });
 
@@ -488,734 +469,9 @@ $( "#echoWindow" ).dialog({ autoOpen: false, modal: true, minWidth: 700,
         "Save and Close": function() {
             $( this ).dialog( "close" );
             sendEchotimes();
-        }
-
-        
+        }        
     } 
 });
-
-function sendThresholds(){
-
-    var thresholds={}
-
-    $('.met').each(function(){
-        console.log(this.name)
-        thresholds[this.name]=parseInt( this.value )
-    })
-
-
-    $.getJSON('/_alter_thresholds', {
-        thresholds:JSON.stringify(thresholds)
-    }, function(data) {
-    });
-}
-
-
-function loadThresholds(){
-
-    $.get("config/metabolite_thresholds.txt", function(response) {
-       var lines = response.split('\n');
-       for(line in lines){
-        var line_split = lines[line].split(' ');
-        $("input[name='"+line_split[0]+"']").val(line_split[1] )
-    }
-});
-}
-
-function sendEchotimes(){
-
-    var echotimes={}
-
-    $('.e_met').each(function(){
-        console.log(this.name)
-        echotimes[this.name]= this.value
-    })
-
-
-    $.getJSON('/_alter_echotimes', {
-        echotimes:JSON.stringify(echotimes)
-    }, function(data) {
-    });
-}
-
-function loadEchotimes(){
-
-    $.get("config/metabolite_echotimes.txt", function(response) {
-       var lines = response.split('\n');
-       for(line in lines){
-        var line_split = lines[line].split(' ');
-        $("input[name='e_"+line_split[0]+"']").val(line_split[1] )
-    }
-});
-}
-
-loadThresholds()
-loadEchotimes()
-google.load("visualization", "1", {packages:["corechart"]});
-// google.setOnLoadCallback(drawChart);
-//needed to let list be transfered
-jQuery.ajaxSettings.traditional=true
-
-function calculateAge(){
-    var years = $('#years').val()
-    var months = $('#months').val()
-    var weeks = $('#weeks').val()
-    var days = $('#days').val()
-
-    var total = parseInt(days) + parseInt(weeks)*7 + parseInt(months)*30 + parseInt(years)*365
-
-    $("input[name='age']").val(total)
-
-}
-
-
-function inputValid(){
-    var num_list = /^[0-9.]+(,[0-9.]+)*$/i;
-    var opt_num_list = /^([0-9]+(,[0-9]+)*)*$/i
-
-
-
-    /*if ($('input[name="values"]').val().search(num_list) < 0){
-        alert('You entered\n\n' +$('input[name="values"]').val()+ '\n\nPlease enter metabolite values separated by dashes.')
-        return false
-    }*/
-
-    if ($('input[name="DatabaseID"]').val().search(opt_num_list) < 0){
-        alert('You entered\n\n' +$('input[name="DatabaseID"]').val()+ '\n\nPlease enter ID values separated by dashes.')
-        return false
-    }
-
-    if ($('input[name="limit"]').val().search(/^[0-9]*$/) < 0){
-        alert('Limit must be a number.')
-        return false
-    }
-
-    if ($('input[name="age"]').val().search(/^[0-9]*$/) < 0){
-        alert('Age must be a number.')
-        return false
-    }
-
-    return true
-}
-
-function exportToCsv(){
-    for (result in window.my_config.results){
-        //data = new google.visualization.DataTable(window.my_config.results[result])
-        data = window.my_config.results[result]
-
-        csv = google.visualization.dataTableToCsv(data)
-
-        csv_cols = []
-        // Iterate columns
-        for (var i=0; i<data.getNumberOfColumns(); i++) {
-            // Replace any commas in column labels
-            csv_cols.push(data.getColumnLabel(i).replace(/,/g,""));
-        }
-
-        // Create column row of CSV
-        csv = csv_cols.join(",")+"\r\n" + csv;
-
-        downloadCsv(csv, result)
-    }
-}
-
-function exportChartsAsPng(){
-    for (chart in window.my_config.charts){
-        downloadPNG(window.my_config.charts[chart].getImageURI(), chart)
-    }
-}
-
-function downloadPNG (png_out, name) {
-
-    var data = atob( png_out.substring( "data:image/png;base64,".length ) ),
-    asArray = new Uint8Array(data.length);
-
-    for( var i = 0, len = data.length; i < len; ++i ) {
-        asArray[i] = data.charCodeAt(i);    
-    }
-
-    var blob = new Blob( [ asArray.buffer ], {type: "image/png"} );
-
-    var url  = window.URL || window.webkitURL;
-    var link = document.createElementNS("http://www.w3.org/1999/xhtml", "a");
-    link.href = url.createObjectURL(blob);
-    link.download = name + ".png"; 
-
-    var event = document.createEvent("MouseEvents");
-    event.initEvent("click", true, false);
-    link.dispatchEvent(event); 
-}
-
-function clearCanvas() {
-
-    remove_sidebar()
-    $(".myCharts").remove()
-
-    document.getElementById('merge').disabled = false
-
-    window.my_config = null
-
-    return false;
-}
-
-$(function() {
-    $('a#query').bind('click', function() {
-
-        $.getJSON('/_get_query', {
-
-            keywords: $('input[name="keyword"]').val(),
-            key_exclude: $('input[name="key_exclude"]').val(),
-            age: $('input[name="age"]').val(),
-            limit: $('input[name="limit"]').val(),
-            uxlimit: $('input[name="uxlimit"]').val(),
-            lxlimit: $('input[name="lxlimit"]').val(),
-            location: $('#location').val(),
-            merge: document.getElementById('merge').checked,
-            legend: document.getElementById('legend').checked,
-            metabolites: $('#metabolites').val(),
-            classification_code: $('#code').val(),
-
-            values: $('input[name="values"]').val(),
-            gender: $("#gender option:selected").val(),
-            field: $("#field option:selected").val(),
-            ID: $('input[name="DatabaseID"]').val(),
-            Scan_ID: $('input[name="ScanID"]').val(),
-
-            windowed_SD_threshold: $('input[name="sdThreshold"]').val(),
-            overlay: (document.getElementById('overlay').checked == false || (document.getElementById('overlay').checked == true && window.my_config == null))? 0:(window.my_config.results[window.my_config.names[0]].getNumberOfColumns())
-        }, function(data) {
-
-            if (document.getElementById('overlay').checked == false || (document.getElementById('overlay').checked == true && window.my_config == null)){
-
-                window.my_config = {metadata_array: data.metadata_array,
-                    sd_array: data.sd_array,
-                    results: data.result,
-                    names: data.names
-                }
-
-                render_html(data.names)
-                for (result in data.result) {
-                    window.my_config.results[result] = new google.visualization.DataTable(data.result[result])
-                }
-                drawChart(window.my_config.results);
-            } else {
-
-                if (window.my_config.sd_array != null){
-                    window.my_config['sd_array'] = $.extend({},window.my_config['sd_array'],data.sd_array)
-
-                    window.my_config['metadata_array'] = $.extend({}, window.my_config['metadata_array'], data.metadata_array)
-                    console.log(data.metadata_array)
-                    console.log(window.my_config.metadata_array)
-                }
-
-                redraw_charts(data.result)
-
-            }
-
-
-            remove_sidebar()
-
-        });
-return false;
-});
-});
-
-
-$(document).ready(function () {
-
-    $(".chosen").data("placeholder","Select options...").chosen()
-
-    setSize()
-
-    $(window).bind('resize', function() {
-        scrollControl()
-        setSize()
-    })
-
-    $(window).scroll(function () {
-        scrollControl()
-    })
-
-
-});
-
-function remove_sidebar(){
-    $('#sidebar').remove()
-    $('#sidebar_top').remove()
-}
-
-function downloadCsv(csv_out, name) {
-    var blob = new Blob([csv_out], {type: 'text/csv;charset=utf-8'});
-    var url  = window.URL || window.webkitURL;
-    var link = document.createElementNS("http://www.w3.org/1999/xhtml", "a");
-    link.href = url.createObjectURL(blob);
-    link.download = name + ".csv"; 
-
-    var event = document.createEvent("MouseEvents");
-    event.initEvent("click", true, false);
-    link.dispatchEvent(event); 
-}
-
-
-function setSize(){
-    var width = ($(window).width() / 2 )
-    var height = $(window).height()
-    $('#left').css({
-        'width':width+20,
-
-    })
-    $('#right').css({
-        'width':width-20,
-    })
-}
-
-function scrollControl(){
-
-    var scroll = $(this).scrollTop()? $(this).scrollTop():0
-    var height = $('#sidebar').height()
-    var max_height = $(window).height()
-    var width = $(window).width()/2
-    var top_height = document.getElementById('top_header').offsetHeight
-    var top_height2 = 50
-
-
-    if (scroll < $('#charts').offset().top) {
-
-        $('#sidebar_top').css({
-            'position': 'static',
-            'top': '0',
-            'max-height': max_height - (top_height-scroll),
-        })
-
-        $('#sidebar').css({
-            'position': 'static',
-            'top': '0',
-            'max-height': max_height - (top_height+top_height2-scroll),
-        });
-
-    } else {
-
-        $('#sidebar_top').css({'position':'fixed','left': width + 25})
-
-
-        $('#sidebar').css({
-            'position': 'fixed',
-            'top': '50px',
-            'left': width + 25,
-
-        })
-    }
-}
-
-function prepareList() {
-    for (patient in window.my_config.current_selection) {
-        $('#'+patient).find('li:has(ul)').unbind('click').click(function(event) {
-            if(this == event.target) {
-                $(this).toggleClass('expanded');
-                $(this).children('ul').toggle('medium');
-            }
-            return false;
-        }).addClass('collapsed').removeClass('expanded').children('ul').hide();
-
-//Hack to add links inside the cv
-$('#' + patient + 'a').unbind('click').click(function() {
-    window.open($(this).attr('href'));
-    return false;
-});
-
-}
-};
-
-$(document).keyup(function(e) {
-    if (e.keyCode == 13) { $('.query').click(); }     // enter
-    if (e.keyCode == 27) { clearSelection() } //esc
-        if (e.keyCode == 46) { clearCanvas() } //del
-    });
-
-function clearSelection(){
-    remove_sidebar()
-    for (c in window.my_config.charts){
-        window.my_config.charts[c].setSelection()
-    }
-}
-
-function render_html(names) {
-    if (document.getElementById('overlay').checked != true){
-        $(".myCharts").remove()
-    } else if ('charts' in window.my_config) {console.log("True")}
-
-    for (name in names) {
-        $("#charts").after("<div id = " + names[name] + " style='max-width: 700px; width: 100%; height: 400px; float: right;' class = 'myCharts'>")
-    }
-}
-
-function drawChart(allChartData) {
-
-    charts = {}
-    window.my_config.columns = {}
-    window.my_config.series = {}
-
-    for (c in allChartData){
-        var columns = allChartData[c].getNumberOfColumns()
-        window.my_config.columns[c] = []
-        window.my_config.series[c] = {}
-
-        for (var i = 0; i < columns; i++) {
-            window.my_config.columns[c].push(i);
-            if (i < (columns-2)/2) {
-                window.my_config.series[c][i] = {}
-            }
-        }
-
-        window.my_config['options'] = {
-            title: 'Age vs. ' + c,
-            hAxis: {title: 'Age',            
-            logScale: document.getElementById('scale').checked? true:false},
-            vAxis: {title: "mM per Kg wet wgt."},
-            legend: { position: 'top', maxLines : 5},
-            aggregationTarget: 'series',
-            selectionMode: 'multiple',
-            pointSize: 4,
-            explorer: {},
-            trendlines: document.getElementById('trendline').checked? { 0: {pointSize: 0, type: 'linear'} }: null,
-            chartArea: columns > 2? {width: '70%', height: '70%'}:{width: '80%', height: '70%'},
-            tooltip: {isHtml: true, trigger: 'none'},
-            series:window.my_config.series[c]
-        }
-
-        charts[c] = new google.visualization.ScatterChart(document.getElementById(c));
-        charts[c].draw(allChartData[c], window.my_config['options']);
-    }
-
-    window.my_config['charts'] = charts;
-
-    for (c in charts) {
-        google.visualization.events.addListener(charts[c], 'select', function() {
-            showHideSeries()
-            update_sidebar()
-        } )
-
-//google.visualization.events.addListener(charts[c], 'onmouseover', sidebar_mouseover);
-//google.visualization.events.addListener(charts[c], 'onmouseout', sidebar_mouseout)
-    }
-};
-
-function sidebar_mouseover(e) {
-    console.log(e)
-    for(chart in window.my_config.charts) {
-        var columns = window.my_config.columns[chart]
-
-        var sel = window.my_config.charts[chart].getSelection();
-        // if selection length is 0, we deselected an element
-        if (sel.length > 0) {
-            // if row is undefined, we clicked on the legend
-            if (sel[0].row != null) {
-                var col = sel[0].column;
-                if (columns[col] == col) {
-                    // hide the data series
-                    columns[col] = {
-                        label: window.my_config.results[chart].getColumnLabel(col),
-                        type: window.my_config.results[chart].getColumnType(col),
-                        calc: function () {
-                            return null;
-                        }
-                    };
-                    
-                    // grey out the legend entry
-                    window.my_config.series[chart][(col - 2)/2].color = '#CCCCCC';
-                }
-                else {
-                    // show the data series
-                    columns[col] = col;
-                    window.my_config.series[chart][(col - 2)/2].color = null;
-                }
-                var view = new google.visualization.DataView(window.my_config.results[chart]);
-                view.setColumns(columns);
-                window.my_config.options.title = "Age vs. " + chart
-                window.my_config.charts[chart].draw(view, window.my_config.options);
-            }
-        }
-    }
-}
-
-function redraw_charts(results){
-    var merged_results = null
-    var results_new = window.my_config.results
-    for (d in results_new){
-        var label = ''
-        if (d in results){
-            var n = new google.visualization.DataTable(results[d])
-            var o = results_new[d]
-
-            var old_cols = []
-
-            for (i = 2; i < results_new[d].getNumberOfColumns(); i++) {
-                old_cols.push(i)
-            }
-            merged_results = google.visualization.data.join(o, n, 'full',[[0,0],[1,1]],old_cols,[2,3]);
-
-            results_new[d] = merged_results
-            window.my_config.results[d] = merged_results
-
-            //label = results[d].cols[results[d].cols.length -1].label
-        }
-        //merged_results[d]['cols'] = merged_results[d]['cols'].concat({"id": "", "label": label, "type": "number"})
-    }
-    console.log(window.my_config.results)
-    drawChart(results_new)
-}
-
-function compare_unique_dict(a,b) {
-    var a_key = 0
-    var b_key = 0
-    for (c in a)
-        a_key = Math.round(a[c] * 10)/10
-    for (d in b)
-        b_key = Math.round(b[d] * 10)/10
-    if (a_key < b_key)
-        return -1;
-    if (a_key > b_key)
-        return 1;
-    return 0;
-}
-
-
-function add_SD(r){
-    var complete_list = ""
-
-    var positive = []
-    var negative = []
-    var zero = []
-
-    var categories = [positive,negative,zero]
-    var filtered = $('input[name="sdThreshold"]').val()? parseFloat($('input[name="sdThreshold"]').val()):0
-
-    //sort and order
-    var ordered_sd = window.my_config.sd_array[r].sort(compare_unique_dict)
-
-    for (m in ordered_sd){
-        if (compare_unique_dict(ordered_sd[m],{'a': -filtered}) == -1){
-            negative.push(ordered_sd[m])
-        }
-        else if (compare_unique_dict(ordered_sd[m],{'a':filtered}) == 1){
-            positive.unshift(ordered_sd[m])
-        }
-        else {            
-            zero.push(ordered_sd[m])
-        }						
-    }
-    console.log(categories)
-    var ent_list = "<div id='sdDisplay' class='listContainer' style='overflow:hidden'>"
-
-    //render the list
-    for (c in categories){
-        var arrow = ""
-        var div = ""
-        var elem = ''
-        if (categories[c].length > 0){
-            if (c == 0){
-                div += "<div id='raised' style='float:left;width:30%'>"
-                arrow += "<img src='/img/up.png' alt='Raised' style='width:15px;height:15px'>"
-            }       
-            else if (c == 1) {
-                div += "<div id='lowered' style='float:left;width:30%'>"
-                arrow += "<img src='/img/down.png' alt='Lowered' style='width:15px;height:15px'>"
-            } else {
-                div = "<div id='normal' style='float:left;width:30%'>"
-            }
-
-            for (i = 0; i < categories[c].length; i++){
-                for (name in categories[c][i])
-                    elem += name +": " + arrow + Math.round(categories[c][i][name] * 10)/10 + " SD <br>"
-            }
-            ent_list += div + elem + "</div>"
-
-        }
-    }
-    return ent_list + "</div>"
-}
-
-function showHideSeries () {
-
-    for(chart in window.my_config.charts) {
-        var columns = window.my_config.columns[chart]
-
-        var sel = window.my_config.charts[chart].getSelection();
-        // if selection length is 0, we deselected an element
-        if (sel.length > 0) {
-            // if row is undefined, we clicked on the legend
-            if (sel[0].row === null) {
-                var col = sel[0].column;
-                if (columns[col] == col) {
-                    // hide the data series
-                    columns[col] = {
-                        label: window.my_config.results[chart].getColumnLabel(col),
-                        type: window.my_config.results[chart].getColumnType(col),
-                        calc: function () {
-                            return null;
-                        }
-                    };
-                    
-                    // grey out the legend entry
-                    window.my_config.series[chart][(col - 2)/2].color = '#CCCCCC';
-                }
-                else {
-                    // show the data series
-                    columns[col] = col;
-                    window.my_config.series[chart][(col - 2)/2].color = null;
-                }
-                var view = new google.visualization.DataView(window.my_config.results[chart]);
-                view.setColumns(columns);
-                window.my_config.options.title = "Age vs. " + chart
-                window.my_config.charts[chart].draw(view, window.my_config.options);
-            }
-        }
-    }
-}
-
-function update_right_sidebar(){
-
-    $("#sidebar_top").append("<img src='../img/left.png' style='width:50px;height:50px;float:none' class='arrow' onclick='document.getElementById(\"sidebar\").scrollLeft = 0'></img><img src='../img/right.png' style='width:50px;height:50px;float:none' class='arrow' onclick='document.getElementById(\"sidebar\").scrollLeft = document.getElementById(\"sidebar\").scrollWidth'></img>")
-
-    patients = window.my_config.current_selection
-    sd_array = window.my_config.sd_array
-
-    shared_mets = {}
-
-    for (r in patients){
-        for (i in sd_array[r]){
-            for (met in sd_array[r][i]){
-
-                shared = true
-
-                for (s in patients){
-
-                    this_one = false
-
-                    for (j in sd_array[s]){
-                        for (mm in sd_array[s][j]){
-                            if (met == mm) 
-                                this_one = true
-                        }
-                    }
-
-                    if(this_one==false){
-                        shared = false
-                    }
-                }
-                if (shared == true && !(met in shared_mets)){
-                    shared_mets[met]=0
-                }
-            }
-        }
-    }
-    //get standard deviation values
-    for (r in patients){
-        for (i in sd_array[r]){
-            for (met in sd_array[r][i]){
-                if (met in shared_mets){
-                    shared_mets[met] += sd_array[r][i][met] / Object.keys(patients).length
-                }
-            }
-        }
-    }
-
-
-    var sd_array = []
-    for (met in shared_mets){
-            var qq = {}
-
-        console.log(met)
-        qq[met]=shared_mets[met]
-        sd_array.push(qq)
-    }
-
-    console.log(shared_mets)
-    window.my_config.sd_array['group']=sd_array
-
-    /*
-    for (met in shared_mets){
-        console.log(met)
-        sel = window.my_config.charts[met].getSelection()
-        tot = 0
-        for (val in sel){
-            tot += window.my_config.charts[met].getValue(sel[val].row,sel[val].column)
-        }
-    }*/
-
-    var i = /*"<div class='title'>Mean of Selected Patients:</div><div class='content'>tCr: 15.3</div><div class='content'>Cr: 9.8</div>*/"<div class='title'>Pooled Standard Deviation:</div><div class='content'>"+add_SD('group')+"</div>"
-
-    $("#sidebar_right").append("<div id='"+r+"' class='group'>"+i+"</div>")
-
-
-
-    if (window.my_config.sd_array != null)
-        prepareList()
-    //needed in case scroll bar results from overflow of
-    setSize()
-}
-
-function getScanID(c,e){
-    for (q = 3; q < c.getNumberOfColumns(); q+= 2){ if (c.getValue(e.row, q) != null)
-        return c.getValue(e.row, q)
-    }
-}
-
-function update_sidebar(){
-
-    remove_sidebar()
-
-    $('#right').append("<div id='sidebar_top' style='height:50px;width:100%''></div><div id='sidebar'><div id ='sidebar_left' style='float:left;width:528px;'></div><div id ='sidebar_right' style='float:none;margin-left:560px;width:528px'></div></div>")
-
-    var patients = {}
-
-    for (c in window.my_config.charts){
-        selection = window.my_config.charts[c].getSelection()
-        data = window.my_config.results[c]
-
-
-        for (i = 0; i < selection.length; i++){
-            patient = getScanID(data,selection[i])
-            console.log(patient)
-            if (patient in patients || patients == null){} else{
-                patients[patient] = null
-            }
-        }
-    }
-
-    window.my_config['current_selection'] = patients
-
-    for (r in patients){
-
-        var i = ""
-
-        for (m in window.my_config.metadata_array[r]) {
-            for (n in window.my_config.metadata_array[r][m]) {
-                if (window.my_config.metadata_array[r][m][n]) {
-                    i+= "<div class='title'>"
-                    +n+": </div><div class='content'>" 
-                    + window.my_config.metadata_array[r][m][n] + "</div>"
-                }
-
-
-            }
-        }
-        if (window.my_config.sd_array[r] != null){
-            i+= "<div class='title'>SD score for available metabolites:</div><div class='content'>" + add_SD(r) +"</div>"
-        }
-
-        $("#sidebar_left").append("<div id='"+r+"' class='patient'>"+i+"</div>")
-
-    }
-
-    if (window.my_config.sd_array != null)
-        prepareList()
-    setSize()
-
-    if (Object.keys(patients).length > 1){
-        update_right_sidebar()}
-
-    }
 
 </script>
 </body>

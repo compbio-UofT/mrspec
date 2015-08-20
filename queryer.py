@@ -1,6 +1,9 @@
 from connection import *
 import sys
 
+class InvalidConfigFileError(Exception):
+    pass
+
 class MrspecDatabaseQueryer(object):
 
     def __init__(self, silent=False,database='mrspec'):

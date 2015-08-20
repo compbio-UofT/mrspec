@@ -2,9 +2,6 @@ import mysql.connector as m
 import csv, os, sys, shutil, inspect
 import __main__ as main
 
-class InvalidConfigFileError(Exception):
-    pass
-
 def is_run_from_commandline():
     '''Return true if the script calling this method was run from command line, false otherwise (i.e. in an IDE).'''
     if inspect.getouterframes(inspect.currentframe())[1][1] == main.__file__:
@@ -69,9 +66,10 @@ class DatabaseConnection(object):
             #get credentials from file or user input
             try:
                 with open("credentials.txt", 'r') as c:
-                    user = c.next()
-                    password = c.next()
-            except IOError as e:
+                    #if len(c) >= 2:
+                    user = next(c)
+                    password = next(c)
+            except IOError or StopIteration as e:
                 #stdin.readline used here for compatibility with Python 2.7 and 3.x
                 print('User:')
                 user = sys.stdin.readline()

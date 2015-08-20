@@ -138,7 +138,7 @@ class MrspecDatabaseEditor(MrspecDatabaseQueryer):
                     added = ' + '.join(["sel."+ mm +"_opt" for mm in met_to_calculate[met]])
                     greatest = ','.join(["sel.`"+ mm + "_opt_%SD`" for mm in met_to_calculate[met]])
                     
-                    not_zero = ''.join(['AND '," > 0.000001 AND ".join([ 'sel.' + mm + '_opt' for mm in met_to_calculate[met]]),' > 0.000001'])
+                    not_zero = ''.join(['AND '," > 0 AND ".join([ 'sel.' + mm + '_opt' for mm in met_to_calculate[met]]),' > 0'])
     
                     subquery1 = "SELECT AgeAtScan,Scan_ID,{},".format(self.unique_desc) + ",".join(["SUBSTRING_INDEX(GROUP_CONCAT(CASE WHEN `{0}`>0 AND {3}.ScanTEParameters {2} THEN {0} ELSE NULL END),',',1) as `{0}_opt`".format(mm, '100', self.met_echo[mm],table) for mm in met_to_calculate[met]]) + ' FROM {} GROUP BY AgeAtScan,{}'.format(table,self.unique_desc)
                     

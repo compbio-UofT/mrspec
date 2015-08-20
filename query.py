@@ -46,7 +46,7 @@ def format_query_with_pseries_and_names(query, columns, values, legend, overlay)
         cols += [{'id': "Age", 'label': "Age", 'type': 'number'}] + \
                 [{'id': "DatabaseID", 'label':'DatabaseID', "role": "tooltip", "type": "string", "p" : { "role" : "tooltip" } }] + \
                 [{'id': column, 'label': format_legend(column,legend), 'type': 'number'}] + \
-                [{'id': "Scan_ID",'label':'Scan_ID', "role": "annotation", "type": "string", "p" : { "role" : "annotation" } }]
+                [{'id': "Scan_ID",'label':'Scan_ID', "role": "tooltip", "type": "string", "p" : { "role" : "tooltip" } }]
                 
         for row in query:
             ##print(i,row[i+1])
@@ -72,25 +72,36 @@ def format_query_with_pseries(query, columns, values, legend):
     ##print rows, columns, values
 
     #print values
-
-    q = {}
-    cols = []
+    cols = [{'id': "Age", 'label': "Age", 'type': 'number'}] + \
+        [{'id': "DatabaseID", 'label':'DatabaseID', "role": "tooltip", "type": "string", "p" : { "role" : "tooltip" } }]
     rows = []
+    q={}
 
-    columns.append("Patient Data")
+    for i,column in enumerate(columns[1:]):
+        ##print(i, column)
 
-    for column in columns:
-        cols.append({'id': column, 'label': format_legend(column, legend), 'type': 'number'})
+        #removed from cols
+        ##[{'id': "", 'label': "", 'type': 'number'} for aa in range(0, overlay)]
+
+        cols += [{'id': column, 'label': format_legend(column,legend), 'type': 'number'}] + \
+            [{'id': "Scan_ID",'label':'Scan_ID', "role": "tooltip", "type": "string", "p" : { "role" : "tooltip" } }]
 
     for row in query:
-        vals = [{'v': str(value)} for value in row[:len(columns)-1]]
+        ##print(i,row[i+1])
+        vals = [{'v': str(row[0])},{'v':str(row[-len(c.metadata)+1])}] 
+        for i in range(1,len(columns)):
+            vals+=[{'v': float(row[i]) if row[i] is not None else None},{'v': str(row[-len(c.metadata)])}]
         rows.append({'c':vals})
 
-    for val in values[1:]:
-        rows.append({'c':[{'v': values[0]}] + [{'v': None} for value in row[1:len(columns)-1]]+[{'v':str(val)}]})
+    ##add patient data as its own data series
+    #if overlay == 0:
+        #rows.append({'c':[{'v': values[0]},{'v': None},{'v':float(values[i+1])} ]})
+        #cols.append({'id': "Patient Data", 'label': "Patient Data", 'type': 'number'})
 
     q['rows'] = rows
     q['cols'] = cols
+
+    #qq[column] = q
 
     return q
 
@@ -366,7 +377,7 @@ def get_query():
             legend.append(u"\u00B1" + windowed_SD_threshold + " SD")
 
     if merge == 'true':
-        d = {metabolites:format_query_with_pseries(q,
+        d = {','.join(metabolites):format_query_with_pseries(q,
                                                    ['Age']+metabolites,
                                                    (str(age) + "," + values).split(","),
                                                    legend)}
@@ -378,7 +389,7 @@ def get_query():
                                                 overlay)
 
     return jsonify(result=d,
-                   names = ','.join(metabolites) if merge == "true" else metabolites,
+                   names = [','.join(metabolites)] if merge == "true" else metabolites,
                    metadata_array=format_metadata2(q,overlay),
                    sd_array = sd_array)
 

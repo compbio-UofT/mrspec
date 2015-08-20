@@ -4,6 +4,37 @@ import sys
 
 class MrpecDatabaseUpdator(MrspecDatabaseEditor):
     
+    def insert_new_scans(self, scan_file):
+        #assume scans are unique
+        name = 'mrspec_updates'
+        name_merged = name + '_merged'
+        standard_name='standard_' + name_merged
+        
+        self.drop_table_if_exists(name)
+        self.drop_table_if_exists(name_merged)
+        self.drop_table_if_exists(standard_name)
+                                  
+        self.import_csv(scan_file, name, "text")
+        
+        self.check_for_table_before_executing(name_merged, "CREATE TABLE IF NOT EXISTS {} SELECT * FROM {} LEFT JOIN OUTCOMES_GROUPED ON OUTCOMES_GROUPED.`MRN (column to be removed once study is in analysis phase)` = updates.HSC_Number AND str_to_date(OUTCOMES_GROUPED.Date, '%d/%m/%Y') = str_to_date(updates.ProcedureDate, '%d/%m/%Y')".format(name_merged, name))
+        self.con.commit()
+        
+        self.cur.execute('alter table {} add column AgeAtScan bigint(21)'.format(name_merged)) if not self.column_exists(name_merged,'AgeAtScan') else None
+        self.cur.execute("UPDATE {} as T SET T.AgeAtScan = (TO_DAYS(STR_TO_DATE(T.ProcedureDate,'%d/%m/%Y')) - TO_DAYS(STR_TO_DATE(T.PatientBirthDay,'%d/%m/%Y'))) where T.Scan_ID = Scan_ID".format(name_merged))
+        self.con.commit()
+        self.create_standardized_table(standard_name, name_merged, self.update_table_schema, None, None)
+        
+        self.insert_additional_metabolites(standard_name, self.met_to_calculate)
+        self.insert_aggregate_metabolites_optimal(standard_name, self.met_to_calculate)
+    
+        ##rename Cr and Cho for 1.5T scans to tCr and tCho
+        self.rename_lower_field_metabolites(standard_name)        
+        
+        self.create_null_sd_columns(standard_name)
+        
+        self.cur.execute('INSERT INTO {} SELECT * FROM {}'.format(self.table,standard_name))
+        
+    
     def add_column(self, dest_table, source_table, column, join_on,overwrite=False):
         name = column[2] if len(column)==3 else column[0]
         join = join_on[2] if len(join_on)==3 else join_on[0]
@@ -22,9 +53,7 @@ class MrpecDatabaseUpdator(MrspecDatabaseEditor):
         
         name='outcomes_update'
         
-        if self.table_exists(name):
-            self.cur.execute("DROP TABLE {}".format(name))
-            if not self.silent: print("Table '{}' dropped from database.".format(name))
+        self.drop_table_if_exists(name)
         self.import_csv(update_file, name, "varchar(500)")
 
         columns_for_import = ",".join(["CAST({0} AS {1}) AS {2}".format(c[0], c[1], c[0] if len(c) < 3 else c[2]) for c in self.outcomes_schema])
@@ -33,6 +62,11 @@ class MrpecDatabaseUpdator(MrspecDatabaseEditor):
 
         self.cur.execute("UPDATE {} as t,(SELECT {},DOB,`MRN (column to be removed once study is in analysis phase)` as ID,str_to_date(Date, '%d/%m/%Y') as cast_date FROM {} GROUP BY ID,cast_date ORDER BY cast_date) as q SET {} WHERE t.ID=q.ID AND t.AgeAtScan=(TO_DAYS(q.cast_date)-TO_DAYS(str_to_date(q.DOB, '%d/%m/%Y')))".format(self.table,columns_for_import,name,set_statement))
         self.con.commit()
+
+    def drop_table_if_exists(self, name):
+        if self.table_exists(name):
+            self.cur.execute("DROP TABLE {}".format(name))
+            if not self.silent: print("Table '{}' dropped from database.".format(name))
         
     def update_database_ID(self, table):
         if not d.column_exists(table, 'DatabaseID'):
@@ -40,15 +74,15 @@ class MrpecDatabaseUpdator(MrspecDatabaseEditor):
         for result in cur.execute("set @i=0;update {0} as t inner join (select ID,Scan_ID,@i:=@i+1 as num from (select ID,Scan_ID from {0} group by ID order by Scan_ID) t2) t1 on t.ID=t1.ID set DatabaseID=num;".format(table),multi=True): pass
         con.commit()
         
-    def rename_lower_field_metabolites(self):
-        if self.execute_and_return_query("select count(Cr) from standard where ScanBZero=1.5")[1][0][0]:
-            cur.execute("UPDATE standard SET tCr=Cr,tCho=Cho,`tCr_%SD`=`Cr_%SD`,`tCho_%SD`=`Cho_%SD` WHERE ScanBZero=1.5 AND standard.Scan_ID=Scan_ID")
-            cur.execute("UPDATE standard SET tCr_opt=Cr WHERE (`tCr_%SD` BETWEEN 0.000001 AND {}) AND ScanBZero=1.5 AND standard.Scan_ID=Scan_ID".format(d.met_threshold['tCr_opt']))
-            cur.execute("UPDATE standard SET tCho_opt=Cho WHERE (`tCho_%SD` BETWEEN 0.000001 AND {}) AND ScanBZero=1.5 AND standard.Scan_ID=Scan_ID".format(d.met_threshold['tCho_opt']))
+    def rename_lower_field_metabolites(self,table):
+        if self.execute_and_return_query("select count(Cr) from {} where ScanBZero=1.5".format(table))[1][0][0]:
+            cur.execute("UPDATE {0} SET tCr=Cr,tCho=Cho,`tCr_%SD`=`Cr_%SD`,`tCho_%SD`=`Cho_%SD` WHERE ScanBZero=1.5 AND {0}.Scan_ID=Scan_ID".format(table))
+            cur.execute("UPDATE {0} SET tCr_opt=Cr WHERE (`tCr_%SD` BETWEEN 0.000001 AND {1}) AND ScanBZero=1.5 AND {0}.Scan_ID=Scan_ID".format(table,self.met_threshold['tCr_opt']))
+            cur.execute("UPDATE {0} SET tCho_opt=Cho WHERE (`tCho_%SD` BETWEEN 0.000001 AND {1}) AND ScanBZero=1.5 AND {0}.Scan_ID=Scan_ID".format(table,self.met_threshold['tCho_opt']))
             con.commit()
-            cur.execute("UPDATE standard SET Cr=NULL,Cho=NULL,`Cr_%SD`=NULL,`Cho_%SD`=NULL WHERE ScanBZero=1.5")
+            cur.execute("UPDATE {0} SET Cr=NULL,Cho=NULL,`Cr_%SD`=NULL,`Cho_%SD`=NULL WHERE ScanBZero=1.5".format(table))
             con.commit()
-            if not self.silent: print("\nRenamed Cr and Cho from 1.5T to tCr and tCho (and tCr_opt,tCho_opt)")            
+            if not self.silent: print("\nRenamed Cr and Cho from 1.5T to tCr and tCho (and tCr_opt,tCho_opt) in '{}'.".format(table))            
 
 if __name__== "__main__":
     with MrpecDatabaseUpdator() as (d,con,cur):
@@ -60,7 +94,7 @@ if __name__== "__main__":
         #d.insert_aggregate_metabolites_optimal(update, d.met_to_calculate)
         
         ##rename Cr and Cho for 1.5T scans to tCr and tCho
-        d.rename_lower_field_metabolites()        
+        d.rename_lower_field_metabolites(d.table)        
         
         d.update_outcomes('outcomes3.csv')
         
