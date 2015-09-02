@@ -15,7 +15,6 @@
     <script src='../js/chosen.jquery.js'></script>
     <script src="../js/mrspec.js"></script>
 
-
     <style type="text/css">
 
 #left {
@@ -34,7 +33,6 @@
    width: 545px;
    position: static;
    left: 700px;
-
 }
 
 #sidebar .patient {
@@ -161,8 +159,7 @@
                         <input type="checkbox" id="trendline" name="trendline" onclick="drawChart(window.my_config.results)">
                     </span>
                     <span title="Overlay queries.">Overlay queries:
-                        <input
-                        type="checkbox" id="overlay" name="overlay" onclick="document.getElementById('merge').disabled = true;">
+                        <input type="checkbox" id="overlay" name="overlay" onclick="document.getElementById('merge').disabled = true;">
                     </span>
                     <span title="Detailed legend.">Detailed legend:
                         <input type="checkbox" id="legend" name="legend">
@@ -228,6 +225,7 @@
         <label>New Features</label>
         <p>• Change default standard deviation thresholds and echotimes by clicking "More options".<br>
             • For metabolites, location and indication code, click on or type inside the box to search/reveal options; you may select multiple options
+            • Can now merge two or more metabolites on the same graph
         </p>
         <label>Keyword Search</label>
         <p>Keyword search is implemented using the MySQL 'LIKE' clause, whose basic usage can be summarized as follows:<br>

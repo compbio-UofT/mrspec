@@ -295,9 +295,6 @@ def return_txt(name, ext):
 def return_css(name, ext):
     return send_file('css/'+name+'.'+ext, mimetype='text/css')
 
-# This route will show a form to perform an AJAX request
-# jQuery is loaded to execute the request and update the
-# value of the operation
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -396,9 +393,9 @@ def get_query():
 
 
 if __name__ == '__main__':
-    # Reload Flask app when template file changes
+    # Reload Flask app when template file changes. App must be run with use_reloader=True to work
     # http://stackoverflow.com/questions/9508667/reload-flask-app-when-template-file-changes
-    extra_dirs = ['templates',]
+    extra_dirs = ['templates','js','config',]
     extra_files = extra_dirs[:]
     for extra_dir in extra_dirs:
         for dirname, dirs, files in os.walk(extra_dir):
@@ -407,14 +404,14 @@ if __name__ == '__main__':
                 if path.isfile(filename):
                     extra_files.append(filename)
     
-    #establish connection to database
     #Launch app if script was called from commandline
     if is_run_from_commandline():
         app.run(
             host="0.0.0.0",
             port=int(8081),
             debug=True,
-            extra_files=extra_files
+            extra_files=extra_files,
+            use_reloader=True
         )
     #Otherwise, execute custom code for debugging
     else:

@@ -3,12 +3,36 @@ import csv, os, sys, shutil, inspect, time
 from queryer import *
 
 class MrspecDatabaseEditor(MrspecDatabaseQueryer):
+    '''Class for populating an empty Mrspec database or modifying an existing one.
     
-    def __init__(self, silent=False):
-        
-        self._database = 'mrspec'
-        
-        super(MrspecDatabaseEditor, self).__init__(silent,self._database)
+    Import tables from .csv files, convert tables to standardized schemas for use with MrspecDatabaseQueryer, calculate compound metabolites, .
+    
+    Attributes:
+    - self.silent (bool): indicate whether progress messages will be printed to sys.stout. Exceptions will always be printed.
+    - self._database (str): name of database to connect to. Changing this value after connection established will have no effect.
+    - self.con (object): database connection object
+    - self.cur (object): database cursor object
+    - self._base_metabolites (List): list of all metabolite names (str) read from LCModel
+    - self.met_to_calculate (Dict): dictionary containing metabolites that are calculated by adding multiple metabolites from _base_metabolites. Each key points to a list of metabolites.
+    - self.queryable_metabolites (List): list of all queryable metabolites in the database
+    - self.table (String): name of table on which to run all queries
+    - self.unique_desc (Str): name of unique identifier for each scan
+    - self.metadata (List): list of queryable patient and scan metadata such as tabPatientID and scan parameters
+    - self.met_threshold (Dict): dictionary of quality threshold values (int) for all queryable metabolites. Used to filter noisy results, optional. Defaults are loaded from 'metabolite_thresholds.txt' stored in '../config'.
+    - self.met_echo (Dict): dictionary of echotimes for all queryable metabolites. Defaults are loaded from 'metabolite_echotimes.txt' stored in '../config'.
+    - self.low (Str): expression used to define low echotimes in queries (i.e. <50)
+    - self.high (Str): expression used to define high echotimes in queries (i.e. =144)
+    - self._u (str): MySQL datatype designator for unsigned integers
+    - self._s (str): MySQL datatype designator for signed integers
+    - self._d (str): MySQL datatype designator for numbers with decimal points
+    - self._t (str): MySQL datatype designator for text
+    - self.outcomes_schema (List): database schema for the file containing patient outcomes
+    - self.table_schema (List): database schema for the file containing patient scans from before 2012
+    - self.update_table_schema (List): database schema for the file containing patient scans from after 2012
+    '''
+    def __init__(self, silent=False, database='mrspec',finalized=True):
+        #call __init__ of parent class: MrspecDatabaseQueryer
+        super(MrspecDatabaseEditor, self).__init__(silent,database,finalized)
                 
         #datatypes
         self._u = 'UNSIGNED'
@@ -40,9 +64,7 @@ class MrspecDatabaseEditor(MrspecDatabaseQueryer):
             self.update_table_schema += [[metabolite, self._d],['`' + metabolite + "_SD`", self._s, '`' + metabolite + "_%SD`"]]               
 
     def populate_SD_table(self, gender, field, location, return_single_scan_per_procedure, filter_by_sd):
-        '''Populates a table in which the '''
-        self.create_null_sd_columns(self.table)
-        
+        '''Populates a table in which the '''        
         limit = 50
 
         cols,all_scans = self.execute_and_return_query(self.parse_query(ID='', Scan_ID='', age='', gender='', field='', location='', metabolites=self.met_threshold, limit='', 
@@ -67,7 +89,7 @@ class MrspecDatabaseEditor(MrspecDatabaseQueryer):
                     all_queries.append(subquery)
                 j+=1
             i+=1
-        print('Sending SD score updates to database...')
+        if not self.silent: print('Sending SD score updates to database...')
         #["LOCK TABLES {} WRITE".format(self.table)]+["UNLOCK TABLES"]
         t = self.cur.execute('; '.join(all_queries), multi=True)
         for u in t:
@@ -75,9 +97,7 @@ class MrspecDatabaseEditor(MrspecDatabaseQueryer):
         self.con.commit()
 
     def populate_SD_table_without_multi(self, gender, field, location, return_single_scan_per_procedure, filter_by_sd):
-        '''Populates a table in which the '''
-        self.create_null_sd_columns(self.table)
-        
+        '''Populates a table in which the '''        
         limit = 50
     
         cols,all_scans = self.execute_and_return_query(self.parse_query(ID='', Scan_ID='', age='', gender='', field='', location='', metabolites=self.met_threshold, limit='', 
@@ -87,7 +107,8 @@ class MrspecDatabaseEditor(MrspecDatabaseQueryer):
     
         i=0
         l = len(all_scans)
-        print l
+        if not self.silent:
+            print("Progress:\n ")
         for row in all_scans:
             age = row[0]
             Scan_ID = row[-len(self.metadata)] #sixth last row
@@ -105,8 +126,10 @@ class MrspecDatabaseEditor(MrspecDatabaseQueryer):
                     #print(subquery)
                     self.cur.execute(subquery)
                     self.con.commit()
-                j+=1            
-            i+=1        
+                j+=1
+            i+=1
+            if not self.silent and i % 50 == 0 :
+                print(str(i*100/l) + '%')            
             
     def create_null_sd_columns(self, table):
         for m in self.queryable_metabolites:
@@ -264,11 +287,26 @@ class MrspecDatabaseEditor(MrspecDatabaseQueryer):
             for e in x:
                 pass
             if not self.silent: print("Table '{}' successfully copied from '{}'.".format(new_table,old_table))
-
+            
+    def rename_lower_field_metabolites(self,table):
+        if self.execute_and_return_query("select count(Cr) from {} where ScanBZero=1.5".format(table))[1][0][0]:
+            self.cur.execute("UPDATE {0} SET tCr=Cr,tCho=Cho,`tCr_%SD`=`Cr_%SD`,`tCho_%SD`=`Cho_%SD` WHERE ScanBZero=1.5 AND {0}.Scan_ID=Scan_ID".format(table))
+            self.cur.execute("UPDATE {0} SET tCr_opt=Cr WHERE (`tCr_%SD` BETWEEN 0.000001 AND {1}) AND ScanBZero=1.5 AND {0}.Scan_ID=Scan_ID".format(table,self.met_threshold['tCr_opt']))
+            self.cur.execute("UPDATE {0} SET tCho_opt=Cho WHERE (`tCho_%SD` BETWEEN 0.000001 AND {1}) AND ScanBZero=1.5 AND {0}.Scan_ID=Scan_ID".format(table,self.met_threshold['tCho_opt']))
+            self.con.commit()
+            self.cur.execute("UPDATE {0} SET Cr=NULL,Cho=NULL,`Cr_%SD`=NULL,`Cho_%SD`=NULL WHERE ScanBZero=1.5".format(table))
+            self.con.commit()
+            if not self.silent: print("\nRenamed Cr and Cho from 1.5T to tCr and tCho (and tCr_opt,tCho_opt) in '{}'.".format(table))   
+            
+    def drop_table_if_exists(self, name):
+        if self.table_exists(name):
+            self.cur.execute("DROP TABLE {}".format(name))
+            if not self.silent: print("Table '{}' dropped from '{}'.".format(name, self._database))
+            
 if __name__ == "__main__":
 
     #Establish connection with database
-    with MrspecDatabaseEditor() as (c,con,cur):
+    with MrspecDatabaseEditor(finalized=False) as (c,con,cur):
         
         if c.table_exists(c.table):
             print("'{}' already exists in database, no changes made.".format(c.table))
@@ -289,23 +327,17 @@ if __name__ == "__main__":
         
             c.check_for_table_before_executing('merged', "CREATE TABLE IF NOT EXISTS merged SELECT * FROM OUTCOMES_GROUPED RIGHT JOIN mrspec_MRN ON OUTCOMES_GROUPED.`MRN (column to be removed once study is in analysis phase)` = mrspec_MRN.MRN AND str_to_date(OUTCOMES_GROUPED.Date, '%d/%m/%Y') = str_to_date(mrspec_MRN.procedureDate, '%d/%m/%Y')")   
             
-            ##
+            
             #create standardized table
             c.create_standardized_table(c.table, 'merged', c.table_schema, None, None)
             
-            ##update code##
-            c.import_csv("updates.csv", 'updates', "text")
-            c.check_for_table_before_executing('updates_merged', "CREATE TABLE IF NOT EXISTS updates_merged SELECT * FROM updates LEFT JOIN OUTCOMES_GROUPED ON OUTCOMES_GROUPED.`MRN (column to be removed once study is in analysis phase)` = updates.HSC_Number AND str_to_date(OUTCOMES_GROUPED.Date, '%d/%m/%Y') = str_to_date(updates.ProcedureDate, '%d/%m/%Y')")
-            con.commit()
-            cur.execute('alter table updates_merged add column AgeAtScan bigint(21)') if not c.column_exists('updates_merged','AgeAtScan') else None
-            cur.execute("UPDATE updates_merged as T SET T.AgeAtScan = (TO_DAYS(STR_TO_DATE(T.ProcedureDate,'%d/%m/%Y')) - TO_DAYS(STR_TO_DATE(T.PatientBirthDay,'%d/%m/%Y'))) where T.Scan_ID = Scan_ID")
-            con.commit()
-            c.create_standardized_table("standard_update", 'updates_merged', c.update_table_schema, None, None)
+            ##post-processing
+            c.insert_additional_metabolites(c.table, c.met_to_calculate)
+            c.insert_aggregate_metabolites_optimal(c.table, c.met_to_calculate)
+            #rename Cr and Cho for 1.5T scans to tCr and tCho
+            c.rename_lower_field_metabolites(c.table)        
+            c.create_null_sd_columns(c.table)
             
-            ##COMMENT THIS LINE OUT AFTER SCRIPT HAS RUN ONCE, otherwise you will get an error
-            cur.execute('INSERT INTO {} SELECT * FROM standard_update'.format(c.table))
-            
-            con.commit()
-             
+            if prompt_yes_no("\nDo you wish to calculate the windowed SD columns? WARNING: This will take a long time and is not recommended until all update files have been imported."): c.populate_SD_table_without_multi('', '', '', False, True)
 
-        print('\nAll operations completed successfully.')
+            print('\nAll operations completed successfully.')
