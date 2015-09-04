@@ -20,7 +20,7 @@ class MrspecDatabaseUpdator(MrspecDatabaseEditor):
         self.cur.execute('alter table {} add column AgeAtScan bigint(21)'.format(name_merged)) if not self.column_exists(name_merged,'AgeAtScan') else None
         self.cur.execute("UPDATE {} as T SET T.AgeAtScan = (TO_DAYS(STR_TO_DATE(T.ProcedureDate,'%d/%m/%Y')) - TO_DAYS(STR_TO_DATE(T.PatientBirthDay,'%d/%m/%Y'))) where T.Scan_ID = Scan_ID".format(name_merged))
         self.con.commit()
-        self.create_standardized_table(standard_name, name_merged, self.update_table_schema, None, self.unique_desc)        
+        self.create_standardized_table(standard_name, name_merged, self.update_table_schema, None, 'Scan_ID')        
     
     def insert_new_scans(self, scan_file):
         #assume scans are unique
@@ -51,6 +51,7 @@ class MrspecDatabaseUpdator(MrspecDatabaseEditor):
         self.create_null_sd_columns(standard_name)
         
         self.cur.execute('INSERT INTO {} SELECT * FROM {}'.format(self.table,standard_name))
+        self.con.commit()
     
     def copy_column(self, dest_table, source_table, column, join_on,overwrite=False):
         name = column[2] if len(column)==3 else column[0]

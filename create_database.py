@@ -47,7 +47,7 @@ class MrspecDatabaseEditor(MrspecDatabaseQueryer):
             ['`Treatment (from chart)`', self._t, "Treatment"]]
         
         self.table_schema = [
-            ['MRN', self._t, 'ID'],
+            #['MRN', self._t, 'ID'],
             ['AgeAtScan', self._s],
             ['Gender', self._t],
             ['ScanBZero', self._t],
@@ -57,7 +57,7 @@ class MrspecDatabaseEditor(MrspecDatabaseQueryer):
             ['tabPatient_ID', self._t]
             ] + self.outcomes_schema                        
     
-        self.update_table_schema= [['HSC_Number', self._t, 'ID']] + self.table_schema[1:]
+        self.update_table_schema= self.table_schema[:] #[['HSC_Number', self._t, 'ID']] + self.table_schema[1:] #
     
         for metabolite in self._base_metabolites:
             self.table_schema += [[metabolite, self._d],['`' + metabolite + "_%SD`", self._s]]
@@ -329,7 +329,7 @@ if __name__ == "__main__":
             
             
             #create standardized table
-            c.create_standardized_table(c.table, 'merged', c.table_schema, None, None)
+            c.create_standardized_table(c.table, 'merged', c.table_schema, None, 'Scan_ID')
             
             ##post-processing
             c.insert_additional_metabolites(c.table, c.met_to_calculate)
