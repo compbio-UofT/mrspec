@@ -39,7 +39,7 @@ function sendEchotimes(){
 	var echotimes={}
 
 	$('.e_met').each(function(){
-		echotimes[this.name]= this.value
+		echotimes[this.name.slice(2)]= this.value
 	})
 
 	$.getJSON('/_alter_echotimes', {
