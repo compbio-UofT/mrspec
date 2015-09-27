@@ -14,6 +14,8 @@
     <link rel="stylesheet" href="../css/chosen.css">
     <script src='../js/chosen.jquery.js'></script>
     <script src="../js/mrspec.js"></script>
+    <script src="../js/tabs.js"></script>
+
 
     <style type="text/css">
 
@@ -23,33 +25,16 @@
 
 #right {
     float:left;
-    padding-left:5px     
+    padding-left:5px;
 }
 
-#sidebar {
-   overflow-y:auto;
-   overflow-x:auto;
-   background-color: white;
-   width: 545px;
-   position: static;
-   left: 700px;
-}
-
-#sidebar .patient {
-    border: 1px solid #eee;
-    padding: 10px;
+ .patient {
+    border-bottom: 1px solid #c9c3ba;
     padding-bottom: 5px;
-    margin-top: 10px;
+    margin-top: 5px;
 }
 
-#sidebar .group {
-    border: 1px solid #eee;
-    padding: 10px;
-    padding-bottom: 5px;
-    margin-top: 10px;
-}
-
-#sidebar .title {
+ .title {
     font-weight:600;
     background-color: white;
     color: #909090;
@@ -57,7 +42,7 @@
     padding-left: 5px
 }
 
-#sidebar .content {
+ .content {
     text-align: left;
     padding-left: 15px;
     padding-bottom: 5px
@@ -85,6 +70,17 @@
 .arrow:hover {
     opacity:1;
 }
+
+ul#tabs { list-style-type: none; margin: 30px 0 0 0; padding: 0 0 0.15em 0; }
+ul#tabs li { display: inline; }
+ul#tabs li a { color: #42454a; background-color: #f1f0ee; border: 1px solid #c9c3ba; border-bottom: none; padding: 0.3em; text-decoration: none; }
+ul#tabs li a:hover { background-color: white; }
+ul#tabs li a.selected { color: #000; background-color: white; font-weight: bold; padding: 0.7em 0.3em 0.38em 0.3em; }
+div.tabContent { border: 1px solid #c9c3ba; padding: 0.5em; overflow-y:auto;
+   background-color: white;
+   width: 545px;
+   left: 700px; }
+div.tabContent.hide { display: none; }
 
 </style>
 </head>
@@ -132,47 +128,47 @@
 
                     <div style="padding-top:5px">
 
-                        <span title="Indication code.">Indication code:
-                            <select class='chosen' data-placeholder="Indication code (optional)" multiple='true' id='code' style="width:200px;">
-                                <option value="AN">AN</option>
-                                <option value="DD">DD</option>
-                                <option value="DY">DY</option>
-                                <option value="MET">MET</option>
-                                <option value="GEN">GEN</option>
+                        <span title="Classification code.">Classification code:
+                            <select class='chosen' data-placeholder="Classification code (optional)" multiple='true' id='code' style="width:200px;">
+                                <option value="%AN%">AN</option>
+                                <option value="%DD%">DD</option>
+                                <option value="%DY%">DY</option>
+                                <option value="%MET%">MET</option>
+                                <option value="%GEN%">GEN</option>
                             </select>
                         </span>
 
-                        <span title="Keywords of the query. e.g. '%glioma'">Keywords:
-                            <div class ='optionBox' ><input type="text" size="4" name="keyword" style="border:0px solid"><img id='keyOpt' src="../img/new_window.png" style="padding-bottom:3px" />
+                        <span title="Diagnosis keywords of the query. e.g. '%glioma'. See help for more information.">Diagnosis keywords:
+                            <div class ='optionBox' ><input type="text" size="4" name="diagnosis" style="border:0px solid"><img id='keyOpt' src="../img/new_window.png" style="padding-bottom:3px" />
                             </div>
                         </span>
 
                     </div>
 
-                    <span title="Merge graphs.">Merge Graphs:
+                    <div style='width:14%; float:left'  title="Merge graphs.">Merge Graphs:
                         <input type="checkbox" id="merge" name="Merge Graphs">
-                    </span>
-                    <span title="Log scale.">Log Scale:
+                    </div>
+                    <div style='width:14%; float:left'  title="Log scale.">Log Scale:
                         <input type="checkbox" id="scale" name="scale" onclick="drawChart(window.my_config.results)">
-                    </span>
-                    <span title="Trendline.">Trendline:
+                    </div>
+                    <div style='width:14%; float:left'  title="Trendline.">Trendline:
                         <input type="checkbox" id="trendline" name="trendline" onclick="drawChart(window.my_config.results)">
-                    </span>
-                    <span title="Overlay queries.">Overlay queries:
+                    </div>
+                    <div style='width:14%; float:left'  title="Overlay queries.">Overlay queries:
                         <input type="checkbox" id="overlay" name="overlay" onclick="document.getElementById('merge').disabled = true;">
-                    </span>
-                    <span title="Detailed legend.">Detailed legend:
-                        <input type="checkbox" id="legend" name="legend">
-                    </span>
-                    <span title="More options.">More options <img id='allOpt' src="../img/new_window.png" style="padding-bottom:3px" />
-                    </span>
+                    </div>
+                    <div style='width:14%; float:left'  title="Detailed legend.">Detailed legend:
+                        <input type="checkbox" id="legend" name="legend" checked>
+                    </div>
+                    <div style='width:14%; float:left'  title="More options.">More options <img id='allOpt' src="../img/new_window.png" style="padding-bottom:3px" />
+                    </div>
                     <a href="javascript:void();" id="query" class='query'><img src='../img/submit.png' alt="Submit Query" style="float:right" /></a>
 
-                </form>
-                <p>
+                    <div style='float:left'>
                     <a href="javascript:clearSelection()">clear selection (esc)</a> - <a href="javascript:clearCanvas()">clear canvas (del)</a> - <a href="javascript:void();" id="dump" onclick="exportToCsv()">export canvas to file</a> - <a href="javascript:void();" id="png_dump" onclick="exportChartsAsPng()"> export charts as .png</a> - <a href="javascript:void();" id="help" >help</a>
-                </p>
-            </form>
+                    </div>
+                </form>
+            </p>
         </div>
     </div>
 
@@ -180,21 +176,31 @@
         <div id="charts"></div>
     </div>
 
-    <div id='right'></div>
+    <div id='right' style='display:none'>
+        <ul id="tabs">
+          <li><a id = 'select' href="#selection">Selection</a></li>
+          <li id='group_tab_entry' style='display:none'><a href="#group_select">Group Statistics</a></li>
+      </ul>
+
+      <div class="tabContent" id="selection">
+      </div>
+
+      <div class="tabContent" id="group_select">
+      </div>
+
+    </div>
 
     <div id="allOptWindow" title="More Options"><label>Query Refinements</label><br>
-        <span title="Search for a tabPatient.">tabPatientID: <input type="text" size="2" name="DatabaseID">
+    <div style="width:50%;float:left">
+        <span title="Search for a tabPatient.">tabPatientIDs: <input type="text" size="2" name="DatabaseID">
         </span><br>
         <span title="Search for a ScanID.">ScanIDs: <input type="text" size="2" name="ScanID">
         </span><br>
+                <span title="Lower limit of the X-axis range.">Min Age to Show:
+            <input type="text" size="2" name="lxlimit">
+        </span><br>
         <span title="Only include the X closest patients above and below the 'AGE'.">Limit:
             <input type="text" size="2" name="limit">
-        </span><br>
-        <span title="Lower limit of the X-axis range.">Min Age to Show:
-            <input type="text" size="2" name="lxlimit">
-        </span>
-        <span title="Upper limit of the X-axis range.">Max Age to Show:
-            <input type="text" size="2" name="uxlimit" value="6570">
         </span><br>
         <span title="Select data that lies outside of a certain standard deviation score.">SD score:
             <input type="text" size="2" name="sdThreshold">
@@ -205,14 +211,33 @@
             </div>
         </span>
 
-        <span title="Values of the query.">Values:
+        <span title="Values of the query."> Values:
             <input type="text" size="5" name="values">
         </span><br>
+        </div>
+        <div style="width:50%;float:left">
+        <span title="Exclude a tabPatient.">tabPatientIDs to exclude: <input type="text" size="2" name="DatabaseID_exclude">
+        </span><br>
+        <span title="Exclude a ScanID.">ScanIDs to exclude: <input type="text" size="2" name="ScanID_exclude">
+        </span><br>
+                <span title="Upper limit of the X-axis range.">Max Age to Show:
+            <input type="text" size="2" name="uxlimit" value="6570">
+        </span><br>
+        </div>
     </div>
 
     <div id="keyOptWindow" title="Keyword Options">
-        <span title="Keywords of the query. e.g. '%glioma'">Keywords to exclude:
-            <input type="text" size="4" name="key_exclude">
+        <span title="Diagnosis keywords to exclude from search. e.g. '%glioma'">Diagnosis keywords to exclude:
+            <input type="text" size="4" name="diagnosis_exclude">
+        </span><br>
+        <span title="Indication keywords. e.g. '%glioma'">Indication keywords:
+            <input type="text" size="4" name="indication">
+        </span><br>
+        <span title="Indication keywords to exclude from search. e.g. '%glioma'">Indication keywords to exclude:
+            <input type="text" size="4" name="indication_exclude">
+        </span><br>
+        <span title="Anesthesia keywords. e.g. 'GA'">Anesthesia keywords:
+            <input type="text" size="4" name="anesthesia">
         </span>
     </div>
 
@@ -229,13 +254,11 @@
         </p>
         <label>Keyword Search</label>
         <p>Keyword search is implemented using the MySQL 'LIKE' clause, whose basic usage can be summarized as follows:<br>
-            • Keyword search will search both the indication and diagnosis fields for all patients in the database and return a scan if either of these fields matches the keyword.<br>
             • For most searches, use the '%' symbol on both ends of the word, i.e. '%glioma%'. '%' is a wildcard for an unlimited number of characters. For instance, if you want to match the word 'dog' in the phrase 'A dog runs', you would need to search '%dog%' since it appears in the middle of the sentence.<br>
             • Use the '_' symbol as a wildcard for a single character. For instance, 'T_m' would match 'Tim','Tom','Tum' and any other letter in the middle.<br>
             • You can enter multiple keywords separated by a comma; scans will be returned if they match any of the keywords.<br>
             • By clicking on <img src="../img/new_window.png" style="padding-bottom:3px" /> in the keyword box, you can enter keywords to EXCLUDE scans from being returned as matches. Only scans that do not have any of these words will be returned.
         </p>
-
     </div>
 
     <div id='ageWindow' title="Input Age">
@@ -359,6 +382,8 @@ google.charts.load('41', {packages: ['corechart']});
 jQuery.ajaxSettings.traditional=true
 
 $(document).ready(function () {
+
+    tabInit()
 
     $(".chosen").data("placeholder","Select options...").chosen()
 
