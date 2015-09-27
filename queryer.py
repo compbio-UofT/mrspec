@@ -172,8 +172,26 @@ class MrspecDatabaseQueryer(DatabaseConnection):
         rows = self.cur.fetchall()
         return columns, rows
     
+    def _parse_keywords(self, keywords, column_to_search, exclude=False):
+        if keywords:
+            cond = []
+            for keyword in keywords:
+                if keyword:
+                    cond += ["{2}.{1} {3} LIKE '{0}'".format(keyword, column_to_search, self.table, 'NOT' if exclude else '')]
+                    
+            if cond:
+                parsed_keys = " AND ".join(cond)
+                return ''.join(['(', parsed_keys, ')'])
+            else:
+                return None
+        else:
+            return None
+    
+    def _parse_IDs(self,ID):
+        return None if not ID else "'"+("','").join([identifier.strip() for identifier in ID.split(',')])+"'"
+
     #bug exists where could access scan information from later date because of use of coalesce if unique is True                     !!!                                        !!!!!
-    def parse_query(self, ID, Scan_ID, age, gender, field, location, metabolites, limit, uxlimit, lxlimit, mets_span_each, return_single_scan_per_procedure, filter_by_sd, keywords, key_exclude, windowed_SD_threshold,classification_code,extended=True):
+    def parse_query(self, ID=None, ID_exclude=None, Scan_ID=None, Scan_ID_exclude=None, age=None, gender=None, field=None, location=None, metabolites=None, limit=None, uxlimit=None, lxlimit=None, mets_span_each=False, return_single_scan_per_procedure=True, filter_by_sd=True, diagnosis=None, diagnosis_exclude=None, indication=None, indication_exclude=None, windowed_SD_threshold=None,classification_code=None,anesthesia=None,extended=True):
         '''(MrspecDatabaseQueryer, Str, Str, Str, Str, Str, Str, Str, Str, Str, Str, Bool, Bool, Bool,
         List, List, Str, List, Bool) -> Str
         Return a string of a query parsed with the specified parameters.
@@ -222,42 +240,30 @@ class MrspecDatabaseQueryer(DatabaseConnection):
         parsed_where = ''
         parsed_options = []
 
-        ID = None if not ID else "'"+("','").join(ID.split(',').strip())+"'"
-        Scan_ID = None if not Scan_ID else "'"+("','").join(Scan_ID.split(',').strip())+"'"
+        ID = self._parse_IDs(ID)
+        Scan_ID = self._parse_IDs(Scan_ID)
+        ID_exclude = self._parse_IDs(ID_exclude)
+        Scan_ID_exclude = self._parse_IDs(Scan_ID_exclude)
+        
 
         constraints = {'Gender':gender, 'ScanBZero':field, self.unique_desc:ID, 'Scan_ID':Scan_ID}
         for constraint in constraints:
             if constraints[constraint]:
                 parsed_options.append("{}.{} IN({})".format(self.table,constraint,
                                                             constraints[constraint]))
-
-        ###keywords:search indication and diagnosis###
-        if keywords:
-            cond = []
-            for keyword in keywords:
-                cond += ["{3}.{1} LIKE '{0}' OR {3}.{2} LIKE '{0}' ".format(keyword, self.metadata[3],self.metadata[2], self.table)]
-            parsed_keys = " AND ".join(cond)
-            parsed_keys = ''.join(['(', parsed_keys, ')'])
-            parsed_options.append(parsed_keys)
-
-        ##keywords to exclude
-        if key_exclude:
-            cond = []
-            for keyword in key_exclude:
-                cond += ["{3}.{1} NOT LIKE '{0}' AND {3}.{2} NOT LIKE '{0}' ".format(keyword, self.metadata[3],self.metadata[2], self.table)]
-            parsed_keys = " AND ".join(cond)
-            parsed_keys = ''.join(['(', parsed_keys, ')'])
-            parsed_options.append(parsed_keys)
-
-        ##classification code
-        if classification_code:
-            cond = []
-            for code in classification_code:
-                cond += ["{2}.{1} LIKE '%{0}%'".format(code, '`Classification Code`', self.table)]
-            parsed_keys = " AND ".join(cond)
-            parsed_keys = ''.join(['(', parsed_keys, ')'])
-            parsed_options.append(parsed_keys)    
-
+                
+        neg_constraints = {self.unique_desc:ID_exclude, 'Scan_ID':Scan_ID_exclude}
+        for neg_constraint in neg_constraints:
+            if neg_constraints[neg_constraint]:
+                parsed_options.append("{}.{} NOT IN({})".format(self.table,constraint,
+                                                            constraints[constraint]))
+                
+        searches = [(diagnosis, self.metadata[3]),(diagnosis_exclude,self.metadata[3],True),(classification_code, '`Classification Code`'),(indication, self.metadata[2]),(indication_exclude,self.metadata[2],True),(anesthesia, 'Anesthetic')]
+        for search in searches:
+            parsed_kwords = self._parse_keywords(*search)
+            if parsed_kwords:
+                parsed_options.append(parsed_kwords)
+            
         if uxlimit:
             parsed_options.append('{}.AgeAtScan < {}'.format(self.table, uxlimit))
         if lxlimit:

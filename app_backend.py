@@ -334,10 +334,18 @@ def get_query():
     location = request.args.get('location', '', type=str)
     overlay = request.args.get('overlay', 0, type=int)
     calc_sd = True
-    k_inc = request.args.get('keywords', 0, type=str)
-    k_exc = request.args.get('key_exclude', 0, type=str)
-    keywords = k_inc if not k_inc else k_inc.split(',')
-    key_exclude = k_exc if not k_exc else k_exc.split(',')
+    diagnosis = request.args.get('diagnosis', 0, type=str)
+    diagnosis_exclude = request.args.get('diagnosis_exclude', 0, type=str)
+    diagnosis = diagnosis if not diagnosis else diagnosis.split(',')
+    diagnosis_exclude = diagnosis_exclude if not diagnosis_exclude else diagnosis_exclude.split(',')
+    indication = request.args.get('indication', 0, type=str)
+    indication_exclude = request.args.get('indication_exclude', 0, type=str)
+    indication = indication if not indication else indication.split(',')
+    indication_exclude = indication_exclude if not indication_exclude else indication_exclude.split(',')
+
+    anesthesia = request.args.get('anesthesia', 0, type=str)
+    anesthesia = anesthesia if not anesthesia else anesthesia.split(',')
+    
     windowed_SD_threshold = request.args.get('windowed_SD_threshold',0,type=str)
     
     classification_code=request.args.getlist('classification_code')
@@ -358,8 +366,10 @@ def get_query():
         mets_span_each=False,
         return_single_scan_per_procedure=return_single_scan_per_procedure,
         filter_by_sd=filter_by_sd,
-        keywords=keywords,
-        key_exclude = key_exclude, windowed_SD_threshold=windowed_SD_threshold, classification_code=classification_code)
+        diagnosis=diagnosis,
+        diagnosis_exclude = diagnosis_exclude, windowed_SD_threshold=windowed_SD_threshold, classification_code=classification_code, indication=indication,indication_exclude=indication_exclude,anesthesia=anesthesia)
+     
+
     
     print query
     

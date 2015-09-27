@@ -69,8 +69,7 @@ class MrspecDatabaseEditor(MrspecDatabaseQueryer):
 
         cols,all_scans = self.execute_and_return_query(self.parse_query(ID='', Scan_ID='', age='', gender='', field='', location='', metabolites=self.met_threshold, limit='', 
                                                                         uxlimit='', lxlimit='', mets_span_each=False, return_single_scan_per_procedure=False, 
-                                                                        filter_by_sd=True, keywords='', key_exclude='', 
-                                                                        windowed_SD_threshold='',classification_code='',extended=False))
+                                                                        filter_by_sd=True, windowed_SD_threshold='',classification_code='',extended=False))
 
         all_queries=[]
         i=0
@@ -85,7 +84,7 @@ class MrspecDatabaseEditor(MrspecDatabaseQueryer):
                 name = column[:-9] if filter_by_sd else column
 
                 if name in self.met_threshold and all_scans[i][j] is not None:
-                    subquery = ''.join(['UPDATE {2} as S, (SELECT ({1} - (( T.avgXY - T.avgX * T.avgY ) / ( T.avgXsq - power(T.avgX, 2) )*({3} - T.avgx) + T.avgy))/T.sd as q FROM (SELECT STDDEV_SAMP({0}) as sd,avg(AgeAtScan) AS avgX, avg({0})  AS avgY, avg({0}*AgeAtScan)  AS avgXY, avg(power(AgeAtScan, 2)) AS avgXsq,U.{0} FROM ('.format(column, all_scans[i][j], self.table, age), self.parse_query('','',age,gender,field,location,[name],limit,'','',True,return_single_scan_per_procedure,filter_by_sd,[],[],'','',extended=False),') AS U) AS T) AS Q set S.{}_SD=CAST(Q.q AS {}) WHERE S.{}={}'.format(name,self._d,'Scan_ID',Scan_ID)])
+                    subquery = ''.join(['UPDATE {2} as S, (SELECT ({1} - (( T.avgXY - T.avgX * T.avgY ) / ( T.avgXsq - power(T.avgX, 2) )*({3} - T.avgx) + T.avgy))/T.sd as q FROM (SELECT STDDEV_SAMP({0}) as sd,avg(AgeAtScan) AS avgX, avg({0})  AS avgY, avg({0}*AgeAtScan)  AS avgXY, avg(power(AgeAtScan, 2)) AS avgXsq,U.{0} FROM ('.format(column, all_scans[i][j], self.table, age), self.parse_query(age=age, gender=gender, field=field, location=location, metabolites=[name], limit=limit, mets_span_each=True, return_single_scan_per_procedure=return_single_scan_per_procedure, filter_by_sd=filter_by_sd,extended=False),') AS U) AS T) AS Q set S.{}_SD=CAST(Q.q AS {}) WHERE S.{}={}'.format(name,self._d,'Scan_ID',Scan_ID)])
                     all_queries.append(subquery)
                 j+=1
             i+=1
@@ -100,10 +99,7 @@ class MrspecDatabaseEditor(MrspecDatabaseQueryer):
         '''Populates a table in which the '''        
         limit = 50
     
-        cols,all_scans = self.execute_and_return_query(self.parse_query(ID='', Scan_ID='', age='', gender='', field='', location='', metabolites=self.met_threshold, limit='', 
-                                                                    uxlimit='', lxlimit='', mets_span_each=False, return_single_scan_per_procedure=False, 
-                                                                    filter_by_sd=True, keywords='', key_exclude='', 
-                                                                    windowed_SD_threshold='',classification_code=''))
+        cols,all_scans = self.execute_and_return_query(self.parse_query(metabolites=self.met_threshold, mets_span_each=False, return_single_scan_per_procedure=False, filter_by_sd=True))
     
         i=0
         l = len(all_scans)
@@ -117,10 +113,10 @@ class MrspecDatabaseEditor(MrspecDatabaseQueryer):
             #iterate through all columns of the query (doesn't matter at what columns metabolites begin)
             for column in cols:
                 #get metabolite name by truncating title if filtered
-                name = column[:-9] if filter_by_sd else column
+                name = column[:-9] if filter_by_sd else column   
     
                 if name in self.met_threshold and all_scans[i][j] is not None:
-                    subquery = ''.join(['UPDATE {2} as S, (SELECT ({1}- (( T.avgXY - T.avgX * T.avgY ) / ( T.avgXsq - power(T.avgX, 2) )*({3} - T.avgx) + T.avgy))/T.sd as q FROM (SELECT STDDEV_SAMP({0}) as sd,avg(AgeAtScan) AS avgX, avg({0})  AS avgY, avg({0}*AgeAtScan)  AS avgXY, avg(power(AgeAtScan, 2)) AS avgXsq,U.{0} FROM ('.format(column, all_scans[i][j], self.table, age), self.parse_query('','',age,gender,field,location,[name],limit,'','',True,return_single_scan_per_procedure,filter_by_sd,[],[],'','',extended=False),') AS U) AS T) AS Q set S.{}_SD=CAST(Q.q AS {}) WHERE S.{}={}'.format(name,self._d,'Scan_ID',Scan_ID)])
+                    subquery = ''.join(['UPDATE {2} as S, (SELECT ({1}- (( T.avgXY - T.avgX * T.avgY ) / ( T.avgXsq - power(T.avgX, 2) )*({3} - T.avgx) + T.avgy))/T.sd as q FROM (SELECT STDDEV_SAMP({0}) as sd,avg(AgeAtScan) AS avgX, avg({0})  AS avgY, avg({0}*AgeAtScan)  AS avgXY, avg(power(AgeAtScan, 2)) AS avgXsq,U.{0} FROM ('.format(column, all_scans[i][j], self.table, age), self.parse_query(age=age, gender=gender, field=field, location=location, metabolites=[name], limit=limit, mets_span_each=True, return_single_scan_per_procedure=return_single_scan_per_procedure, filter_by_sd=filter_by_sd,extended=False),') AS U) AS T) AS Q set S.{}_SD=CAST(Q.q AS {}) WHERE S.{}={}'.format(name,self._d,'Scan_ID',Scan_ID)])
                     ##old which just takes mean
                     #subquery = ''.join(['UPDATE {2} as S, (SELECT (CASE WHEN COUNT(T.{0})<2 THEN 0 ELSE ({1}-AVG(T.{0}))/STDDEV_SAMP(T.{0}) END) AS q FROM ('.format(column, all_scans[i][j], self.table), self.parse_query('','',age,gender,field,location,[name],limit,'','',True,return_single_scan_per_procedure,filter_by_sd,[],[],'',''),') AS T) AS Q set S.{}_SD=CAST(Q.q AS DECIMAL(11,6))where S.{}={}'.format(name,'Scan_ID',Scan_ID)])
                     #print(subquery)

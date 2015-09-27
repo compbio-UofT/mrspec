@@ -137,6 +137,9 @@ function downloadPNG (png_out, name) {
 function clearCanvas() {
 
 	removeSidebar()
+	
+	$('#right').css({'display':none})
+
 	$(".myCharts").remove()
 
 	document.getElementById('merge').disabled = false
@@ -150,8 +153,12 @@ $(function() {
 	$('a#query').bind('click', function() {
 
 		$.getJSON('/_get_query', {
-			keywords: $('input[name="keyword"]').val(),
-			key_exclude: $('input[name="key_exclude"]').val(),
+			diagnosis: $('input[name="diagnosis"]').val(),
+			diagnosis_exclude: $('input[name="diagnosis_exclude"]').val(),
+			indication: $('input[name="indication"]').val(),
+			indication_exclude: $('input[name="indication_exclude"]').val(),
+			anesthesia: $('input[name="anesthesia"]').val(),
+
 			age: $('input[name="age"]').val(),
 			limit: $('input[name="limit"]').val(),
 			uxlimit: $('input[name="uxlimit"]').val(),
@@ -167,6 +174,9 @@ $(function() {
 			field: $("#field option:selected").val(),
 			ID: $('input[name="DatabaseID"]').val(),
 			Scan_ID: $('input[name="ScanID"]').val(),
+
+			ID_exclude: $('input[name="DatabaseID_exclude"]').val(),
+			Scan_ID_exclude: $('input[name="ScanID_exclude"]').val(),
 
 			windowed_SD_threshold: $('input[name="sdThreshold"]').val(),
 			overlay: (document.getElementById('overlay').checked == false || (document.getElementById('overlay').checked == true && window.my_config == null))? 0:(window.my_config.results[window.my_config.names[0]].getNumberOfColumns())
@@ -200,8 +210,9 @@ return false;
 });
 
 function removeSidebar(){
-	$('#sidebar').remove()
-	$('#sidebar_top').remove()
+	$('.patient').remove()
+	$('#group_tab_entry').css({'display':'none'})
+	$('#right').css({'display':'none'})
 }
 
 function downloadCsv(csv_out, name) {
@@ -218,7 +229,7 @@ function downloadCsv(csv_out, name) {
 
 function setSize(){
 	var width = ($(window).width() / 2 )
-	var height = $(window).height()
+
 	$('#left').css({
 		'width':width+20,
 
@@ -235,33 +246,27 @@ function scrollControl(){
 	var max_height = $(window).height()
 	var width = $(window).width()/2
 	var top_height = document.getElementById('top_header').offsetHeight
-	var top_height2 = 50
+	var top_height2 = 52.094
 
 
 	if (scroll < $('#charts').offset().top) {
 
-		$('#sidebar_top').css({
-			'position': 'static',
-			'top': '0',
-			'max-height': max_height - (top_height-scroll),
-		})
-
-		$('#sidebar').css({
-			'position': 'static',
-			'top': '0',
-			'max-height': max_height - (top_height+top_height2-scroll),
+		$('.tabContent').css({
+			'max-height': max_height - top_height - top_height2 + scroll,
 		});
+
+		$('#right').css({
+			'position': 'static',
+			'top':'0px'
+		})
 
 	} else {
 
-		$('#sidebar_top').css({'position':'fixed','left': width + 25})
+		$('.tabContent').css({'max-height': max_height-top_height2 })
 
-
-		$('#sidebar').css({
+		$('#right').css({
 			'position': 'fixed',
-			'top': '50px',
-			'left': width + 25,
-
+			'left': width + 20,
 		})
 	}
 }
@@ -508,7 +513,9 @@ function showHideSeries () {
 
 function update_right_sidebar(){
 
-	$("#sidebar_top").append("<img src='../img/left.png' style='width:50px;height:50px;float:none' class='arrow' onclick='document.getElementById(\"sidebar\").scrollLeft = 0'></img><img src='../img/right.png' style='width:50px;height:50px;float:none' class='arrow' onclick='document.getElementById(\"sidebar\").scrollLeft = document.getElementById(\"sidebar\").scrollWidth'></img>")
+	//$("#sidebar_top").append("<img src='../img/left.png' style='width:50px;height:50px;float:none' class='arrow' onclick='document.getElementById(\"sidebar\").scrollLeft = 0'></img><img src='../img/right.png' style='width:50px;height:50px;float:none' class='arrow' onclick='document.getElementById(\"sidebar\").scrollLeft = document.getElementById(\"sidebar\").scrollWidth'></img>")
+
+	$('#group_tab_entry').css({'display':'inline'})
 
 	patients = window.my_config.current_selection
 	sd_array = window.my_config.sd_array
@@ -576,7 +583,7 @@ function update_right_sidebar(){
 
     var i = /*"<div class='title'>Mean of Selected Patients:</div><div class='content'>tCr: 15.3</div><div class='content'>Cr: 9.8</div>*/"<div class='title'>Pooled Standard Deviation:</div><div class='content'>"+addSD('group')+"</div>"
 
-    $("#sidebar_right").append("<div id='"+r+"' class='group'>"+i+"</div>")
+    $("#group_select").append("<div id='"+r+"' class='patient'>"+i+"</div>")
 
     if (window.my_config.sd_array != null)
     	setSize()
@@ -592,7 +599,7 @@ function updateSidebar(){
 
 	removeSidebar()
 
-	$('#right').append("<div id='sidebar_top' style='height:50px;width:100%''></div><div id='sidebar'><div id ='sidebar_left' style='float:left;width:528px;'></div><div id ='sidebar_right' style='float:none;margin-left:560px;width:528px'></div></div>")
+	//$('#right').append("<div id='sidebar_top' style='height:50px;width:100%''></div><div id='sidebar'><div id ='sidebar_left' style='float:left;width:528px;'></div><div id ='sidebar_right' style='float:none;margin-left:560px;width:528px'></div></div>")
 
 	var patients = {}
 
@@ -630,15 +637,22 @@ function updateSidebar(){
 			i+= "<div class='title'>SD score for available metabolites:</div><div class='content'>" + addSD(r) +"</div>"
 		}
 
-		$("#sidebar_left").append("<div id='"+r+"' class='patient'>"+i+"</div>")
+		$("#selection").append("<div id='"+r+"' class='patient'>"+i+"</div>")
 
 	}
 
 	if (window.my_config.sd_array != null)
 		setSize()
 
-	if (Object.keys(patients).length > 1){
-		update_right_sidebar()
+	if (Object.keys(patients).length >= 1){
+		$('#right').css({'display':'inline'})
+
+		if (Object.keys(patients).length = 1)
+			document.getElementById('select').click()
+
+
+		if (Object.keys(patients).length > 1)
+			update_right_sidebar()
 	}
 
 }
