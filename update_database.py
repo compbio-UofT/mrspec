@@ -78,24 +78,25 @@ class MrspecDatabaseUpdator(MrspecDatabaseEditor):
         column_names = [c[0] if len(c) < 3 else c[2] for c in self.outcomes_schema]
         set_statement = ','.join(['t.{0}=q.{0}'.format(n) for n in column_names])
 
-        self.cur.execute("UPDATE {} as t,(SELECT {},DOB,`MRN (column to be removed once study is in analysis phase)` as ID,str_to_date(Date, '%d/%m/%Y') as cast_date FROM {} GROUP BY ID,cast_date ORDER BY cast_date) as q SET {} WHERE t.ID=q.ID AND t.AgeAtScan=(TO_DAYS(q.cast_date)-TO_DAYS(str_to_date(q.DOB, '%d/%m/%Y')))".format(self.table,columns_for_import,name,set_statement))
+        self.cur.execute("UPDATE {} as t,(SELECT {},{}.tabPatient_ID,DOB,`MRN (column to be removed once study is in analysis phase)` as ID,str_to_date(Date,'%d/%m/%Y') as cast_date FROM {} LEFT JOIN tab_mrn ON `MRN (column to be removed once study is in analysis phase)`=HSC_Number GROUP BY ID,cast_date ORDER BY cast_date) as q SET {} WHERE t.{}=q.{} AND t.AgeAtScan=(TO_DAYS(q.cast_date)-TO_DAYS(str_to_date(q.DOB, '%d/%m/%Y')))".format(self.table,columns_for_import,name,name,set_statement,self.unique_desc,self.unique_desc))
         self.con.commit()
         
     def update_database_ID(self, table):
-        if not d.column_exists(table, 'DatabaseID'):
+        pass
+        '''if not d.column_exists(table, 'DatabaseID'):
             cur.execute("alter table {} add column DatabaseID BIGINT(21)".format(table))
         for result in cur.execute("set @i=0;update {0} as t inner join (select ID,Scan_ID,@i:=@i+1 as num from (select ID,Scan_ID from {0} group by ID order by Scan_ID) t2) t1 on t.ID=t1.ID set DatabaseID=num;".format(table),multi=True): pass
-        con.commit()           
+        con.commit()'''
 
 if __name__== "__main__":
     with MrspecDatabaseUpdator() as (d,con,cur):
         
         update = 'standard'
         
-        d.insert_new_scans('updates.csv')     
+        #d.insert_new_scans('updates.csv')     
         
-        #d.update_outcomes('outcomes3.csv')
+        d.update_outcomes('outcomes_latest.csv')
         
         #if prompt_yes_no("\nDo you wish to create/overwrite the windowed SD columns with null values? WARNING: This cannot be undone, and will take a long time to restore the values."): d.create_null_sd_columns(update)
-        if prompt_yes_no("\nDo you wish to (re)calculate the windowed SD columns? WARNING: This will overwrite previous data, and will take a long time to restore the values."): d.populate_SD_table_without_multi('', '', '', False, True)
+        #if prompt_yes_no("\nDo you wish to (re)calculate the windowed SD columns? WARNING: This will overwrite previous data, and will take a long time to restore the values."): d.populate_SD_table_without_multi('', '', '', False, True)
         

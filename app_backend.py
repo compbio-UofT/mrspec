@@ -319,9 +319,12 @@ def alter_echotimes():
 
 @app.route('/_get_query')
 def get_query():
+    ID_exclude = request.args.get('ID_exclude', 0, type=str)
+    Scan_ID_exclude=request.args.get('Scan_ID_exclude', 0, type=str)
+    
     ID = request.args.get('ID', 0, type=str)
     #ID = '' if not ID else ''.join(ID.split(','))
-    Scan_ID=request.args.get('Scan_ID', 0, type=str)
+    Scan_ID=request.args.get('Scan_ID', 0, type=str)    
     
     metabolites = request.values.getlist('metabolites') #metabolites
     values = request.args.get('values', 0, type=str) #values
@@ -342,6 +345,10 @@ def get_query():
     indication_exclude = request.args.get('indication_exclude', 0, type=str)
     indication = indication if not indication else indication.split(',')
     indication_exclude = indication_exclude if not indication_exclude else indication_exclude.split(',')
+    
+    treatment = request.args.get('treatment', 0, type=str)
+    treatment = treatment if not treatment else treatment.split(',')
+    
 
     anesthesia = request.args.get('anesthesia', 0, type=str)
     anesthesia = anesthesia if not anesthesia else anesthesia.split(',')
@@ -354,7 +361,9 @@ def get_query():
     #temporary workaround while figuring out what to do with patient data
     overlay = 1
     
-    query = c.parse_query(ID=ID,Scan_ID=Scan_ID,
+    query = c.parse_query(ID=ID,Scan_ID=Scan_ID,ID_exclude=ID_exclude,
+                          Scan_ID_exclude=Scan_ID_exclude,
+                          treatment=treatment,
         age=age,
         gender=gender,
         field=field,
@@ -386,12 +395,12 @@ def get_query():
     if merge == 'true':
         d = {','.join(metabolites):format_query_with_pseries(q,
                                                    ['Age']+metabolites,
-                                                   (str(age) + "," + values).split(","),
+                                                   (str(age) + "," + str(values)).split(","),
                                                    legend)}
     else:
         d = format_query_with_pseries_and_names(q,
                                                 ['Age']+metabolites,
-                                                (str(age) + "," + values).split(","),
+                                                (str(age) + "," + str(values)).split(","),
                                                 legend,
                                                 overlay)
 

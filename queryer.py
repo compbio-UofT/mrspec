@@ -188,10 +188,11 @@ class MrspecDatabaseQueryer(DatabaseConnection):
             return None
     
     def _parse_IDs(self,ID):
+        print ID
         return None if not ID else "'"+("','").join([identifier.strip() for identifier in ID.split(',')])+"'"
 
     #bug exists where could access scan information from later date because of use of coalesce if unique is True                     !!!                                        !!!!!
-    def parse_query(self, ID=None, ID_exclude=None, Scan_ID=None, Scan_ID_exclude=None, age=None, gender=None, field=None, location=None, metabolites=None, limit=None, uxlimit=None, lxlimit=None, mets_span_each=False, return_single_scan_per_procedure=True, filter_by_sd=True, diagnosis=None, diagnosis_exclude=None, indication=None, indication_exclude=None, windowed_SD_threshold=None,classification_code=None,anesthesia=None,extended=True):
+    def parse_query(self, ID=None, ID_exclude=None, Scan_ID=None, Scan_ID_exclude=None, age=None, gender=None, field=None, location=None, metabolites=None, limit=None, uxlimit=None, lxlimit=None, mets_span_each=False, return_single_scan_per_procedure=True, filter_by_sd=True, diagnosis=None, diagnosis_exclude=None, indication=None, indication_exclude=None, windowed_SD_threshold=None,classification_code=None,treatment=None,anesthesia=None,extended=True):
         '''(MrspecDatabaseQueryer, Str, Str, Str, Str, Str, Str, Str, Str, Str, Str, Bool, Bool, Bool,
         List, List, Str, List, Bool) -> Str
         Return a string of a query parsed with the specified parameters.
@@ -245,7 +246,6 @@ class MrspecDatabaseQueryer(DatabaseConnection):
         ID_exclude = self._parse_IDs(ID_exclude)
         Scan_ID_exclude = self._parse_IDs(Scan_ID_exclude)
         
-
         constraints = {'Gender':gender, 'ScanBZero':field, self.unique_desc:ID, 'Scan_ID':Scan_ID}
         for constraint in constraints:
             if constraints[constraint]:
@@ -253,12 +253,12 @@ class MrspecDatabaseQueryer(DatabaseConnection):
                                                             constraints[constraint]))
                 
         neg_constraints = {self.unique_desc:ID_exclude, 'Scan_ID':Scan_ID_exclude}
-        for neg_constraint in neg_constraints:
-            if neg_constraints[neg_constraint]:
-                parsed_options.append("{}.{} NOT IN({})".format(self.table,constraint,
-                                                            constraints[constraint]))
+        for c in neg_constraints:
+            if neg_constraints[c]:
+                parsed_options.append("{}.{} NOT IN({})".format(self.table,c,
+                                                            neg_constraints[c]))
                 
-        searches = [(diagnosis, self.metadata[3]),(diagnosis_exclude,self.metadata[3],True),(classification_code, '`Classification Code`'),(indication, self.metadata[2]),(indication_exclude,self.metadata[2],True),(anesthesia, 'Anesthetic')]
+        searches = [(diagnosis, self.metadata[3]),(diagnosis_exclude,self.metadata[3],True),(classification_code, '`Classification Code`'),(indication, self.metadata[2]),(indication_exclude,self.metadata[2],True),(treatment,'Treatment'),(anesthesia, 'Anesthetic')]
         for search in searches:
             parsed_kwords = self._parse_keywords(*search)
             if parsed_kwords:

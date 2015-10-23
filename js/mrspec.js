@@ -138,7 +138,7 @@ function clearCanvas() {
 
 	removeSidebar()
 	
-	$('#right').css({'display':none})
+	$('#right').css({'display':'none'})
 
 	$(".myCharts").remove()
 
@@ -158,6 +158,7 @@ $(function() {
 			indication: $('input[name="indication"]').val(),
 			indication_exclude: $('input[name="indication_exclude"]').val(),
 			anesthesia: $('input[name="anesthesia"]').val(),
+			treatment: $('input[name="treatment"]').val(),
 
 			age: $('input[name="age"]').val(),
 			limit: $('input[name="limit"]').val(),
@@ -194,6 +195,9 @@ $(function() {
 				for (result in data.result) {
 					window.my_config.results[result] = new google.visualization.DataTable(data.result[result])
 				}
+
+				addCustomPatientData()
+
 				drawChart(window.my_config.results);
 			} else {
 
@@ -201,6 +205,7 @@ $(function() {
 					window.my_config['sd_array'] = $.extend({},window.my_config['sd_array'],data.sd_array)
 					window.my_config['metadata_array'] = $.extend({}, window.my_config['metadata_array'], data.metadata_array)
 				}
+
 				redrawCharts(data.result)
 			}
 			removeSidebar()
@@ -208,6 +213,82 @@ $(function() {
 return false;
 });
 });
+
+function addCustomPatientData(){
+	identifiers = $('input[name="p_identifier"]').val()
+	values = $('input[name="p_values"]').val()
+	ages = $('input[name="p_ages"]').val()
+
+	if ((identifiers && values && ages) != ''){
+
+		names = window.my_config.names
+
+		identifiers = $('input[name="p_identifier"]').val().split(',')
+		ages = $('input[name="p_ages"]').val().split(',')
+		values = $('input[name="p_values"]').val().split(',')
+
+		for (name in names){
+			value_count = countCommas(names[name]) + 1
+
+			for (i in identifiers){
+				row = [parseInt(ages[i]),identifiers[i]]
+
+				for (var q = 1; q <= window.my_config.results[names[name]].getNumberOfColumns() -2 ; q++) {
+					row.push(null)
+				}
+
+
+				for (var j = 1; j <= value_count; j++) {
+					row.push(parseInt(values.shift()))
+					row.push(null)
+
+				};
+
+				console.log(row)
+				if (document.getElementById('merge').checked == false){
+					window.my_config.results[names[name]].addColumn('number','Patient: '+identifiers[i])
+					window.my_config.results[names[name]].addColumn({'id': "Scan_ID",'label':'Scan_ID', "role": "tooltip", "type": "string", "p" : { "role" : "tooltip" } })
+
+				} else{
+					mets = $('#metabolites').val()
+					for (met in mets){
+						window.my_config.results[names[name]].addColumn('number',mets[met]+": Patient "+identifiers[i])
+						window.my_config.results[names[name]].addColumn({'id': "Scan_ID",'label':'Scan_ID', "role": "tooltip", "type": "string", "p" : { "role" : "tooltip" } })
+
+
+					}
+				}
+
+
+				window.my_config.results[names[name]].addRow(row)
+			}
+
+		}
+
+	}
+} 
+
+function countCommas(string){
+	return (string.match(/,/g) || []).length;
+}
+
+//from http://stackoverflow.com/questions/14480345/how-to-get-the-nth-occurrence-in-a-string
+function nth_occurrence(str, pat, n){
+	var L= str.length, i= -1;
+	while(n-- && i++<L){
+		i= str.indexOf(pat, i);
+	}
+	return i;
+}
+
+function chartArrayintoDatatable(result){
+	var obj = {};
+	result.each(function (i,e) { 
+		obj[ i ] = google.visualization.DataTable( e ); 
+	});
+	return obj
+}
+
 
 function removeSidebar(){
 	$('.patient').remove()
@@ -334,6 +415,8 @@ function drawChart(allChartData) {
 
 	for (c in charts) {
 		google.visualization.events.addListener(charts[c], 'select', function() {
+
+			//identify_selection_type()
 			showHideSeries()
 			updateSidebar()
 		} )
@@ -342,6 +425,8 @@ function drawChart(allChartData) {
 //google.visualization.events.addListener(charts[c], 'onmouseout', sidebar_mouseout)
 }
 };
+
+//function identify_selection_type()
 
 function sidebar_mouseover(e) {
 	for(chart in window.my_config.charts) {
@@ -394,6 +479,7 @@ function redrawCharts(results){
 			for (i = 2; i < results_new[d].getNumberOfColumns(); i++) {
 				old_cols.push(i)
 			}
+
 			merged_results = google.visualization.data.join(o, n, 'full',[[0,0],[1,1]],old_cols,[2,3]);
 
 			results_new[d] = merged_results
@@ -513,8 +599,6 @@ function showHideSeries () {
 
 function update_right_sidebar(){
 
-	//$("#sidebar_top").append("<img src='../img/left.png' style='width:50px;height:50px;float:none' class='arrow' onclick='document.getElementById(\"sidebar\").scrollLeft = 0'></img><img src='../img/right.png' style='width:50px;height:50px;float:none' class='arrow' onclick='document.getElementById(\"sidebar\").scrollLeft = document.getElementById(\"sidebar\").scrollWidth'></img>")
-
 	$('#group_tab_entry').css({'display':'inline'})
 
 	patients = window.my_config.current_selection
@@ -581,12 +665,13 @@ function update_right_sidebar(){
         }
     }*/
 
-    var i = /*"<div class='title'>Mean of Selected Patients:</div><div class='content'>tCr: 15.3</div><div class='content'>Cr: 9.8</div>*/"<div class='title'>Pooled Standard Deviation:</div><div class='content'>"+addSD('group')+"</div>"
+    var i = "<div class='title'>Pooled Standard Deviation:</div><div class='content'>"+addSD('group')+"</div>"
 
     $("#group_select").append("<div id='"+r+"' class='patient'>"+i+"</div>")
 
-    if (window.my_config.sd_array != null)
-    	setSize()
+    if (window.my_config.sd_array != null){
+    	//setSize()
+    }
 }
 
 function getScanID(c,e){
@@ -598,8 +683,6 @@ function getScanID(c,e){
 function updateSidebar(){
 
 	removeSidebar()
-
-	//$('#right').append("<div id='sidebar_top' style='height:50px;width:100%''></div><div id='sidebar'><div id ='sidebar_left' style='float:left;width:528px;'></div><div id ='sidebar_right' style='float:none;margin-left:560px;width:528px'></div></div>")
 
 	var patients = {}
 
@@ -641,18 +724,21 @@ function updateSidebar(){
 
 	}
 
-	if (window.my_config.sd_array != null)
-		setSize()
+	if (window.my_config.sd_array != null){
+		//setSize()
+	}
 
-	if (Object.keys(patients).length >= 1){
+
+
+	if (Object.keys(patients).length = 1){
 		$('#right').css({'display':'inline'})
+		document.getElementById('select').click()
 
-		if (Object.keys(patients).length = 1)
-			document.getElementById('select').click()
+	}
 
-
-		if (Object.keys(patients).length > 1)
-			update_right_sidebar()
+	if (Object.keys(patients).length > 1){
+		$('#right').css({'display':'inline'})
+		update_right_sidebar()
 	}
 
 }

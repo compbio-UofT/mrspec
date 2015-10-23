@@ -20,12 +20,14 @@
     <style type="text/css">
 
 #left {
-    float:left
+    float:left;
+    width:50%;
 }
 
 #right {
     float:left;
     padding-left:5px;
+    width:50%;
 }
 
  .patient {
@@ -78,7 +80,7 @@ ul#tabs li a:hover { background-color: white; }
 ul#tabs li a.selected { color: #000; background-color: white; font-weight: bold; padding: 0.7em 0.3em 0.38em 0.3em; }
 div.tabContent { border: 1px solid #c9c3ba; padding: 0.5em; overflow-y:auto;
    background-color: white;
-   width: 545px;
+   max-width: 545px;
    left: 700px; }
 div.tabContent.hide { display: none; }
 
@@ -199,20 +201,12 @@ div.tabContent.hide { display: none; }
                 <span title="Lower limit of the X-axis range.">Min Age to Show:
             <input type="text" size="2" name="lxlimit">
         </span><br>
-        <span title="Only include the X closest patients above and below the 'AGE'.">Limit:
-            <input type="text" size="2" name="limit">
+        <span title="The age of the query. Used to set the center of the limit.">Age:
+            <div class ='optionBox' style="padding-bottom:3px"><input type="text" size="2" name="age" placeholder="Days"style="border:0px solid;"><img id='ageOpt' src="../img/new_window.png" style="padding-bottom:3px" />
+            </div>
         </span><br>
         <span title="Select data that lies outside of a certain standard deviation score.">SD score:
             <input type="text" size="2" name="sdThreshold">
-        </span><br>
-        <label>Input Patient Data to Compare</label><br>
-        <span title="The age of the query. Used to set the center of the limit.">Age:
-            <div class ='optionBox'><input type="text" size="2" name="age" placeholder="Days"style="border:0px solid;"><img id='ageOpt' src="../img/new_window.png" style="padding-bottom:3px" />
-            </div>
-        </span>
-
-        <span title="Values of the query."> Values:
-            <input type="text" size="5" name="values">
         </span><br>
         </div>
         <div style="width:50%;float:left">
@@ -223,7 +217,21 @@ div.tabContent.hide { display: none; }
                 <span title="Upper limit of the X-axis range.">Max Age to Show:
             <input type="text" size="2" name="uxlimit" value="6570">
         </span><br>
+        <span title="Only include the X closest patients above and below the 'AGE'.">Limit around age:
+            <input type="text" size="2" name="limit">
+        </span>
+        </div><br>
+                <label style="width:100%">Manually Input Patient Data to Compare</label><br>
+		<div style="width:30%;float:left" title="Identifier of patient(s) (optional)">Patient label (i.e. name):
+            <input type="text" size="2" name="p_identifier">
         </div>
+		<div style="width:30%;float:left" title="Ages of patients, delimited by commas.">Age of patient(s):
+            <input type="text" size="2" name="p_ages">
+        </div>
+
+        <div style="width:30%;float:left" title="Metabolite values of the patient(s). Metabolites are those selected on the main query window."> Metabolite values:
+            <input type="text" size="5" name="p_values">
+        </div><br>
     </div>
 
     <div id="keyOptWindow" title="Keyword Options">
@@ -235,6 +243,9 @@ div.tabContent.hide { display: none; }
         </span><br>
         <span title="Indication keywords to exclude from search. e.g. '%glioma'">Indication keywords to exclude:
             <input type="text" size="4" name="indication_exclude">
+        </span><br>
+        <span title="Treatment keywords. e.g. '%glioma'">Treatment keywords:
+            <input type="text" size="4" name="treatment">
         </span><br>
         <span title="Anesthesia keywords. e.g. 'GA'">Anesthesia keywords:
             <input type="text" size="4" name="anesthesia">
@@ -383,15 +394,16 @@ jQuery.ajaxSettings.traditional=true
 
 $(document).ready(function () {
 
+	//initialize and format tabs (they are initially hidden)
     tabInit()
-
+    //initialize and format multiselect boxes (chosen)
     $(".chosen").data("placeholder","Select options...").chosen()
 
-    setSize()
+    //setSize()
 
     $(window).bind('resize', function() {
         scrollControl()
-        setSize()
+        //setSize()
     })
 
     $(window).scroll(function () {
@@ -400,10 +412,11 @@ $(document).ready(function () {
 
 });
 
+//for keyboard shortcuts
 $(document).keyup(function(e) {
-    if (e.keyCode == 13) { $('.query').click(); }     // enter
+    if (e.keyCode == 13) { $('.query').click(); } // enter
     if (e.keyCode == 27) { clearSelection() } //esc
-        if (e.keyCode == 46) { clearCanvas() } //del
+    if (e.keyCode == 46) { clearCanvas() } //del
     });
 
 //HELP WINDOW
