@@ -69,7 +69,7 @@ class MrspecDatabaseQueryer(DatabaseConnection):
         self.metadata = ['Scan_ID',
                          self.unique_desc,
                          "Indication",
-                         "Diagnosis",
+                         "Diagnosis","Treatment","Anesthetic",
                          "ScanBZero",
                          "LocationName"
                          ]    
@@ -208,7 +208,7 @@ class MrspecDatabaseQueryer(DatabaseConnection):
         - limit (str): if 'age' (int) is not null, limits query to this number of scans on either side closest to 'age' (i.e. if limit is 50, then return the 50 closest to 'age' on either side of 'age' for a total of 100 scans)
         - uxlimit (str): upper age limit for scans
         - lxlimit (str): lower age limit for scans
-        - mets_span_each (bool): if True, will return only those scans for which all metabolites
+        - mets_span_each (bool): if True, will return only those scans for which all metabolites are available (i.e. won't coalesce scans)
         - return_single_scan_per_procedure (bool): if True, only return a single scan per procedure date per patient that satisfies all other search criteria
         - filter_by_sd (bool): if True, only return metabolite values that meet the quality threshold stored in self.met_thresholds 
         - keywords (List): keywords to match (inclusive or) in the 'Indication' and 'Diagnosis' fields in the database. 
