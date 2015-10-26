@@ -1,3 +1,10 @@
+var cursorX;
+var cursorY;
+document.onmousemove = function(e){
+	cursorX = e.pageX;
+	cursorY = e.pageY;
+}
+
 function loadThresholds(){
 
 	$.get("config/metabolite_thresholds.txt", function(response) {
@@ -404,8 +411,7 @@ function drawChart(table, name, options) {
 		chart.draw(table, options);
 
 		google.visualization.events.addListener(chart, 'select', function() {
-
-			showHideSeries()
+			selectionMenu()
 			updateSidebar()
 
 			/*
@@ -430,6 +436,7 @@ function drawChart(table, name, options) {
 //google.visualization.events.addListener(charts[c], 'onmouseout', sidebar_mouseout)
 };
 
+
 function getScanID(c,e){
 	for (q = 3; q < c.getNumberOfColumns(); q+= 2){ if (c.getValue(e.row, q) != null)
 		return c.getValue(e.row, q)
@@ -444,13 +451,17 @@ function updateSidebar(){
 
 	for (c in window.my_config.results){
 		selection = window.my_config.charts[c].getSelection()
-		data = window.my_config.results[c]
+		if (selection.length > 0) {
+			if (selection[0].row != null){
+				data = window.my_config.results[c]
 
 
-		for (i = 0; i < selection.length; i++){
-			patient = getScanID(data,selection[i])
-			if (patient in patients || patients == null){} else{
-				patients[patient] = null
+				for (i = 0; i < selection.length; i++){
+					patient = getScanID(data,selection[i])
+					if (patient in patients || patients == null){} else{
+						patients[patient] = null
+					}
+				}
 			}
 		}
 	}
@@ -491,6 +502,7 @@ function updateSidebar(){
 		updateRightSidebar()
 	}
 }
+
 
 function updateRightSidebar(){
 
@@ -560,45 +572,6 @@ function updateRightSidebar(){
     $("#group_select").append("<div id='"+r+"' class='patient'>"+i+"</div>")
 
 }
-/*function sidebar_mouseover(e) {
-	for(chart in window.my_config.charts) {
-		var columns = window.my_config.columns[chart]
-
-		var sel = window.my_config.charts[chart].getSelection();
-        // if selection length is 0, we deselected an element
-        if (sel.length > 0) {
-            // if row is undefined, we clicked on the legend
-            if (sel[0].row != null) {
-            	var col = sel[0].column;
-            	if (columns[col] == col) {
-                    // hide the data series
-                    columns[col] = {
-                    	label: window.my_config.results[chart].getColumnLabel(col),
-                    	type: window.my_config.results[chart].getColumnType(col),
-                    	calc: function () {
-                    		return null;
-                    	}
-                    };
-                    
-                    // grey out the legend entry
-                    window.my_config.series[chart][(col - 2)/2].color = '#CCCCCC';
-                }
-                else {
-                    // show the data series
-                    columns[col] = col;
-                    window.my_config.series[chart][(col - 2)/2].color = null;
-                }
-                var view = new google.visualization.DataView(window.my_config.results[chart]);
-                view.setColumns(columns);
-                options = window.my_config.options
-                title = "Age vs. " + chart
-                		options['series'] = window.my_config.series[name]
-
-                window.my_config.charts[chart].draw(view, window.my_config.options);
-            }
-        }
-    }
-}*/
 
 function compareUniqueDict(a,b) {
 	var a_key = 0
@@ -666,9 +639,58 @@ function addSD(r){
     }
     return ent_list + "</div>"
 }
-//
-function showHideSeries () {
 
+function selectionMenu(){
+	for(chart in window.my_config.charts) {
+		var columns = window.my_config.columns[chart]
+
+		var sel = window.my_config.charts[chart].getSelection();
+        // if selection length is 0, we deselected an element
+        if (sel.length > 0) {
+            // if row is undefined, we clicked on the legend
+            if (sel[0].row === null) {
+            	$('.context-menu-one').contextMenu({x:cursorX,y:cursorY})
+            }
+        }
+    }
+}
+
+function deleteSeries () {
+	for(chart in window.my_config.charts) {
+		var columns = window.my_config.results[chart].getNumberOfColumns()
+		cols_to_include = []
+
+		var sel = window.my_config.charts[chart].getSelection();
+        // if selection length is 0, we deselected an element
+        if (sel.length > 0) {
+            // if row is undefined, we clicked on the legend
+            if (sel[0].row === null) {
+            	if (columns <=4){
+            		alert("You cannot remove the only series in a chart. Try 'clear canvas' to delete the chart altogether.")
+            	} else {
+            		var col = sel[0].column;
+            		for (i=0; i<columns; i++){
+            			if (i != col && (i != col + 1)){
+            				cols_to_include.push(i)
+            			}
+            		}
+
+            		console.log(col)
+            		console.log(cols_to_include)
+            		var view = new google.visualization.DataView(window.my_config.results[chart]);
+            		view.setColumns(cols_to_include);
+            		options = window.my_config.options
+            		options['title'] = "Age vs. " + chart
+            		options['series'] = window.my_config.series[chart]
+
+            		window.my_config.charts[chart].draw(view, options);
+            	}
+            }
+        }
+    }
+}
+
+function showHideSeries () {
 	for(chart in window.my_config.charts) {
 		var columns = window.my_config.columns[chart]
 
@@ -707,3 +729,40 @@ function showHideSeries () {
         }
     }
 }
+
+$(function(){
+    // make button open the menu
+    $('#activate-menu').on('click', function(e) {
+    	e.preventDefault();
+    	$('.context-menu-one').contextMenu();
+        // or $('.context-menu-one').trigger("contextmenu");
+        // or $('.context-menu-one').contextMenu({x: 100, y: 100});
+    });
+    
+    $.contextMenu({
+    	selector: '.context-menu-one', 
+    	trigger: 'none',
+    	callback: function(key, options) {
+    		if (key =='edit'){
+    			showHideSeries()
+    		} else if (key == 'display'){
+
+    		} else if (key == "delete"){
+    			deleteSeries()
+    		} else if (key == "select"){
+
+    		}
+    		clearSelection()
+
+            //var m = "clicked: " + key;
+            //window.console && console.log(m) || alert(m); 
+        },
+        items: {
+        	"edit": {name: "Show/hide series"},
+        	"select": {name: "Select all points in series"},
+        	"display": {name: "Display complete query information"},
+        	"sep1": "---------",
+        	"delete": {name: "Delete series", icon: "delete"},
+        }
+    });
+});
