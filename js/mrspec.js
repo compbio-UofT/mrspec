@@ -759,8 +759,8 @@ $(function(){
         },
         items: {
         	"edit": {name: "Show/hide series"},
-        	"select": {name: "Select all points in series"},
-        	"display": {name: "Display complete query information"},
+        	/*"select": {name: "Select all points in series"},
+        	"display": {name: "Display complete query information"},*/
         	"sep1": "---------",
         	"delete": {name: "Delete series", icon: "delete"},
         }
