@@ -87,33 +87,38 @@ function inputValid(){
     return true
 }
 
-function exportToCsv(){
-	for (result in window.my_config.results){
-		data = window.my_config.results[result]
+function onEach(obj,func,arg){
+	Object.keys(obj).forEach(function(val){
+		args = [obj[val],val].concat(arg)
+		func.apply(obj,args)})
+};
 
-		csv = google.visualization.dataTableToCsv(data)
+function downloadCSV(table,name){
+	csv = google.visualization.dataTableToCsv(table)
 
-		csv_cols = []
-        // Iterate columns
-        for (var i=0; i<data.getNumberOfColumns(); i++) {
-            // Replace any commas in column labels
-            csv_cols.push(data.getColumnLabel(i).replace(/,/g,""));
-        }
-
-        // Create column row of CSV
-        csv = csv_cols.join(",")+"\r\n" + csv;
-
-        downloadCsv(csv, result)
+	csv_cols = []
+    // Iterate columns
+    for (var i=0; i<table.getNumberOfColumns(); i++) {
+        // Replace any commas in column labels
+        csv_cols.push(table.getColumnLabel(i).replace(/,/g,""));
     }
+    // Create column row of CSV
+    csv = csv_cols.join(",")+"\r\n" + csv;
+
+    //prepare download object
+    var blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
+    var url  = window.URL || window.webkitURL;
+    var link = document.createElementNS("http://www.w3.org/1999/xhtml", "a");
+    link.href = url.createObjectURL(blob);
+    link.download = name + ".csv"; 
+
+    var event = document.createEvent("MouseEvents");
+    event.initEvent("click", true, false);
+    link.dispatchEvent(event); 
 }
 
-function exportChartsAsPng(){
-	for (chart in window.my_config.charts){
-		downloadPNG(window.my_config.charts[chart].getImageURI(), chart)
-	}
-}
-
-function downloadPNG (png_out, name) {
+function downloadPNG(chart,name) {
+	png_out = chart.getImageURI()
 
 	var data = atob( png_out.substring( "data:image/png;base64,".length ) ),
 	asArray = new Uint8Array(data.length);
@@ -135,9 +140,8 @@ function downloadPNG (png_out, name) {
 }
 
 function clearCanvas() {
-
 	removeSidebar()
-	
+
 	$('#right').css({'display':'none'})
 
 	$(".myCharts").remove()
@@ -180,60 +184,115 @@ $(function() {
 			Scan_ID_exclude: $('input[name="ScanID_exclude"]').val(),
 
 			windowed_SD_threshold: $('input[name="sdThreshold"]').val(),
-			overlay: (document.getElementById('overlay').checked == false || (document.getElementById('overlay').checked == true && window.my_config == null))? 0:(window.my_config.results[window.my_config.names[0]].getNumberOfColumns())
+			//overlay: (document.getElementById('overlay').checked == false || (document.getElementById('overlay').checked == true && window.my_config == null))? 0:(window.my_config.results[window.my_config.names[0]].getNumberOfColumns())
 		}, function(data) {
 
-			if (document.getElementById('overlay').checked == false || (document.getElementById('overlay').checked == true && window.my_config == null)){
-				window.my_config = {metadata_array: data.metadata_array,
-					sd_array: data.sd_array,
-					results: data.result,
-					names: data.names
+			removeSidebar()
+
+			for (result in data.result) {
+				data.result[result] = new google.visualization.DataTable(data.result[result])
+			}
+
+			//add custom patient data
+			data.result = addCustomPatientData(data.names,data.result)
+
+			//if no query has been made yet, and the next query won't be overlaid on top of existing charts, remove them and render the new charts
+			overlay = document.getElementById('overlay').checked
+			if (overlay == false || (overlay == true && window.my_config == null)){
+
+				$(".myCharts").remove()
+
+				setWindowVals(data)
+				
+				for (result in data.result){
+					renderChartDiv(result)
+
+					configSeries(data.result[result],result)
+					window.my_config.charts[result] = drawChart(data.result[result],result,window.my_config.options)
 				}
 
-				renderChartDivs(data.names)
-
-				for (result in data.result) {
-					window.my_config.results[result] = new google.visualization.DataTable(data.result[result])
-				}
-
-				addCustomPatientData()
-
-				drawChart(window.my_config.results);
+				//otherwise, merge the chart data with what's already on the canvas
 			} else {
 
-				if (window.my_config.sd_array != null){
-					window.my_config['sd_array'] = $.extend({},window.my_config['sd_array'],data.sd_array)
-					window.my_config['metadata_array'] = $.extend({}, window.my_config['metadata_array'], data.metadata_array)
-				}
+				//merge metadata (simple concatenation)
+				window.my_config['sd_array'] = $.extend({},window.my_config['sd_array'],data.sd_array)
+				window.my_config['metadata_array'] = $.extend({}, window.my_config['metadata_array'], data.metadata_array)
 
-				redrawCharts(data.result)
+
+				for (result in data.result){
+					//join old and new tables of same metabolites
+					if (result in window.my_config.results){
+						old_table = window.my_config.results[result]
+						new_table = data.result[result]
+						//determine how many columns there are in both tables to merge
+						number_of_old_cols = []
+						number_of_new_cols = []
+						for (i = 2; i < old_table.getNumberOfColumns(); i++) {
+							number_of_old_cols.push(i)
+						}
+						for (i = 2; i < new_table.getNumberOfColumns(); i++) {
+							number_of_new_cols.push(i)
+						}
+						//join on Age (col 0) and DatabaseID (col 1)
+						data.result[result] = google.visualization.data.join(old_table, new_table, 'full',[[0,0],[1,1]],number_of_old_cols,number_of_new_cols);
+
+						window.my_config.results[result] = data.result[result]
+					//if new table was not a previously queried metabolite, add its results anyways in a new chart div
+				} else {
+					renderChartDiv(result)
+					window.my_config.names.push(result)
+				}
+				configSeries(data.result[result],result)
+				window.my_config.charts[result] = drawChart(data.result[result],result,window.my_config.options)
 			}
-			removeSidebar()
-		});
+		}
+	});
 return false;
 });
 });
 
-function addCustomPatientData(){
+function setWindowVals(data){
+	window.my_config = {metadata_array: data.metadata_array,
+		sd_array: data.sd_array,
+		results: data.result,
+		names: data.names,
+		charts: {},
+		columns: {},
+		series: {},
+		options: {
+			hAxis: {title: 'Age',            
+			logScale: document.getElementById('scale').checked? true:false},
+			vAxis: {title: "mM/kg wet wgt."},
+			legend: { position: 'top', maxLines : 5},
+			aggregationTarget: 'series',
+			selectionMode: 'multiple',
+			pointSize: 4,
+			explorer: {},
+			trendlines: document.getElementById('trendline').checked? { 0: {pointSize: 0, type: 'linear'} }: null,
+			tooltip: {isHtml: true, trigger: 'none'}
+		}
+	}
+}
+
+//bug exists where data is added in order of metabolites dropdown list, not order inputted by user
+function addCustomPatientData(names,results){
 	identifiers = $('input[name="p_identifier"]').val()
 	values = $('input[name="p_values"]').val()
 	ages = $('input[name="p_ages"]').val()
 
 	if ((identifiers && values && ages) != ''){
+		identifiers = $('input[name="p_identifier"]').val().split(/[,\s]+/)
+		ages = $('input[name="p_ages"]').val().split(/[,\s]+/)
+		values = $('input[name="p_values"]').val().split(/[,\s]+/)
 
-		names = window.my_config.names
+		for (i in identifiers){
 
-		identifiers = $('input[name="p_identifier"]').val().split(',')
-		ages = $('input[name="p_ages"]').val().split(',')
-		values = $('input[name="p_values"]').val().split(',')
+			for (name in names){
+				value_count = countCommas(names[name]) + 1
 
-		for (name in names){
-			value_count = countCommas(names[name]) + 1
-
-			for (i in identifiers){
 				row = [parseInt(ages[i]),identifiers[i]]
 
-				for (var q = 1; q <= window.my_config.results[names[name]].getNumberOfColumns() -2 ; q++) {
+				for (var q = 1; q <= results[names[name]].getNumberOfColumns() -2 ; q++) {
 					row.push(null)
 				}
 
@@ -243,81 +302,38 @@ function addCustomPatientData(){
 					row.push(null)
 
 				};
-
-				console.log(row)
 				if (document.getElementById('merge').checked == false){
-					window.my_config.results[names[name]].addColumn('number','Patient: '+identifiers[i])
-					window.my_config.results[names[name]].addColumn({'id': "Scan_ID",'label':'Scan_ID', "role": "tooltip", "type": "string", "p" : { "role" : "tooltip" } })
+					results[names[name]].addColumn('number','Patient: '+identifiers[i])
+					results[names[name]].addColumn({'id': "Scan_ID",'label':'Scan_ID', "role": "tooltip", "type": "string", "p" : { "role" : "tooltip" } })
 
-				} else{
+				} else {
 					mets = $('#metabolites').val()
 					for (met in mets){
-						window.my_config.results[names[name]].addColumn('number',mets[met]+": Patient "+identifiers[i])
-						window.my_config.results[names[name]].addColumn({'id': "Scan_ID",'label':'Scan_ID', "role": "tooltip", "type": "string", "p" : { "role" : "tooltip" } })
-
-
+						results[names[name]].addColumn('number',mets[met]+": Patient "+identifiers[i])
+						results[names[name]].addColumn({'id': "Scan_ID",'label':'Scan_ID', "role": "tooltip", "type": "string", "p" : { "role" : "tooltip" } })
 					}
 				}
-
-
-				window.my_config.results[names[name]].addRow(row)
+				results[names[name]].addRow(row)
 			}
 
 		}
-
+		if (document.getElementById('overlay').checked){
+			$('input[name="p_identifier"]').val('')
+			$('input[name="p_values"]').val('')
+			$('input[name="p_ages"]').val('')
+		}
 	}
+	return results
 } 
 
 function countCommas(string){
 	return (string.match(/,/g) || []).length;
 }
 
-//from http://stackoverflow.com/questions/14480345/how-to-get-the-nth-occurrence-in-a-string
-function nth_occurrence(str, pat, n){
-	var L= str.length, i= -1;
-	while(n-- && i++<L){
-		i= str.indexOf(pat, i);
-	}
-	return i;
-}
-
-function chartArrayintoDatatable(result){
-	var obj = {};
-	result.each(function (i,e) { 
-		obj[ i ] = google.visualization.DataTable( e ); 
-	});
-	return obj
-}
-
-
 function removeSidebar(){
 	$('.patient').remove()
 	$('#group_tab_entry').css({'display':'none'})
 	$('#right').css({'display':'none'})
-}
-
-function downloadCsv(csv_out, name) {
-	var blob = new Blob([csv_out], {type: 'text/csv;charset=utf-8'});
-	var url  = window.URL || window.webkitURL;
-	var link = document.createElementNS("http://www.w3.org/1999/xhtml", "a");
-	link.href = url.createObjectURL(blob);
-	link.download = name + ".csv"; 
-
-	var event = document.createEvent("MouseEvents");
-	event.initEvent("click", true, false);
-	link.dispatchEvent(event); 
-}
-
-function setSize(){
-	var width = ($(window).width() / 2 )
-
-	$('#left').css({
-		'width':width+20,
-
-	})
-	$('#right').css({
-		'width':width-20,
-	})
 }
 
 function scrollControl(){
@@ -361,74 +377,190 @@ function clearSelection(){
 	}
 }
 
-function renderChartDivs(names) {
-	if (document.getElementById('overlay').checked != true){
-		$(".myCharts").remove()
-
-	} 
-
-	for (name in names) {
-		$("#charts").after("<div id = " + names[name] + " style='max-width: 700px; width: 100%; height: 400px; float: right;' class = 'myCharts'>")
-	} 
-
+function renderChartDiv(name) {
+	$("#charts").after("<div id = " + name + " style='max-width: 700px; width: 100%; height: 400px; float: right;' class = 'myCharts'>")
 }
 
-function drawChart(allChartData) {
+function configSeries(table,name){
+	var columns = table.getNumberOfColumns()
+	window.my_config.columns[name] = []
+	window.my_config.series[name] = {}
 
-	charts = {}
-	window.my_config.columns = {}
-	window.my_config.series = {}
-
-	for (c in allChartData){
-		var columns = allChartData[c].getNumberOfColumns()
-		window.my_config.columns[c] = []
-		window.my_config.series[c] = {}
-
-		for (var i = 0; i < columns; i++) {
-			window.my_config.columns[c].push(i);
-			if (i < (columns-2)/2) {
-				window.my_config.series[c][i] = {}
-			}
+	for (var i = 0; i < columns; i++) {
+		window.my_config.columns[name].push(i);
+		if (i < (columns-2)/2) {
+			window.my_config.series[name][i] = {}
 		}
-
-		window.my_config['options'] = {
-			title: 'Age vs. ' + c,
-			hAxis: {title: 'Age',            
-			logScale: document.getElementById('scale').checked? true:false},
-			vAxis: {title: "mM per Kg wet wgt."},
-			legend: { position: 'top', maxLines : 5},
-			aggregationTarget: 'series',
-			selectionMode: 'multiple',
-			pointSize: 4,
-			explorer: {},
-			trendlines: document.getElementById('trendline').checked? { 0: {pointSize: 0, type: 'linear'} }: null,
-			chartArea: columns > 2? {width: '70%', height: '70%'}:{width: '80%', height: '70%'},
-			tooltip: {isHtml: true, trigger: 'none'},
-			series: window.my_config.series[c]
-		}
-
-		charts[c] = new google.visualization.ScatterChart(document.getElementById(c));
-		charts[c].draw(allChartData[c], window.my_config['options']);
 	}
+}
 
-	window.my_config['charts'] = charts;
+function drawChart(table, name, options) {
 
-	for (c in charts) {
-		google.visualization.events.addListener(charts[c], 'select', function() {
+		//set options custom to the chart
+		options['title'] = 'Age vs. ' + name
+		options['series'] = window.my_config.series[name]
 
-			//identify_selection_type()
+		chart = new google.visualization.ScatterChart(document.getElementById(name));
+		chart.draw(table, options);
+
+		google.visualization.events.addListener(chart, 'select', function() {
+
 			showHideSeries()
 			updateSidebar()
-		} )
 
+			/*
+			//get selection
+			var selection = chart.getSelection();
+        	// if selection length is 0, we deselected an element
+        	if (selection.length > 0) {
+	            // if row is defined, we clicked on a data point
+	            if (selection[0].row != null) {
+	            	updateSidebar(selection)
+	            } else{
+					// otherwise, we clicked on the legend
+					showHideSeries(window.my_config.charts, chart, selection)
+
+				}
+			} else {
+				removeSidebar()
+			}*/
+		} )
+		return chart
 //google.visualization.events.addListener(charts[c], 'onmouseover', sidebar_mouseover);
 //google.visualization.events.addListener(charts[c], 'onmouseout', sidebar_mouseout)
-}
 };
 
-//function identify_selection_type()
+function getScanID(c,e){
+	for (q = 3; q < c.getNumberOfColumns(); q+= 2){ if (c.getValue(e.row, q) != null)
+		return c.getValue(e.row, q)
+	}
+}
 
-function sidebar_mouseover(e) {
+function updateSidebar(){
+
+	removeSidebar()
+
+	var patients = {}
+
+	for (c in window.my_config.results){
+		selection = window.my_config.charts[c].getSelection()
+		data = window.my_config.results[c]
+
+
+		for (i = 0; i < selection.length; i++){
+			patient = getScanID(data,selection[i])
+			if (patient in patients || patients == null){} else{
+				patients[patient] = null
+			}
+		}
+	}
+
+	window.my_config['current_selection'] = patients
+
+	for (r in patients){
+
+		var i = ""
+
+		for (m in window.my_config.metadata_array[r]) {
+			for (n in window.my_config.metadata_array[r][m]) {
+				if (window.my_config.metadata_array[r][m][n]) {
+					i+= "<div class='title'>"
+					+n+": </div><div class='content'>" 
+					+ window.my_config.metadata_array[r][m][n] + "</div>"
+				}
+
+
+			}
+		}
+		if (window.my_config.sd_array[r] != null){
+			i+= "<div class='title'>SD score for available metabolites:</div><div class='content'>" + addSD(r) +"</div>"
+		}
+
+		$("#selection").append("<div id='"+r+"' class='patient'>"+i+"</div>")
+
+	}
+
+	patient_count = Object.keys(patients).length
+	if (patient_count == 0 ){
+		removeSidebar()
+	} else if (patient_count == 1){
+		$('#right').css({'display':'inline'})
+		document.getElementById('select').click()
+	} else if (patient_count > 1){
+		$('#right').css({'display':'inline'})
+		updateRightSidebar()
+	}
+}
+
+function updateRightSidebar(){
+
+	$('#group_tab_entry').css({'display':'inline'})
+
+	patients = window.my_config.current_selection
+	sd_array = window.my_config.sd_array
+	n = Object.keys(patients).length
+
+	shared_mets = {}
+
+	for (r in patients){
+		for (i in sd_array[r]){
+			for (met in sd_array[r][i]){
+
+				shared = true
+
+				for (s in patients){
+
+					this_one = false
+
+					for (j in sd_array[s]){
+						for (mm in sd_array[s][j]){
+							if (met == mm) 
+								this_one = true
+						}
+					}
+
+					if(this_one==false){
+						shared = false
+					}
+				}
+				if (shared == true){
+					if (met in shared_mets){						
+						shared_mets[met] += sd_array[r][i][met] / n
+					} else {						
+						shared_mets[met] = 0
+					}
+				}
+			}
+		}
+	}
+
+    /*//get standard deviation values
+    for (r in patients){
+    	for (i in sd_array[r]){
+    		for (met in sd_array[r][i]){
+    			if (met in shared_mets){
+    				shared_mets[met] += sd_array[r][i][met] / n
+    			}
+    		}
+    	}
+    } */
+
+    var sd_array = []
+    for (met in shared_mets){
+    	var qq = {}
+
+    	qq[met]=shared_mets[met]
+    	sd_array.push(qq)
+    }
+
+    window.my_config.sd_array['group']=sd_array
+
+    var i = "<div class='title'>Pooled Standard Deviation:</div><div class='content'>"+addSD('group')+"</div>"
+
+    $("#group_select").append("<div id='"+r+"' class='patient'>"+i+"</div>")
+
+}
+/*function sidebar_mouseover(e) {
 	for(chart in window.my_config.charts) {
 		var columns = window.my_config.columns[chart]
 
@@ -458,39 +590,15 @@ function sidebar_mouseover(e) {
                 }
                 var view = new google.visualization.DataView(window.my_config.results[chart]);
                 view.setColumns(columns);
-                window.my_config.options.title = "Age vs. " + chart
+                options = window.my_config.options
+                title = "Age vs. " + chart
+                		options['series'] = window.my_config.series[name]
+
                 window.my_config.charts[chart].draw(view, window.my_config.options);
             }
         }
     }
-}
-
-function redrawCharts(results){
-	var merged_results = null
-	var results_new = window.my_config.results
-	for (d in results_new){
-		var label = ''
-		if (d in results){
-			var n = new google.visualization.DataTable(results[d])
-			var o = results_new[d]
-
-			var old_cols = []
-
-			for (i = 2; i < results_new[d].getNumberOfColumns(); i++) {
-				old_cols.push(i)
-			}
-
-			merged_results = google.visualization.data.join(o, n, 'full',[[0,0],[1,1]],old_cols,[2,3]);
-
-			results_new[d] = merged_results
-			window.my_config.results[d] = merged_results
-
-            //label = results[d].cols[results[d].cols.length -1].label
-        }
-        //merged_results[d]['cols'] = merged_results[d]['cols'].concat({"id": "", "label": label, "type": "number"})
-    }
-    drawChart(results_new)
-}
+}*/
 
 function compareUniqueDict(a,b) {
 	var a_key = 0
@@ -558,7 +666,7 @@ function addSD(r){
     }
     return ent_list + "</div>"
 }
-
+//
 function showHideSeries () {
 
 	for(chart in window.my_config.charts) {
@@ -590,155 +698,12 @@ function showHideSeries () {
                 }
                 var view = new google.visualization.DataView(window.my_config.results[chart]);
                 view.setColumns(columns);
-                window.my_config.options.title = "Age vs. " + chart
-                window.my_config.charts[chart].draw(view, window.my_config.options);
+                options = window.my_config.options
+                options['title'] = "Age vs. " + chart
+                options['series'] = window.my_config.series[chart]
+
+                window.my_config.charts[chart].draw(view, options);
             }
         }
     }
-}
-
-function update_right_sidebar(){
-
-	$('#group_tab_entry').css({'display':'inline'})
-
-	patients = window.my_config.current_selection
-	sd_array = window.my_config.sd_array
-
-	shared_mets = {}
-
-	for (r in patients){
-		for (i in sd_array[r]){
-			for (met in sd_array[r][i]){
-
-				shared = true
-
-				for (s in patients){
-
-					this_one = false
-
-					for (j in sd_array[s]){
-						for (mm in sd_array[s][j]){
-							if (met == mm) 
-								this_one = true
-						}
-					}
-
-					if(this_one==false){
-						shared = false
-					}
-				}
-				if (shared == true && !(met in shared_mets)){
-					shared_mets[met]=0
-				}
-			}
-		}
-	}
-	var n = Object.keys(patients).length
-    //get standard deviation values
-    for (r in patients){
-    	for (i in sd_array[r]){
-    		for (met in sd_array[r][i]){
-    			if (met in shared_mets){
-    				shared_mets[met] += sd_array[r][i][met] / n
-    			}
-    		}
-    	}
-    }
-
-    var sd_array = []
-    for (met in shared_mets){
-    	var qq = {}
-
-    	qq[met]=shared_mets[met]
-    	sd_array.push(qq)
-    }
-
-    window.my_config.sd_array['group']=sd_array
-
-    /*
-    for (met in shared_mets){
-        console.log(met)
-        sel = window.my_config.charts[met].getSelection()
-        tot = 0
-        for (val in sel){
-            tot += window.my_config.charts[met].getValue(sel[val].row,sel[val].column)
-        }
-    }*/
-
-    var i = "<div class='title'>Pooled Standard Deviation:</div><div class='content'>"+addSD('group')+"</div>"
-
-    $("#group_select").append("<div id='"+r+"' class='patient'>"+i+"</div>")
-
-    if (window.my_config.sd_array != null){
-    	//setSize()
-    }
-}
-
-function getScanID(c,e){
-	for (q = 3; q < c.getNumberOfColumns(); q+= 2){ if (c.getValue(e.row, q) != null)
-		return c.getValue(e.row, q)
-	}
-}
-
-function updateSidebar(){
-
-	removeSidebar()
-
-	var patients = {}
-
-	for (c in window.my_config.charts){
-		selection = window.my_config.charts[c].getSelection()
-		data = window.my_config.results[c]
-
-
-		for (i = 0; i < selection.length; i++){
-			patient = getScanID(data,selection[i])
-			if (patient in patients || patients == null){} else{
-				patients[patient] = null
-			}
-		}
-	}
-
-	window.my_config['current_selection'] = patients
-
-	for (r in patients){
-
-		var i = ""
-
-		for (m in window.my_config.metadata_array[r]) {
-			for (n in window.my_config.metadata_array[r][m]) {
-				if (window.my_config.metadata_array[r][m][n]) {
-					i+= "<div class='title'>"
-					+n+": </div><div class='content'>" 
-					+ window.my_config.metadata_array[r][m][n] + "</div>"
-				}
-
-
-			}
-		}
-		if (window.my_config.sd_array[r] != null){
-			i+= "<div class='title'>SD score for available metabolites:</div><div class='content'>" + addSD(r) +"</div>"
-		}
-
-		$("#selection").append("<div id='"+r+"' class='patient'>"+i+"</div>")
-
-	}
-
-	if (window.my_config.sd_array != null){
-		//setSize()
-	}
-
-
-
-	if (Object.keys(patients).length = 1){
-		$('#right').css({'display':'inline'})
-		document.getElementById('select').click()
-
-	}
-
-	if (Object.keys(patients).length > 1){
-		$('#right').css({'display':'inline'})
-		update_right_sidebar()
-	}
-
 }
