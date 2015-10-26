@@ -4,7 +4,7 @@ from os import path
 from flask import Flask, render_template, request, jsonify, json as j, send_file
 import __main__ as main
 from connection import is_run_from_commandline, prompt_yes_no
-from queryer import *
+from query_database import *
 
 # Initialize the Flask application
 app = Flask(__name__)
@@ -25,9 +25,8 @@ def format_legend(column,legend):
     else:
         return column
 
-#adds patient as separate dataseries
 ##updated for use with DataTable joining
-def format_query_with_pseries_and_names(query, columns, values, legend, overlay):
+def format_query_with_names(query, columns, values, legend):#, overlay):
     #values = values.split(",")
     ##print rows, columns, values
 
@@ -53,10 +52,10 @@ def format_query_with_pseries_and_names(query, columns, values, legend, overlay)
             vals = [{'v': str(row[0])},{'v':str(row[-len(c.metadata)+1])},{'v': float(row[i+1]) if row[i+1] is not None else None},{'v': str(row[-len(c.metadata)])}]
             rows.append({'c':vals})
 
-        #add patient data as its own data series
-        if overlay == 0:
-            rows.append({'c':[{'v': values[0]},{'v': None},{'v':float(values[i+1])} ]})
-            cols.append({'id': "Patient Data", 'label': "Patient Data", 'type': 'number'})
+        ##add patient data as its own data series
+        #if overlay == 0:
+            #rows.append({'c':[{'v': values[0]},{'v': None},{'v':float(values[i+1])} ]})
+            #cols.append({'id': "Patient Data", 'label': "Patient Data", 'type': 'number'})
 
         q['rows'] = rows
         q['cols'] = cols
@@ -65,13 +64,9 @@ def format_query_with_pseries_and_names(query, columns, values, legend, overlay)
 
     return qq
 
-#adds patient as separate dataseries
 ##
-def format_query_with_pseries(query, columns, values, legend):
-    #values = values.split(",")
-    ##print rows, columns, values
+def format_query(query, columns, values, legend):
 
-    #print values
     cols = [{'id': "Age", 'label': "Age", 'type': 'number'}] + \
         [{'id': "DatabaseID", 'label':'DatabaseID', "role": "tooltip", "type": "string", "p" : { "role" : "tooltip" } }]
     rows = []
@@ -219,8 +214,8 @@ def format_query_with_point(query, columns, values):
 
     return q
 
-#does not include patient data
-def format_query(query, columns, values):
+#does not include ScanID column
+def format_query_simple(query, columns, values):
     #values = values.split(",")
     ##print rows, columns, values
 
@@ -248,15 +243,13 @@ def windowed_SD(cols, query, gender, field, location, unique, filter_by_sd, over
     i=0
     for row in query:
         age = row[0]
-        patient_ID = row[-len(c.metadata)+1]
-
-        #subject_metabolites_query = default_query(patient_ID, age, "", "", location, met_threshold.keys(), "", False, False, filter_by_sd, [],[], [])
+        Scan_ID = str(row[-len(c.metadata)])
 
         sd = []
 
         j=2
         for column in cols[2:-len(c.metadata)]:
-            #print column
+            #print column, row[j]
             metabolite = column[:-3]
             if metabolite in c.met_echo and row[j] is not None:
                 #subquery = ["SELECT AVG({0}), STDDEV_SAMP({0}),COUNT({0}) FROM ".format(column),""]
@@ -271,7 +264,7 @@ def windowed_SD(cols, query, gender, field, location, unique, filter_by_sd, over
 
                 sd.append({metabolite: float(row[j])})
             j+=1
-        all_sd[str(row[-len(c.metadata)])] = sd
+        all_sd[Scan_ID] = sd
         i+=1
 
     if overlay == 0:
@@ -335,7 +328,7 @@ def get_query():
     filter_by_sd=True
     return_single_scan_per_procedure=False
     location = request.args.get('location', '', type=str)
-    overlay = request.args.get('overlay', 0, type=int)
+    #overlay = request.args.get('overlay', 0, type=int)
     calc_sd = True
     diagnosis = request.args.get('diagnosis', 0, type=str)
     diagnosis_exclude = request.args.get('diagnosis_exclude', 0, type=str)
@@ -393,23 +386,20 @@ def get_query():
             legend.append(u"\u00B1" + windowed_SD_threshold + " SD")
 
     if merge == 'true':
-        d = {','.join(metabolites):format_query_with_pseries(q,
+        d = {','.join(metabolites):format_query(q,
                                                    ['Age']+metabolites,
                                                    (str(age) + "," + str(values)).split(","),
                                                    legend)}
     else:
-        d = format_query_with_pseries_and_names(q,
+        d = format_query_with_names(q,
                                                 ['Age']+metabolites,
                                                 (str(age) + "," + str(values)).split(","),
-                                                legend,
-                                                overlay)
+                                                legend)#,overlay)
 
     return jsonify(result=d,
                    names = [','.join(metabolites)] if merge == "true" else metabolites,
                    metadata_array=format_metadata2(q,overlay),
                    sd_array = sd_array)
-
-
 
 if __name__ == '__main__':
     # Reload Flask app when template file changes. App must be run with use_reloader=True to work
