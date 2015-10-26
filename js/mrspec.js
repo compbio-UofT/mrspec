@@ -178,7 +178,7 @@ $(function() {
 			location: $('#location').val(),
 			merge: document.getElementById('merge').checked,
 			legend: document.getElementById('legend').checked,
-			metabolites: $('#metabolites').val(),
+			metabolites: $('#metabolites').getSelectionOrder(),
 			classification_code: $('#code').val(),
 
 			values: $('input[name="values"]').val(),
@@ -656,11 +656,11 @@ function selectionMenu(){
 }
 
 function deleteSeries () {
-	for(chart in window.my_config.charts) {
-		var columns = window.my_config.results[chart].getNumberOfColumns()
+	for(name in window.my_config.charts) {
+		var columns = window.my_config.results[name].getNumberOfColumns()
 		cols_to_include = []
 
-		var sel = window.my_config.charts[chart].getSelection();
+		var sel = window.my_config.charts[name].getSelection();
         // if selection length is 0, we deselected an element
         if (sel.length > 0) {
             // if row is undefined, we clicked on the legend
@@ -668,22 +668,22 @@ function deleteSeries () {
             	if (columns <=4){
             		alert("You cannot remove the only series in a chart. Try 'clear canvas' to delete the chart altogether.")
             	} else {
-            		var col = sel[0].column;
-            		for (i=0; i<columns; i++){
+            		 var col = sel[0].column;
+            		/*for (i=0; i<columns; i++){
             			if (i != col && (i != col + 1)){
             				cols_to_include.push(i)
             			}
             		}
 
-            		console.log(col)
-            		console.log(cols_to_include)
-            		var view = new google.visualization.DataView(window.my_config.results[chart]);
-            		view.setColumns(cols_to_include);
+            		var view = new google.visualization.DataView(window.my_config.results[name]);
+            		view.setColumns(cols_to_include);*/
             		options = window.my_config.options
             		options['title'] = "Age vs. " + chart
-            		options['series'] = window.my_config.series[chart]
+            		options['series'] = window.my_config.series[name]
 
-            		window.my_config.charts[chart].draw(view, options);
+            		window.my_config.results[name].removeColumns(col, 2)
+
+            		window.my_config.charts[name].draw(window.my_config.results[name], options);
             	}
             }
         }
