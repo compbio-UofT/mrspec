@@ -167,7 +167,7 @@ div.tabContent.hide { display: none; }
                     <a href="javascript:void();" id="query" class='query'><img src='../img/submit.png' alt="Submit Query" style="float:right" /></a>
 
                     <div style='float:left'>
-                    <a href="javascript:clearSelection()">clear selection (esc)</a> - <a href="javascript:clearCanvas()">clear canvas (del)</a> - <a href="javascript:void();" id="dump" onclick="exportToCsv()">export canvas to file</a> - <a href="javascript:void();" id="png_dump" onclick="exportChartsAsPng()"> export charts as .png</a> - <a href="javascript:void();" id="help" >help</a>
+                    <a href="javascript:clearSelection();">clear selection (esc)</a> - <a href="javascript:clearCanvas();">clear canvas (del)</a> - <a href="javascript:void();" id="dump" onclick="javascript:onEach(window.my_config.results,downloadCSV);">export canvas to file</a> - <a href="javascript:void();" id="png_dump" onclick="javascript:onEach(window.my_config.charts,downloadCSV);"> export charts as .png</a> - <a href="javascript:void();" id="help" >help</a>
                     </div>
                 </form>
             </p>
@@ -254,20 +254,23 @@ div.tabContent.hide { display: none; }
 
     <div id="helpWindow" title="QuickStart Guide">
         <label>General Help and Submitting a Query</label>
-        <p>The minimum information for a query is a metabolite to display, which can be entered in the upper left hand corner. You may further specify refinements such as gender, field strength, location, and much more. To submit a query, click "submit query" in the upper left hand corner, or press ENTER at any time.</p>
+        <p>The minimum information required to display a query is one or more metabolite to show, which can be entered in the upper left hand corner. You may specify further refinements such as gender, field strength, location, and much more. You can also manually enter patient data to compare to the database. 
+        To submit a query, click "submit query" in the upper left hand corner, or press ENTER at any time.</p>
         <p>
-            You can find out more about a particular option by hovering over it for a few moments to display a tip. The symbol "<img src="../img/new_window.png" style="padding-bottom:3px" />" indicates that more settings related to that option are available - just click on the symbol to reveal them.
+            You can find out more about a particular option by hovering over it for a few moments to display a tooltip. The symbol "<img src="../img/new_window.png" style="padding-bottom:3px" />" indicates that more settings related to that option are available - just click on the symbol to reveal them.
         </p>
         <label>New Features</label>
-        <p>• Change default standard deviation thresholds and echotimes by clicking "More options".<br>
-            • For metabolites, location and indication code, click on or type inside the box to search/reveal options; you may select multiple options
-            • Can now merge two or more metabolites on the same graph
+        <p> • Keyword search has been expanded to include Treatment, Indication and Anesthesia.<br>
+        	• Now you can manually enter patient data to display on the graph under "More Options". Note that when the 'overlay' query option is selected, the input fields for patient data will be cleared to prevent previously entered data from inadvertently being added again.<br>
+        	• Change default standard deviation thresholds and echotimes by clicking "More options".<br>
+            • For metabolites, location and indication code, click on or type inside the box to search/reveal options; you may select multiple options<br>
+            • Merge two or more metabolites on the same graph by selecting the "Merge" checkbox.
         </p>
         <label>Keyword Search</label>
         <p>Keyword search is implemented using the MySQL 'LIKE' clause, whose basic usage can be summarized as follows:<br>
             • For most searches, use the '%' symbol on both ends of the word, i.e. '%glioma%'. '%' is a wildcard for an unlimited number of characters. For instance, if you want to match the word 'dog' in the phrase 'A dog runs', you would need to search '%dog%' since it appears in the middle of the sentence.<br>
             • Use the '_' symbol as a wildcard for a single character. For instance, 'T_m' would match 'Tim','Tom','Tum' and any other letter in the middle.<br>
-            • You can enter multiple keywords separated by a comma; scans will be returned if they match any of the keywords.<br>
+            • You can enter multiple keywords separated by a comma; scans will be returned if they match any of the keywords entered in that box.<br>
             • By clicking on <img src="../img/new_window.png" style="padding-bottom:3px" /> in the keyword box, you can enter keywords to EXCLUDE scans from being returned as matches. Only scans that do not have any of these words will be returned.
         </p>
     </div>
@@ -388,6 +391,7 @@ div.tabContent.hide { display: none; }
 
 loadThresholds()
 loadEchotimes()
+//Use version 41 as it is compatible with legend select/deselect function https://developers.google.com/chart/interactive/docs/library_loading_enhancements#frozen-versions
 google.charts.load('41', {packages: ['corechart']});
 //needed to let list be transfered
 jQuery.ajaxSettings.traditional=true
