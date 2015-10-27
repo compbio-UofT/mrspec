@@ -443,27 +443,34 @@ function getScanID(c,e){
 	}
 }
 
-function updateSidebar(){
+function updateSidebar(current_selection){
+	console.log(current_selection)
 
 	removeSidebar()
 
 	var patients = {}
 
-	for (c in window.my_config.results){
-		selection = window.my_config.charts[c].getSelection()
-		if (selection.length > 0) {
-			if (selection[0].row != null){
-				data = window.my_config.results[c]
+
+	if (current_selection === undefined){
+
+		for (c in window.my_config.results){
+			selection = window.my_config.charts[c].getSelection()
+			if (selection.length > 0) {
+				if (selection[0].row != null){
+					data = window.my_config.results[c]
 
 
-				for (i = 0; i < selection.length; i++){
-					patient = getScanID(data,selection[i])
-					if (patient in patients || patients == null){} else{
-						patients[patient] = null
+					for (i = 0; i < selection.length; i++){
+						patient = getScanID(data,selection[i])
+						if (patient in patients || patients == null){} else{
+							patients[patient] = null
+						}
 					}
 				}
 			}
-		}
+		} 
+	} else {
+		patients=current_selection
 	}
 
 	window.my_config['current_selection'] = patients
@@ -668,7 +675,7 @@ function deleteSeries () {
             	if (columns <=4){
             		alert("You cannot remove the only series in a chart. Try 'clear canvas' to delete the chart altogether.")
             	} else {
-            		 var col = sel[0].column;
+            		var col = sel[0].column;
             		/*for (i=0; i<columns; i++){
             			if (i != col && (i != col + 1)){
             				cols_to_include.push(i)
@@ -690,6 +697,33 @@ function deleteSeries () {
     }
 }
 
+function selectSeries () {
+	for(name in window.my_config.charts) {
+		var columns = window.my_config.results[name].getNumberOfColumns()
+		cols_to_include = []
+
+		var sel = window.my_config.charts[name].getSelection();
+        // if selection length is 0, we deselected an element
+        if (sel.length > 0) {
+            // if row is undefined, we clicked on the legend
+            if (sel[0].row === null) {
+
+            	var col = sel[0].column + 1
+            	console.log(col)
+
+patients_array = window.my_config.results[name].getDistinctValues(col)
+patients = {}
+patients_array.forEach(	function(val, i) {
+    if (val === null){return;} else {patients[val] = null;}
+})
+
+            	updateSidebar(patients)
+            	
+            }
+        }
+    }
+}
+
 function showHideSeries () {
 	for(chart in window.my_config.charts) {
 		var columns = window.my_config.columns[chart]
@@ -700,6 +734,7 @@ function showHideSeries () {
             // if row is undefined, we clicked on the legend
             if (sel[0].row === null) {
             	var col = sel[0].column;
+            	//console.log(col)
             	if (columns[col] == col) {
                     // hide the data series
                     columns[col] = {
@@ -749,18 +784,19 @@ $(function(){
 
     		} else if (key == "delete"){
     			deleteSeries()
+    			clearSelection()
     		} else if (key == "select"){
-
+    			selectSeries()
     		}
-    		clearSelection()
+    		//clearSelection()
 
             //var m = "clicked: " + key;
             //window.console && console.log(m) || alert(m); 
         },
         items: {
         	"edit": {name: "Show/hide series"},
-        	/*"select": {name: "Select all points in series"},
-        	"display": {name: "Display complete query information"},*/
+        	"select": {name: "Select all points in series"},
+        	/*"display": {name: "Display complete query information"},*/
         	"sep1": "---------",
         	"delete": {name: "Delete series", icon: "delete"},
         }
