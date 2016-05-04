@@ -204,7 +204,8 @@ class MrspecDatabaseEditor(MrspecDatabaseQueryer):
     
                     added = " + ".join(met_to_calculate[met])
                     least = ','.join(["`"+ mm + "_%SD`" for mm in met_to_calculate[met]])
-    
+                    
+                    #make zero or != zero?
                     not_zero = ''.join(['AND '," >= 0 AND ".join([ mm for mm in met_to_calculate[met]]), '>=0'])
                     
                     if not self.silent: print('--------------FIX AGGMET VALUES-----------------')

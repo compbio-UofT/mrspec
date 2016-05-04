@@ -188,7 +188,6 @@ class MrspecDatabaseQueryer(DatabaseConnection):
             return None
     
     def _parse_IDs(self,ID):
-        print ID
         return None if not ID else "'"+("','").join([identifier.strip() for identifier in ID.split(',')])+"'"
 
     #bug exists where could access scan information from later date because of use of coalesce if unique is True                     !!!                                        !!!!!

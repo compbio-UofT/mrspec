@@ -711,11 +711,11 @@ function selectSeries () {
             	var col = sel[0].column + 1
             	console.log(col)
 
-patients_array = window.my_config.results[name].getDistinctValues(col)
-patients = {}
-patients_array.forEach(	function(val, i) {
-    if (val === null){return;} else {patients[val] = null;}
-})
+            	patients_array = window.my_config.results[name].getDistinctValues(col)
+            	patients = {}
+            	patients_array.forEach(	function(val, i) {
+            		if (val === null){return;} else {patients[val] = null;}
+            	})
 
             	updateSidebar(patients)
             	
