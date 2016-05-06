@@ -26,7 +26,7 @@ def format_legend(column,legend):
         return column
 
 ##updated for use with DataTable joining
-def format_query_with_names(query, columns, values, legend):#, overlay):
+def format_query_with_names(query, columns, values, legend):
     #values = values.split(",")
     ##print rows, columns, values
 
@@ -100,143 +100,16 @@ def format_query(query, columns, values, legend):
 
     return q
 
-def format_metadata(query, overlay):
-    array = []
-    for row in query:
-        array.append([{c.metadata[i]:r} for i, r in enumerate(row[-len(c.metadata):])])
-
-    if overlay == 0:
-        array += [[{'Query Patient':''}]]
-
-    return array
-
-def format_metadata2(query, overlay):
+def format_metadata(query):
     array = {}
     for row in query:
         #array.append([{metadata[i]:r} for i, r in enumerate(row[-len(metadata):])])
         array[str(row[-len(c.metadata)])] = [{c.metadata[i]:r} for i, r in enumerate(row[-len(c.metadata):])]
 
-    if overlay == 0:
-        array[''] = [{'Query Patient':'test'}]
-
     return array
 
-#adds patient as separate dataseries and prepares separate graphs for each with tooltips
-def format_query_with_pseries_names_tooltips(query, columns, values):
-    #values = values.split(",")
-    ##print rows, columns, values
-
-    #print values
-    qq = {}
-
-    #print columns
-    for i,column in enumerate(columns[1:]):
-        q = {}
-        cols = []
-        rows = []
-
-        cols.append({'id': "Age", 'label': "Age", 'type': 'number'})
-        cols.append({'id': column, 'label': column, '+': 'number'})
-        cols.append({"id": None, "role": "tooltip", "type": "string", "p" : { "role" : "tooltip" } } )
-        cols.append({'id': "Patient Data", 'label': "Patient Data", 'type': 'number'})
-        cols.append({"id": None, "role": "tooltip", "type": "string", "p" : { "role" : "tooltip" } } )
-
-
-        for row in query:
-            vals = [{'v': float(row[1])},{'v': float(row[i+1])},{'v':row[0] if row[0] != '' else "No indication available."},{'v': None}, {'v': None}]
-            rows.append({'c':vals})
-            #add patient data as its own data series
-            rows.append({'c':[{'v': values[0]},{'v': None},{'v': None},{'v':float(values[i+1])},{'v':None}]})
-
-        q['rows'] = rows
-        q['cols'] = cols
-
-        qq[column] = q
-
-    return qq
-
-#adds patient as separate dataseries, for merged graphs
-def format_query_with_pseries_tooltips(query, columns, values):
-    #values = values.split(",")
-    #print columns, values
-
-    #print values
-
-    q = {}
-    cols = [{'id': columns[0], 'label': columns[0], 'type': 'number'}] #rendered as domain
-    rows = []
-
-    columns.append("Patient Data")
-    for column in columns[1:]:
-        cols.append({'id': column, 'label': column, 'type': 'number'})
-        cols.append({"id": None, "role": "tooltip", "type": "string", "p" : { "role" : "tooltip" } } )
-
-    #print cols
-
-    for row in query:
-        vals = []
-        for value in row[1:]:
-            vals += [{'v': float(value)},{'v': row[0] if row[0] != '' else "No indication available."}]
-        vals += [{'v': None},{'v':None}] #column reserved for query patient dataseries + tooltip
-        rows.append({'c':vals})
-
-    for val in values[1:]:
-        rows.append({'c':[{'v': values[0]}] + [{'v': None} for value in row[2:]]+[{'v':float(val)},{'v':None}]})
-
-    q['rows'] = rows
-    q['cols'] = cols
-
-    return q
-
-#adds patient as an extra data point
-def format_query_with_point(query, columns, values):
-    #values = values.split(",")
-    ##print rows, columns, values
-
-    #print(values)
-
-    q = {}
-    cols = []
-    rows = []
-
-    for column in columns:
-        cols.append({'id': column, 'label': column, 'type': 'number'})
-
-    for row in query:
-        vals = [{'v': float(value)} for value in row]
-        rows.append({'c':vals})
-
-
-    rows.append({'c':[{'v': float(val)} for val in values]})
-
-    q['rows'] = rows
-    q['cols'] = cols
-
-    return q
-
-#does not include ScanID column
-def format_query_simple(query, columns, values):
-    #values = values.split(",")
-    ##print rows, columns, values
-
-    q = {}
-    cols = []
-    rows = []
-
-    for column in columns:
-        cols.append({'id': column, 'label': column, 'type': 'number'})
-
-    for row in query:
-        values = [{'v': float(value)} for value in row]
-        rows.append({'c':values})
-
-    q['rows'] = rows
-    q['cols'] = cols
-
-    return q
-
 ##refactored to work with DataTables join
-def windowed_SD(cols, query, gender, field, location, unique, filter_by_sd, overlay):
+def windowed_SD(cols, query, gender, field, location, unique, filter_by_sd):#, overlay):
     '''Formats the standard deviation values for metadata to be passed to the front end.'''
     all_sd = {}
 
@@ -267,8 +140,8 @@ def windowed_SD(cols, query, gender, field, location, unique, filter_by_sd, over
         all_sd[Scan_ID] = sd
         i+=1
 
-    if overlay == 0:
-        all_sd[''] = []
+    #if overlay == 0:
+        #all_sd[''] = []
 
     return all_sd
 
@@ -312,51 +185,48 @@ def alter_echotimes():
 
 @app.route('/_get_query')
 def get_query():
-    ID_exclude = request.args.get('ID_exclude', 0, type=str)
-    Scan_ID_exclude=request.args.get('Scan_ID_exclude', 0, type=str)
-    
-    ID = request.args.get('ID', 0, type=str)
-    #ID = '' if not ID else ''.join(ID.split(','))
-    Scan_ID=request.args.get('Scan_ID', 0, type=str)    
-    
+    '''Process the query from the frontend.
+    '''
     metabolites = request.values.getlist('metabolites') #metabolites
     values = request.args.get('values', 0, type=str) #values
     merge = request.args.get('merge', 0, type=str)
     age = request.args.get('age', 0, type=int)
     gender = request.args.get('gender', 0, type=str)
     field = request.args.get('field', 0, type=str)
+    location = request.args.get('location', '', type=str)
+    
     filter_by_sd=True
     return_single_scan_per_procedure=False
-    location = request.args.get('location', '', type=str)
-    #overlay = request.args.get('overlay', 0, type=int)
     calc_sd = True
+    
     diagnosis = request.args.get('diagnosis', 0, type=str)
-    diagnosis_exclude = request.args.get('diagnosis_exclude', 0, type=str)
     diagnosis = diagnosis if not diagnosis else diagnosis.split(',')
+    
+    diagnosis_exclude = request.args.get('diagnosis_exclude', 0, type=str)
     diagnosis_exclude = diagnosis_exclude if not diagnosis_exclude else diagnosis_exclude.split(',')
+    
     indication = request.args.get('indication', 0, type=str)
-    indication_exclude = request.args.get('indication_exclude', 0, type=str)
     indication = indication if not indication else indication.split(',')
+    
+    indication_exclude = request.args.get('indication_exclude', 0, type=str)
     indication_exclude = indication_exclude if not indication_exclude else indication_exclude.split(',')
     
     treatment = request.args.get('treatment', 0, type=str)
     treatment = treatment if not treatment else treatment.split(',')
-    
 
     anesthesia = request.args.get('anesthesia', 0, type=str)
     anesthesia = anesthesia if not anesthesia else anesthesia.split(',')
     
     windowed_SD_threshold = request.args.get('windowed_SD_threshold',0,type=str)
     
-    classification_code=request.args.getlist('classification_code')
     detailed_legend = request.args.get('legend', 0, type=str)
     
-    #temporary workaround while figuring out what to do with patient data
-    overlay = 1
-    
-    query = c.parse_query(ID=ID,Scan_ID=Scan_ID,ID_exclude=ID_exclude,
-                          Scan_ID_exclude=Scan_ID_exclude,
-                          treatment=treatment,
+    query = c.parse_query(
+        ID=request.args.get('ID', 0, type=str),
+        Scan_ID=request.args.get('Scan_ID', 0, type=str),
+        ID_exclude=request.args.get('ID_exclude', 0, type=str),
+        Scan_ID_exclude=request.args.get('Scan_ID_exclude', 0, type=str),
+        treatment=treatment,
         age=age,
         gender=gender,
         field=field,
@@ -369,36 +239,37 @@ def get_query():
         return_single_scan_per_procedure=return_single_scan_per_procedure,
         filter_by_sd=filter_by_sd,
         diagnosis=diagnosis,
-        diagnosis_exclude = diagnosis_exclude, windowed_SD_threshold=windowed_SD_threshold, classification_code=classification_code, indication=indication,indication_exclude=indication_exclude,anesthesia=anesthesia)
-     
-
-    
-    print query
+        diagnosis_exclude = diagnosis_exclude, 
+        windowed_SD_threshold=windowed_SD_threshold, 
+        classification_code=request.args.getlist('classification_code'), 
+        indication=indication,
+        indication_exclude=indication_exclude,
+        anesthesia=anesthesia)
     
     cols,q = c.execute_and_return_query(query)
         
-    sd_array = windowed_SD(cols, q, gender, field, location, return_single_scan_per_procedure, filter_by_sd, overlay)
+    sd_array = windowed_SD(cols, q, gender, field, location, return_single_scan_per_procedure, filter_by_sd)
 
     legend = [field, location]
     if detailed_legend == 'true':
         legend.append(gender)
         if windowed_SD_threshold:
-            legend.append(u"\u00B1" + windowed_SD_threshold + " SD")
+            legend.append(''.join([u"\u00B1",windowed_SD_threshold," SD"]))
 
     if merge == 'true':
         d = {','.join(metabolites):format_query(q,
-                                                   ['Age']+metabolites,
-                                                   (str(age) + "," + str(values)).split(","),
-                                                   legend)}
-    else:
-        d = format_query_with_names(q,
                                                 ['Age']+metabolites,
                                                 (str(age) + "," + str(values)).split(","),
-                                                legend)#,overlay)
+                                                legend)}
+    else:
+        d = format_query_with_names(q,
+                                    ['Age']+metabolites,
+                                    (str(age) + "," + str(values)).split(","),
+                                    legend)
 
     return jsonify(result=d,
                    names = [','.join(metabolites)] if merge == "true" else metabolites,
-                   metadata_array=format_metadata2(q,overlay),
+                   metadata_array=format_metadata(q),
                    sd_array = sd_array)
 
 if __name__ == '__main__':

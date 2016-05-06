@@ -10,6 +10,7 @@
 *.txt
 *.lnk
 test.py
+junk.py
 js/*.html
 *.bat
 
