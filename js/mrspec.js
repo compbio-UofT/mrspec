@@ -7,7 +7,7 @@ document.onmousemove = function(e){
 }
 
 function toggleMetabolites(){
-	$('option').prop('selected', $('#metabolites').chosen().val() == undefined );
+	$('.q_mets').prop('selected', $('#metabolites').chosen().val() == undefined );
 	$('#metabolites').trigger('chosen:updated');
 }
 
