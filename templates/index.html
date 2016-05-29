@@ -21,7 +21,6 @@
     <script src="../js/jquery.ui.position.js"></script>
     <script src="../js/chosen.order.jquery.js"></script>
 
-
     <style type="text/css">
 
 #left {
@@ -102,7 +101,12 @@ div.tabContent.hide { display: none; }
                 <form>
                     <span title="Metabolite of the query.">Metabolites: 
                         <select class="chosen" id="metabolites" data-placeholder="Select metabolites..." multiple="true" style="width:300px;">
-                            <option>AcAc</option><option>Acn</option><option>Ala</option><option>Asp</option><option>Cho</option><option>Cr</option><option>CrCH2</option><option>GABA</option><option>GPC</option><option>Glc</option><option>Gln</option><option>Glu</option><option>Glx</option><option>Glx_opt</option><option>Gua</option><option>Ins</option><option>Lac</option><option>Lip09</option><option>Lip13a</option><option>Lip13b</option><option>Lip20</option><option>MM09</option><option>MM12</option><option>MM14</option><option>MM17</option><option>MM20</option><option>NAA</option><option>NAAG</option><option>PCh</option><option>PCr</option><option>Scyllo</option><option>Tau</option><option>tCho</option><option>tCho_opt</option><option>tCr</option><option>tCr_opt</option><option>tNAA</option><option>tNAA_opt</option>
+
+                            <!--programmatic generation of menu options using Jinja2-->
+                        	{% for met_name in queryable_metabolites %}
+                        	<option>{{ met_name }}</option>
+                        	{% endfor %}
+
                         </select>
                     </span>
                     <span title="Gender of the query.">Gender:
@@ -224,6 +228,9 @@ div.tabContent.hide { display: none; }
         </span><br>
         <span title="Only include the X closest patients above and below the 'AGE'.">Limit around age:
             <input type="text" size="2" name="limit">
+        </span><br>
+        <span title="Select all metabolites to query.">Select all metabolites:
+            <input type="checkbox" id="all" name="Select all metabolites" onchange="toggleMetabolites()">
         </span>
         </div><br>
                 <label style="width:100%">Manually Input Patient Data to Compare</label><br>
@@ -289,117 +296,45 @@ div.tabContent.hide { display: none; }
 
     <div id='echoWindow' title="Change Echotimes">
         <form method="post">
+
+            <!--programmatic generation of menu options using Jinja2-->
             <div style="float: left; width: 20%;text-align:right">
-                <label>AcAc:<input type='text' size='1' id=e_AcAc name=e_AcAc class='e_met'></label>
-                <label>Acn:<input type='text' size='1' id=e_Acn name=e_Acn class='e_met'></label>
-                <label>Ala:<input type='text' size='1' id=e_Ala name=e_Ala class='e_met'></label>
-                <label>Asp:<input type='text' size='1' id=e_Asp name=e_Asp class='e_met'></label>
-                <label>Cho:<input type='text' size='1' id=e_Cho name=e_Cho class='e_met'></label>
-                <label>Cr:<input type='text' size='1' id=e_Cr name=e_Cr class='e_met'></label>
-                <label>CrCH2:<input type='text' size='1' id=e_CrCH2 name=e_CrCH2 class='e_met'></label>
-                <label>GABA:<input type='text' size='1' id=e_GABA name=e_GABA class='e_met'></label>
+            {% for m in queryable_metabolites %}
+            	{% if loop.index0 % 8 == 0 %}
+            	    </div><div style="float: left; width: 20%;text-align:right">
+            	{% endif %}
+                <label>{{ m }}:<input type='text' size='1' id=e_{{ m }} name=e_{{ m }} class='e_met'></label>
+            {% endfor %}
             </div>
-            <div style="float: left; width: 20%;text-align:right">
-                <label>GPC:<input type='text' size='1' id=e_GPC name=e_GPC class='e_met'></label>
-                <label>Glc:<input type='text' size='1' id=e_Glc name=e_Glc class='e_met'></label>
-                <label>Gln:<input type='text' size='1' id=e_Gln name=e_Gln class='e_met'></label>
-                <label>Glu:<input type='text' size='1' id=e_Glu name=e_Glu class='e_met'></label>
-                <label>Glx:<input type='text' size='1' id=e_Glx name=e_Glx class='e_met'></label>
-                <label>Gua:<input type='text' size='1' id=e_Gua name=e_Gua class='e_met'></label>
-                <label>Ins:<input type='text' size='1' id=e_Ins name=e_Ins class='e_met'></label>
-                <label>Lac:<input type='text' size='1' id=e_Lac name=e_Lac class='e_met'></label>
-            </div>
-            <div style="float: left; width: 20%;text-align:right">
-                <label>Lip09:<input type='text' size='1' id=e_Lip09 name=e_Lip09 class='e_met'></label>
-                <label>Lip13a:<input type='text' size='1' id=e_Lip13a name=e_Lip13a class='e_met'></label>
-                <label>Lip13b:<input type='text' size='1' id=e_Lip13b name=e_Lip13b class='e_met'></label>
-                <label>Lip20:<input type='text' size='1' id=e_Lip20 name=e_Lip20 class='e_met'></label>
-                <label>MM09:<input type='text' size='1' id=e_MM09 name=e_MM09 class='e_met'></label>
-                <label>MM12:<input type='text' size='1' id=e_MM12 name=e_MM12 class='e_met'></label>
-                <label>MM14:<input type='text' size='1' id=e_MM14 name=e_MM14 class='e_met'></label>
-                <label>MM17:<input type='text' size='1' id=e_MM17 name=e_MM17 class='e_met'></label>
-            </div>
-            <div style="float: left; width: 20%;text-align:right">
-                <label>MM20:<input type='text' size='1' id=e_MM20 name=e_MM20 class='e_met'></label>
-                <label>NAA:<input type='text' size='1' id=e_NAA name=e_NAA class='e_met'></label>
-                <label>NAAG:<input type='text' size='1' id=e_NAAG name=e_NAAG class='e_met'></label>
-                <label>PCh:<input type='text' size='1' id=e_PCh name=e_PCh class='e_met'></label>
-                <label>PCr:<input type='text' size='1' id=e_PCr name=e_PCr class='e_met'></label>
-                <label>Scyllo:<input type='text' size='1' id=e_Scyllo name=e_Scyllo class='e_met'></label>
-                <label>Tau:<input type='text' size='1' id=e_Tau name=e_Tau class='e_met'></label>
-            </div>
-            <div style="float: left; width: 20%;text-align:right">
-                <label>tCho:<input type='text' size='1' id=e_tCho name=e_tCho class='e_met'></label>
-                <label>tCr:<input type='text' size='1' id=e_tCr name=e_tCr class='e_met'></label>
-                <label>tNAA:<input type='text' size='1' id=e_tNAA name=e_tNAA class='e_met'></label>
-                <label>tCho_opt:<input type='text' size='1' id=e_tCho_opt name=e_tCho_opt class='e_met'></label>
-                <label>tCr_opt:<input type='text' size='1' id=e_tCr_opt name=e_tCr_opt class='e_met'></label>
-                <label>tNAA_opt:<input type='text' size='1'id=e_tNAA_opt name=e_tNAA_opt class='e_met'></label>
-            </div>
+
         </form>
     </div>
 
     <div id='metWindow' title="Change Thresholds">
         <form method="post">
-            <div style="float: left; width: 20%;text-align:right">
-                <label>AcAc:<input type='text' size='1'  id=AcAc name=AcAc class='met'></label>
-                <label>Acn:<input type='text' size='1'  id=Acn name=Acn class='met'></label>
-                <label>Ala:<input type='text' size='1'  id=Ala name=Ala class='met'></label>
-                <label>Asp:<input type='text' size='1'  id=Asp name=Asp class='met'></label>
-                <label>Cho:<input type='text' size='1'  id=Cho name=Cho class='met'></label>
-                <label>Cr:<input type='text' size='1'  id=Cr name=Cr class='met'></label>
-                <label>CrCH2:<input type='text' size='1'  id=CrCH2 name=CrCH2 class='met'></label>
-                <label>GABA:<input type='text' size='1'  id=GABA name=GABA class='met'></label>
-            </div>
-            <div style="float: left; width: 20%;text-align:right">
-                <label>GPC:<input type='text' size='1'  id=GPC name=GPC class='met'></label>
-                <label>Glc:<input type='text' size='1'  id=Glc name=Glc class='met'></label>
-                <label>Gln:<input type='text' size='1'  id=Gln name=Gln class='met'></label>
-                <label>Glu:<input type='text' size='1'  id=Glu name=Glu class='met'></label>
-                <label>Glx:<input type='text' size='1'  id=Glx name=Glx class='met'></label>
-                <label>Gua:<input type='text' size='1'  id=Gua name=Gua class='met'></label>
-                <label>Ins:<input type='text' size='1'  id=Ins name=Ins class='met'></label>
-                <label>Lac:<input type='text' size='1'  id=Lac name=Lac class='met'></label>
-            </div>
-            <div style="float: left; width: 20%;text-align:right">
-                <label>Lip09:<input type='text' size='1'  id=Lip09 name=Lip09 class='met'></label>
-                <label>Lip13a:<input type='text' size='1'  id=Lip13a name=Lip13a class='met'></label>
-                <label>Lip13b:<input type='text' size='1'  id=Lip13b name=Lip13b class='met'></label>
-                <label>Lip20:<input type='text' size='1'  id=Lip20 name=Lip20 class='met'></label>
-                <label>MM09:<input type='text' size='1'  id=MM09 name=MM09 class='met'></label>
-                <label>MM12:<input type='text' size='1'  id=MM12 name=MM12 class='met'></label>
-                <label>MM14:<input type='text' size='1'  id=MM14 name=MM14 class='met'></label>
-                <label>MM17:<input type='text' size='1'  id=MM17 name=MM17 class='met'></label>
-            </div>
-            <div style="float: left; width: 20%;text-align:right">
-                <label>MM20:<input type='text' size='1'  id=MM20 name=MM20 class='met'></label>
-                <label>NAA:<input type='text' size='1'  id=NAA name=NAA class='met'></label>
-                <label>NAAG:<input type='text' size='1'  id=NAAG name=NAAG class='met'></label>
-                <label>PCh:<input type='text' size='1'  id=PCh name=PCh class='met'></label>
-                <label>PCr:<input type='text' size='1'  id=PCr name=PCr class='met'></label>
-                <label>Scyllo:<input type='text' size='1'  id=Scyllo name=Scyllo class='met'></label>
-                <label>Tau:<input type='text' size='1'  id=Tau name=Tau class='met'></label>
-            </div>
-            <div style="float: left; width: 20%;text-align:right">
-                <label>tCho:<input type='text' size='1'  id=tCho name=tCho class='met'></label>
-                <label>tCr:<input type='text' size='1'  id=tCr name=tCr class='met'></label>
-                <label>tNAA:<input type='text' size='1'  id=tNAA name=tNAA class='met'></label>
-                <label>tCho_opt:<input type='text' size='1'  id=tCho_opt name=tCho_opt class='met'></label>
-                <label>tCr_opt:<input type='text' size='1'  id=tCr_opt name=tCr_opt class='met'></label>
-                <label>tNAA_opt:<input type='text' size='1' id=tNAA_opt name=tNAA_opt class='met'></label>
-            </div>
 
+            <!--programmatic generation of menu options using Jinja2-->
+            <div style="float: left; width: 20%;text-align:right">
+            {% for m in queryable_metabolites %}
+            	{% if loop.index0 % 8 == 0 %}
+            	    </div><div style="float: left; width: 20%;text-align:right">
+            	{% endif %}
+                <label>{{ m }}:<input type='text' size='1' id={{ m }} name={{ m }} class='met'></label>
+            {% endfor %}
+
+            </div>
         </form>
     </div>
 </div>
 <script type="text/javascript">
-
-loadThresholds()
-loadEchotimes()
 //Use version 41 as it is compatible with legend select/deselect function https://developers.google.com/chart/interactive/docs/library_loading_enhancements#frozen-versions
 google.charts.load('41', {packages: ['corechart']});
 //needed to let list be transfered
 jQuery.ajaxSettings.traditional=true
+
+//load metabolite parameters
+loadThresholds()
+loadEchotimes()
 
 $(document).ready(function () {
 
@@ -407,8 +342,6 @@ $(document).ready(function () {
     tabInit()
     //initialize and format multiselect boxes (chosen)
     $(".chosen").data("placeholder","Select options...").chosen()
-
-    //setSize()
 
     $(window).bind('resize', function() {
         scrollControl()
@@ -423,9 +356,9 @@ $(document).ready(function () {
 
 //for keyboard shortcuts
 $(document).keyup(function(e) {
-    if (e.keyCode == 13) { $('.query').click(); } // enter
-    if (e.keyCode == 27) { clearSelection() } //esc
-    if (e.keyCode == 46) { clearCanvas() } //del
+    if (e.keyCode == 13) { $('.query').click(); } //enter submits the query
+    if (e.keyCode == 27) { clearSelection() } //esc nullifies the selection
+    if (e.keyCode == 46) { clearCanvas() } //del clears the canvas
     });
 
 //HELP WINDOW
@@ -517,7 +450,6 @@ $( "#echoWindow" ).dialog({ autoOpen: false, modal: true, minWidth: 700,
         }        
     } 
 });
-
 </script>
 </body>
 </html>

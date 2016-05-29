@@ -163,24 +163,43 @@ def return_css(name, ext):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', queryable_metabolites=c.queryable_metabolites)
 
-#change default metabolite thresholds    
+#send queryable metabolites    
+@app.route('/_get_mets')
+def get_mets():
+    return jsonify(mets=c.queryable_metabolites)
+
+#send default metabolite thresholds    
+@app.route('/_get_thresholds')
+def get_thresholds():
+    return jsonify(thresholds=c.met_threshold)
+
+#send default metabolite echotimes    
+@app.route('/_get_echotimes')
+def get_echotimes():
+    return jsonify(echotimes=c.met_echo)
+
+#load default metabolite thresholds    
+@app.route('/_default_thresholds')
+def default_thresholds():
+    c.load_default_thresholds()
+
+#load default metabolite echotimes    
+@app.route('/_default_echotimes')
+def default_echotimes():
+    c.load_default_echotimes()
+    
+#change metabolite thresholds    
 @app.route('/_alter_thresholds')
 def alter_thresholds():
-    r = j.loads(request.args.get('thresholds', '', type=str))
-    c.met_threshold = r
-    print  r
-    print c.met_threshold
+    c.met_threshold = j.loads(request.args.get('thresholds', '', type=str))
     return jsonify(data=None)
 
-#change default metabolite echotimes    
+#change metabolite echotimes    
 @app.route('/_alter_echotimes')
 def alter_echotimes():
-    r = j.loads(request.args.get('echotimes', '', type=str))
-    c.met_echo = r
-    print r
-    print c.met_echo
+    c.met_echo = j.loads(request.args.get('echotimes', '', type=str))
     return jsonify(data=None)
 
 @app.route('/_get_query')
@@ -296,6 +315,5 @@ if __name__ == '__main__':
     #Otherwise, execute custom code for debugging
     else:
         with MrspecDatabaseQueryer() as (c,con,cur):
+            ###Sandbox for testing###
             pass
-            ###Sandbox for testing###            
-

@@ -1,17 +1,32 @@
 var cursorX;
 var cursorY;
+
 document.onmousemove = function(e){
 	cursorX = e.pageX;
 	cursorY = e.pageY;
 }
 
+function toggleMetabolites(){
+	$('option').prop('selected', $('#metabolites').chosen().val() == undefined );
+	$('#metabolites').trigger('chosen:updated');
+}
+
 function loadThresholds(){
 
-	$.get("config/metabolite_thresholds.txt", function(response) {
-		var lines = response.split('\n');
-		for(line in lines){
-			var line_split = lines[line].split(' ');
-			$("input[name='"+line_split[0]+"']").val(line_split[1] )
+	$.getJSON('/_get_thresholds', {
+	}, function(data) {
+		for(met in data.thresholds){
+			$("input[name='"+met+"']").val( data.thresholds[met] )
+		}
+	});
+}
+
+function loadEchotimes(){
+
+	$.getJSON('/_get_echotimes', {
+	}, function(data) {
+		for(met in data.echotimes){
+			$("input[name='e_"+met+"']").val( data.echotimes[met] )
 		}
 	});
 }
@@ -26,19 +41,7 @@ function sendThresholds(){
 
 	$.getJSON('/_alter_thresholds', {
 		thresholds:JSON.stringify(thresholds)
-	}, function(data) {
-	});
-}
-
-function loadEchotimes(){
-
-	$.get("config/metabolite_echotimes.txt", function(response) {
-		var lines = response.split('\n');
-		for(line in lines){
-			var line_split = lines[line].split(' ');
-			$("input[name='e_"+line_split[0]+"']").val(line_split[1] )
-		}
-	});
+	}, function(data) {} )
 }
 
 function sendEchotimes(){
@@ -51,8 +54,7 @@ function sendEchotimes(){
 
 	$.getJSON('/_alter_echotimes', {
 		echotimes:JSON.stringify(echotimes)
-	}, function(data) {
-	});
+	}, function(data) {} )
 }
 
 function calculateAge(){
@@ -64,7 +66,6 @@ function calculateAge(){
 	var total = parseInt(days) + parseInt(weeks)*7 + parseInt(months)*30 + parseInt(years)*365
 
 	$("input[name='age']").val(total)
-
 }
 
 function inputValid(){
@@ -486,8 +487,6 @@ function updateSidebar(current_selection){
 					+n+": </div><div class='content'>" 
 					+ window.my_config.metadata_array[r][m][n] + "</div>"
 				}
-
-
 			}
 		}
 		if (window.my_config.sd_array[r] != null){

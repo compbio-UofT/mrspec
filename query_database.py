@@ -61,6 +61,7 @@ class MrspecDatabaseQueryer(DatabaseConnection):
         self.queryable_metabolites = self._base_metabolites + \
             self.met_to_calculate.keys() + \
             [m+'_opt' for m in self.met_to_calculate.keys()]
+        self.queryable_metabolites.sort()
               
         self.table = "standard"
         
@@ -112,39 +113,58 @@ class MrspecDatabaseQueryer(DatabaseConnection):
         
     def load_default_thresholds(self):
         '''MrspecDatabaseQueryer -> NoneType
-        Load default metabolite quality threshold values from '../config/metabolite_thresholds.txt'. If no such file is found, the existing value for self.met_threshold is used.
+        Load default metabolite quality threshold values from '../config/metabolite_thresholds.txt'. Individual metabolite values may be specified and overwritten. If no such file is found, the existing value for self.met_threshold is used.
         '''
-        m={}
+        #m={}
         try:
             with open("config/metabolite_thresholds.txt", 'r') as met_file:
                 for line in met_file:
                     (key, val) = line.split()
-                    m[key] = int(val)
-            if set(m)==set(self.queryable_metabolites):
-                self.met_threshold = m
-                print("Metabolite thresholds loaded from file.")
-            else:
-                raise InvalidConfigFileError(met_file.name + " is not a valid configuration file.")
+                    #m[key] = int(val)
+                    
+                    if key in self.queryable_metabolites:
+                        if int(val) != self.met_threshold[key]:
+                            print("Threshold for '{}' updated to {} from default {}.".format(key,val,self.met_threshold[key]))
+                            self.met_threshold[key]=int(val)
+                        
+                        '''  unindent to match else block and outside of for loop if using again      
+                        if set(m)==set(self.queryable_metabolites):
+                            self.met_threshold = m
+                            print("Metabolite thresholds loaded from file.")
+                        '''
+                    else:
+                        raise InvalidConfigFileError(met_file.name + " contains an invalid metabolite: '{}'.".format(key))
+                        
+                        #raise InvalidConfigFileError(met_file.name + " is not a valid configuration file.")
+                print("Remaining metabolite thresholds loaded from defaults.")
         except Exception as e:
-            print("Metabolite thresholds loaded from defaults. Reason: " +str(e)+".")
+            print("Error parsing config file. Metabolite thresholds loaded from defaults. Reason: " +str(e))
         
     def load_default_echotimes(self):
         '''MrspecDatabaseQueryer -> NoneType
-        Load default metabolite echotimes from '../config/metabolite_echotimes.txt'. If no such file is found, the existing value for self.met_echotimes is used.
+        Load default metabolite echotimes from '../config/metabolite_echotimes.txt'. Individual metabolite values may be specified and overwritten.  If no such file is found, the existing value for self.met_echotimes is used.
         '''
-        m={}
         try:
             with open("config/metabolite_echotimes.txt", 'r') as met_file:
                 for line in met_file:
                     (key, val) = line.split()
-                    m[key] = val
-            if set(m)==set(self.queryable_metabolites):
-                self.met_echo = m
-                print("Metabolite echotimes loaded from file.")
-            else:
-                raise InvalidConfigFileError(met_file.name + " is not a valid configuration file.")
+                    #m[key] = int(val)
+                    
+                    if key in self.queryable_metabolites:
+                        if val != self.met_echo[key]:
+                            print("Echotime for '{}' updated to {} from default {}.".format(key,val,self.met_echo[key]))
+                            self.met_echo[key]=val
+                                            
+                        '''  unindent to match else block and outside of for loop if using again      
+                        if set(m)==set(self.queryable_metabolites):
+                            self.met_echo = m
+                            print("Metabolite thresholds loaded from file.")
+                        '''
+                    else:
+                        raise InvalidConfigFileError(met_file.name + " contains an invalid metabolite: '{}'.".format(key))
+                print("Remaining metabolite echotimes loaded from defaults.")                    
         except Exception as e:
-            print("Metabolite echotimes loaded from defaults. Reason: " +str(e)+".")
+            print("Error parsing config file. Metabolite echotimes loaded from defaults. Reason: " +str(e))
             
     def table_exists(self, tablename):
         '''(MrspecDatabaseQueryer, Str) -> Bool
