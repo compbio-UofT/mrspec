@@ -93,12 +93,14 @@ if __name__== "__main__":
         
         update = 'standard'
         
-        #d.insert_new_scans('updates.csv')     
+        d.insert_new_scans('updates.csv')     
         
-        #d.update_outcomes('outcomes_latest.csv')
+        d.update_outcomes('outcomes_latest.csv')
         
         d.insert_additional_metabolites(update,d.met_to_calculate)
         
+        d.remove_asterisks_blanks(d.table)
+        
         #if prompt_yes_no("\nDo you wish to create/overwrite the windowed SD columns with null values? WARNING: This cannot be undone, and will take a long time to restore the values."): d.create_null_sd_columns(update)
-        #if prompt_yes_no("\nDo you wish to (re)calculate the windowed SD columns? WARNING: This will overwrite previous data, and will take a long time to restore the values."): d.populate_SD_table_without_multi('', '', '', False, True)
+        if prompt_yes_no("\nDo you wish to (re)calculate the windowed SD columns? WARNING: This will overwrite previous data, and will take a long time to restore the values."): d.populate_SD_table_without_multi('', '', '', False, True)
         

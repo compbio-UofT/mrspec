@@ -219,13 +219,13 @@ class MrspecDatabaseEditor(MrspecDatabaseQueryer):
                     self.cur.execute(q2)
                     self.con.commit()
     
-    def check_for_table_before_executing(self, name, query, commit=True):
+    def check_for_table_before_executing(self, name, query, params=None, commit=True):
         '''Str, Str -> None
         Executes the specified query if the table (name) does not exist in the database.'''
         if self.table_exists(name):
             if not self.silent: print("Table '{}' already in database. No changes made.".format(name))
         else:
-            self.cur.execute(query)
+            self.cur.execute(query,params)
             self.con.commit()
     
             if not self.silent: print("Table '{}' created successfully.".format(name))
@@ -308,6 +308,21 @@ class MrspecDatabaseEditor(MrspecDatabaseQueryer):
             self.cur.execute("DROP TABLE {}".format(name))
             if not self.silent: print("Table '{}' dropped from '{}'.".format(name, self._database))
             
+    def remove_asterisks_blanks(self, name):
+        q = []
+        
+        c,r = self.execute_and_return_query("SHOW COLUMNS FROM {}".format(name))
+        
+        columns = [r[i][0] for i in range(0,len(r))]
+        
+        for column in columns:
+            q.append( "UPDATE {0} SET `{1}` = NULL WHERE `{1}` LIKE '*' OR `{1}` LIKE ''".format(name,column) )
+        
+        query = '; '.join(q)
+        
+        for result in self.cur.execute(query,multi=True): pass
+        self.con.commit()        
+            
 if __name__ == "__main__":
 
     #Establish connection with database
@@ -318,7 +333,7 @@ if __name__ == "__main__":
         else:
     
             #import requisite tables in local folder and mysql folder
-            c.import_csv("outcomes2.csv", "outcomes", "varchar(500)")
+            c.import_csv("outcomes_latest.csv", "outcomes", "varchar(500)")
             c.import_csv("mrspec.csv", "mrspec", "text")
             c.import_csv("tabPatients.csv", "tab_MRN", "varchar(50)")
         
@@ -343,6 +358,8 @@ if __name__ == "__main__":
             c.rename_lower_field_metabolites(c.table)        
             c.create_null_sd_columns(c.table)
             
-            if prompt_yes_no("\nDo you wish to calculate the windowed SD columns? WARNING: This will take a long time and is not recommended until all update files have been imported."): c.populate_SD_table_without_multi('', '', '', False, True)
+            c.remove_asterisks_blanks(c.table)
+            
+            #if prompt_yes_no("\nDo you wish to calculate the windowed SD columns? WARNING: This will take a long time and is not recommended until all update files have been imported."): c.populate_SD_table_without_multi('', '', '', False, True)
 
             print('\nAll operations completed successfully.')
