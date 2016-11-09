@@ -7,7 +7,18 @@ document.onmousemove = function(e){
 }
 
 function toggleMetabolites(){
-	$('.q_mets').prop('selected', $('#metabolites').chosen().val() == undefined );
+        $('#all')[0].checked ? toggleMetabolitesOn() : toggleMetabolitesOff()
+	// $('.q_mets').prop('selected', $('#metabolites').chosen().val() == undefined );
+	// $('#metabolites').trigger('chosen:updated');
+}
+
+function toggleMetabolitesOn(){
+	$('.q_mets').prop('selected', true);
+	$('#metabolites').trigger('chosen:updated');
+}
+
+function toggleMetabolitesOff(){
+	$('.q_mets').prop('selected', false);
 	$('#metabolites').trigger('chosen:updated');
 }
 
