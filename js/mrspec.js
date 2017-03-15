@@ -309,7 +309,7 @@ function addCustomPatientData(names,results){
 			for (name in names){
 				value_count = countCommas(names[name]) + 1
 
-				row = [parseInt(ages[i]),identifiers[i]]
+				row = [parseFloat(ages[i]),identifiers[i]]
 
 				for (var q = 1; q <= results[names[name]].getNumberOfColumns() -2 ; q++) {
 					row.push(null)
@@ -317,7 +317,7 @@ function addCustomPatientData(names,results){
 
 
 				for (var j = 1; j <= value_count; j++) {
-					row.push(parseInt(values.shift()))
+					row.push(parseFloat(values.shift()))
 					row.push(null)
 
 				};
